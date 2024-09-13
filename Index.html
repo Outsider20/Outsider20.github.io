@@ -16,9 +16,15 @@ var myGamePiece;
 var myObstacles = [];
 var myScore;
 
+document.addEventListener("DOMContentLoaded", function() {
+    hit_sound = document.getElementById("hit");
+    Music = document.getElementById("music");
+    start_sound = document.getElementById("start_audio");
+});
+    
 function startGame() {
-    myGamePiece = new component(30, 30, "red", 10, 120);
-    myGamePiece.gravity = 0.05;
+    myGamePiece = new component(30, 30, "./Images/Car.png", 10, 120, "image");
+    myGamePiece.gravity = 0;
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
 }
@@ -26,13 +32,25 @@ function startGame() {
 var myGameArea = {
     canvas : document.createElement("canvas"),
     start : function() {
-        this.canvas.width = 480;
-        this.canvas.height = 270;
+        this.canvas.width = 600;
+        this.canvas.height = 360;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
-        },
+        window.addEventListener('keydown', function (e) {
+            myGameArea.keys = (myGameArea.keys || []);
+            myGameArea.keys[e.keyCode] = true;
+        })
+        window.addEventListener('keyup', function (e) {
+            myGameArea.keys[e.keyCode] = false;
+            })
+    },
+     stopGame : function()
+    {
+        clearInterval(this.interval);
+        Music.pause();
+    },
     clear : function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -40,6 +58,11 @@ var myGameArea = {
 
 function component(width, height, color, x, y, type) {
     this.type = type;
+    if (this.type == "image" || this.type == "background")
+    {
+        this.image = new Image();
+        this.image.src = color;
+    }
     this.score = 0;
     this.width = width;
     this.height = height;
@@ -55,7 +78,19 @@ function component(width, height, color, x, y, type) {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
-        } else {
+        } 
+        else if (this.type == "image"|| this.type == "background") {
+            ctx.drawImage(this.image,
+                this.x,
+                this.y,
+                this.width,
+                this.height
+            );
+            if (this.type == "background")
+            {
+                ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
+            }
+        }else {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
