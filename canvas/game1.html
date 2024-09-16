@@ -232,10 +232,6 @@ function accelerate(n) {
     myGamePiece.gravity = n;
 }
 
-function startGame() {
-    startGame
-}
-
 function pauseGame() {
     myGameArea.pause();
 }
@@ -248,8 +244,8 @@ function resumeGame() {
 
     
 <button onclick="startGame()" id="Start_Button">Start Game</button>
-<button onclick="myGameArea.pause()" id="Pause_Button>Pause</button>
-<button onclick="myGameArea.resume()" id="Resume_Button">Resume</button>
+<button onclick="pauseGame()" id="Pause_Button>Pause</button>
+<button onclick="resumeGame()" id="Resume_Button">Resume</button>
 <br>
 <p>Use your arrow keys to maneuver your car
 <p>How long can you stay alive?</p>
