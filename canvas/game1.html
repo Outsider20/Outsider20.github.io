@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <style>
@@ -9,11 +9,7 @@ canvas {
 }
 </style>
 </head>
-<body>
-<audio id="jumpSound" src="jump.mp3" preload="auto"></audio>
-<audio id="crashSound" src="crash.mp3" preload="auto"></audio>
-<audio id="music" src="./game1assets/BackgroundMusic.mp3" loop></audio>
-
+<body onload="startGame()">
 <script>
 var myGamePiece;
 var myObstacles = [];
