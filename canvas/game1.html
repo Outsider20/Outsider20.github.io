@@ -7,18 +7,6 @@ canvas {
     border:1px solid #d3d3d3;
     background-color: #f1f1f1;
 }
-#Pause_Button
-{
-    display: none;
-}
-#Start_Button
-{
-    display: block;
-}
-#Resume_Button
-{
-    display: none;
-}
 </style>
 </head>
 <body>
@@ -228,8 +216,8 @@ function explosion() {
     myGameArea.stop();  // Stop the game loop
 }
 
-function accelerate(n) {
-    myGamePiece.gravity = n;
+function clickToStart() {
+    startGame();
 }
 
 function pauseGame() {
@@ -242,8 +230,7 @@ function resumeGame() {
     
 </script>
 
-    
-<button onclick="startGame()" id="Start_Button">Start Game</button>
+<button onclick="clickToStart()" id="Start_Button">Start Game</button>
 <button onclick="pauseGame()" id="Pause_Button>Pause</button>
 <button onclick="resumeGame()" id="Resume_Button">Resume</button>
 <br>
