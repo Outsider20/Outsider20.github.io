@@ -81,10 +81,11 @@ var myGameArea = {
 
 function gameObject(width, height, color, x, y, type) {
     this.type = type;
-    if (type == "image") {
-    this.image = new Image();
-    this.image.src = color;
-  }
+    if (this.type == "image" || this.type == "background")
+    {
+        this.image = new Image();
+        this.image.src = color;
+    }
     this.score = 0;
     this.width = width;
     this.height = height;
@@ -97,10 +98,7 @@ function gameObject(width, height, color, x, y, type) {
     this.update = function() {
         ctx = myGameArea.context;
         if (type == "image") {
-      ctx.drawImage(this.image,
-        this.x,
-        this.y,
-        this.width, this.height);
+      ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
     } else {
       ctx.fillStyle = color;
       ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -201,6 +199,8 @@ function updateGameArea() {
     }
     myScore.text="SCORE: " + myGameArea.frameNo;
     myScore.update();
+    myBackground.newPos();
+    myBackground.update();
     myGamePiece.newPos();
     myGamePiece.update();
 }
