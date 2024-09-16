@@ -7,77 +7,43 @@ canvas {
     border:1px solid #d3d3d3;
     background-color: #f1f1f1;
 }
-#Pause_Button
-{
-    display: none;
-}
-#Start_Button
-{
-    display: block;
-}
-#Restart_Button
-{
-    display: none;
-}
 </style>
 </head>
 <body onload="startGame()">
 <script>
+
 var myGamePiece;
 var myObstacles = [];
 var myScore;
-var gameInterval;
-var lives = 3;
-var isPaused = false;
-var images = [Car.png];
-var currentImage = 0;
 
 function startGame() {
-    myGamePiece = new gameObject(30, 30, images[0], 10, 120, "image");
-    myGamePiece.gravity = 0;
+    myGamePiece = new gameObject(30, 30, "red", 10, 120);
+    character2 = new gameObject(20, 20, "yellow", 20, 150);
+    
+    myGamePiece.gravity = 0.05;
     myScore = new gameObject("30px", "Consolas", "black", 280, 40, "text");
-    Background = new gameObject(700,320,"./Images/Road.jpg",0,0,"background")
+
+    
     myGameArea.start();
 }
 
 var myGameArea = {
     canvas : document.createElement("canvas"),
     start : function() {
-        this.canvas.width = 600;
-        this.canvas.height = 360;
+        this.canvas.width = 480;
+        this.canvas.height = 270;
         this.context = this.canvas.getContext("2d");
-
-        // Insert the canvas before the first child of the body
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
-        
-        window.addEventListener('keydown', function (e) {
-            myGameArea.keys = (myGameArea.keys || []);
-            myGameArea.keys[e.keyCode] = true;
-        })
-        window.addEventListener('keyup', function (e) {
-            myGameArea.keys[e.keyCode] = false;
-            })
-    },
-     stopGame : function()
-    {
-        clearInterval(this.interval);
-        Music.pause();
-    },
+        },
     clear : function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
 
-function gameObject(width, height, imgSrc, x, y, type) {
+function gameObject(width, height, color, x, y, type) {
     this.type = type;
-    if (this.type == "image" || this.type == "background")
-    {
-        this.image = new Image();
-        this.image.src = color;
-    }
     this.score = 0;
     this.width = width;
     this.height = height;
@@ -93,19 +59,7 @@ function gameObject(width, height, imgSrc, x, y, type) {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
-        } 
-        else if (this.type == "image"|| this.type == "background") {
-            ctx.drawImage(this.image,
-                this.x,
-                this.y,
-                this.width,
-                this.height
-            );
-            if (this.type == "background")
-            {
-                ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
-            }
-        }else {
+        } else {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
@@ -141,55 +95,15 @@ function gameObject(width, height, imgSrc, x, y, type) {
 }
 
 function updateGameArea() {
-    if (isPaused === true)
-    {
-        return;
-    }
-    //Prevent update if pause button is pressed
-    if (myGameArea.key == false)
-    {
-        myGamePiece.speedX=0;
-        myGamePiece.speedY=0;
-        myGamePiece.image.src = "./Images/Car.png";
-    }
-    else{
-    switch (myGameArea.key)
-    {
-        case 37:
-            myGamePiece.speedX = -2;
-            myGamePiece.image.src = "./Images/Car.png";
-            break;
-        case 38:
-            myGamePiece.speedY = -2;
-            myGamePiece.image.src = "./Images/Car.png";
-            break;
-        case 39:
-            myGamePiece.speedX = 2;
-            myGamePiece.image.src = "./Images/Car.png";
-            break;
-        case 40:
-            myGamePiece.speedY = 2;
-            myGamePiece.image.src = "./Images/Car.png";
-            break;
-    }
-        
+    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
     for (i = 0; i < myObstacles.length; i += 1) {
-        if (myGamePiece.crashWith(myObstacles[i]))
-        {
-            hit_sound.play();
-            explosion = new gameObject(200, 200, "./Image/explosion.png", myGamePiece.x - 50, myGamePiece.y -60,"image");
-            explosion.update();
-            setTimeout(function() { myGameArea.stopGame(); },200)
-            document.getElementById("Pause_Button").style.display = "none";
-            document.getElementById("Restart_Button").style.display = "block";
-            
+        if (myGamePiece.crashWith(myObstacles[i])) {
             return;
         } 
     }
-
     myGameArea.clear();
     myGameArea.frameNo += 1;
-    if (myGameArea.frameNo == 1 || everyinterval(50)) {
+    if (myGameArea.frameNo == 1 || everyinterval(150)) {
         x = myGameArea.canvas.width;
         minHeight = 20;
         maxHeight = 200;
@@ -197,10 +111,18 @@ function updateGameArea() {
         minGap = 50;
         maxGap = 200;
         gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-       
-        myObstacles.push(new gameObject(10, height, "./game1assets/Pole.png", x, 0,"image"));
-        myObstacles.push(new gameObject(10, x - height - gap, "./game1assets/Pole.png", x, height + gap,"image"));
+        myObstacles.push(new gameObject(10, height, "green", x, 0));
+        myObstacles.push(new gameObject(10, x - height - gap, "green", x, height + gap));
     }
+    for (i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].x += -1;
+        myObstacles[i].update();
+    }
+    myScore.text="SCORE: " + myGameArea.frameNo;
+    myScore.update();
+    myGamePiece.newPos();
+    myGamePiece.update();
+    character2.update();
 }
 
 function everyinterval(n) {
@@ -208,67 +130,13 @@ function everyinterval(n) {
     return false;
 }
 
-
-function playSound(soundId) {
-    document.getElementById(soundId).play();
+function accelerate(n) {
+    myGamePiece.gravity = n;
 }
-
-function everyinterval(n) {
-    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
-    return false;
-}
-
-function click_start()
-{
-    startGame();
-    document.getElementById("Start_Button").style.display = "none";
-    document.getElementById("Pause_Button").style.display = "block";
-    
-}
-//Function that starts the game when the start button is clicked then hides it and displays the pause button
-function Pause()
-{
-    Paused = !Paused;
-}
-
-function Restart()
-{
-    myObstacles =[];
-    myScore.text = "SCORE: 0"
-    myGameArea.frameNo = 0;
-    Paused = false;
-
-    myGameArea.clear();
-
-    document.getElementById("Pause_Button").style.display = "block";
-    document.getElementById("Restart_Button").style.display = "none";
-    Music.currentTime = 0;
-    startGame();
-}
-
-    function PlayingToggle()
-{
-    PlayingAudio ? Music.pause() : Music.play();
-
-    Music.onplaying = function(){
-        PlayingAudio = true;
-    };
-
-    Music.onpause = function()
-    {
-        PlayingAudio = false;
-    };
-
-}
-}
-    
 </script>
-
 <br>
-<button onclick="startGame()">Start Game</button>
-<button onclick="pauseGame()">Pause/Resume</button>
-<audio id="crashSound" src="crash.mp3" preload="auto"></audio>
-<audio id="music" src="./Audio/drift-action-sport-background-music-loop-157986.mp3" loop></audio>
-<p>Use the Arrow keys to move and the buttons to control the game.</p>
+<button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">ACCELERATE</button>
+<p>Use the ACCELERATE button to stay in the air</p>
+<p>How long can you stay alive?</p>
 </body>
 </html>
