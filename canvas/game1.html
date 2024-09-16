@@ -9,41 +9,81 @@ canvas {
 }
 </style>
 </head>
-<body onload="startGame()">
+<body>
+    
+<audio id="backgroundAudio" loop>
+    <source src="./Audio/drift-action-sport-background-music-loop-157986.mp3" type="audio">
+</audio>
+
+<audio id="explosionSound">
+    <source src="./audio/explosionSound.mp3" type="audio/">
+    Your browser does not support the audio element.
+</audio>
+    
 <script>
 
 var myGamePiece;
 var myObstacles = [];
 var myScore;
-
-function startGame() {
-    myGamePiece = new gameObject(30, 30, "red", 10, 120);
-    character2 = new gameObject(20, 20, "yellow", 20, 150);
+var gamePaused = false;
+var explosionTriggered = false;
+var backgroundAudio = document.getElementById("backgroundAudio");
+var backgroundAudio = document.getElementById("explosionSound");
     
-    myGamePiece.gravity = 0.05;
+function startGame() {
+    myGamePiece = new gameObject(30, 30, "./Images/Car.png", 10, 120);
+    
+    myGamePiece.gravity = 0;
     myScore = new gameObject("30px", "Consolas", "black", 280, 40, "text");
 
-    
+    backgroundAudio.play();
     myGameArea.start();
 }
 
 var myGameArea = {
-    canvas : document.createElement("canvas"),
-    start : function() {
-        this.canvas.width = 480;
-        this.canvas.height = 270;
-        this.context = this.canvas.getContext("2d");
-        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-        this.frameNo = 0;
-        this.interval = setInterval(updateGameArea, 20);
-        },
-    clear : function() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  this.frameNo = 0;
+  canvas : document.createElement("canvas"),
+  start : function() {
+    this.canvas.width = 480;
+    this.canvas.height = 270;
+    this.context = this.canvas.getContext("2d");
+    document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+    this.interval = setInterval(updateGameArea, 20);
+    window.addEventListener('keydown', function (e) {
+      myGameArea.keys = (myGameArea.keys || []);
+      myGameArea.keys[e.keyCode] = true;
+    })
+    window.addEventListener('keyup', function (e) {
+      myGameArea.keys[e.keyCode] = false;
+    })
+  },
+  clear : function(){
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  },
+  stop : function() {
+    clearInterval(this.interval);
+    backgroundAudio.pause();
+  }
+  pause : function() {
+        clearInterval(this.interval);  // Pause the game
+        gamePaused = true;
+        backgroundAudio.pause();  // Pause the background audio
+  },
+  resume : function() {
+        if (gamePaused) {
+            this.interval = setInterval(updateGameArea, 20);  // Resume the game loop
+            gamePaused = false;
+            backgroundAudio.play();  // Resume the background audio
+        }
     }
 }
 
 function gameObject(width, height, color, x, y, type) {
     this.type = type;
+    if (type == "image") {
+    this.image = new Image();
+    this.image.src = color;
+  }
     this.score = 0;
     this.width = width;
     this.height = height;
@@ -55,6 +95,15 @@ function gameObject(width, height, color, x, y, type) {
     this.gravitySpeed = 0;
     this.update = function() {
         ctx = myGameArea.context;
+        if (type == "image") {
+      ctx.drawImage(this.image,
+        this.x,
+        this.y,
+        this.width, this.height);
+    } else {
+      ctx.fillStyle = color;
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
@@ -96,12 +145,43 @@ function gameObject(width, height, color, x, y, type) {
 
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
-    for (i = 0; i < myObstacles.length; i += 1) {
-        if (myGamePiece.crashWith(myObstacles[i])) {
-            return;
-        } 
+    if (!explosionTriggered) {
+        for (let i = 0; i < myObstacles.length; i += 1) {
+            if (myGamePiece.crashWith(myObstacles[i])) {
+                explosion();
+                return;
+            } 
+        }
     }
+    
     myGameArea.clear();
+
+    if (myGameArea.keys == false)
+    {
+        myGamePiece.speedX=0;
+        myGamePiece.speedY=0;
+        myGamePiece.image.src = "./Images/Car.png";
+    }
+    else
+    {
+        switch (myGameArea.keys)
+        {
+            case 37:
+                myGamePiece.speedX = -4;
+                break;
+            case 38:
+                myGamePiece.speedY = -4;
+                break;
+            case 39:
+                myGamePiece.speedX = 4;
+                myGamePiece.image.src = "./game1assets/helicopter.png";
+                break;
+            case 40:
+                myGamePiece.speedY = 4;
+                break;
+        }
+    }
+    
     myGameArea.frameNo += 1;
     if (myGameArea.frameNo == 1 || everyinterval(150)) {
         x = myGameArea.canvas.width;
@@ -111,8 +191,8 @@ function updateGameArea() {
         minGap = 50;
         maxGap = 200;
         gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        myObstacles.push(new gameObject(10, height, "green", x, 0));
-        myObstacles.push(new gameObject(10, x - height - gap, "green", x, height + gap));
+        myObstacles.push(new gameObject(50, height, "./Images/Obstacle.png", x, 0, "image"));
+        myObstacles.push(new gameObject(50, x - height - gap, "./Images/Obstacle.png", x, height + gap, "image"));
     }
     for (i = 0; i < myObstacles.length; i += 1) {
         myObstacles[i].x += -1;
@@ -122,7 +202,6 @@ function updateGameArea() {
     myScore.update();
     myGamePiece.newPos();
     myGamePiece.update();
-    character2.update();
 }
 
 function everyinterval(n) {
@@ -130,13 +209,31 @@ function everyinterval(n) {
     return false;
 }
 
+function explosion() {
+    myGamePiece.image.src = "./Images/Explosion.png";  // Change car image to explosion
+    explosionSound.play();  // Play explosion sound
+    explosionTriggered = true;
+    myGameArea.stop();  // Stop the game loop
+}
+
 function accelerate(n) {
     myGamePiece.gravity = n;
 }
+
+function pauseGame() {
+    myGameArea.pause();
+}
+
+function resumeGame() {
+    myGameArea.resume();
+}
+    
 </script>
+<button onclick="startGame()">Start Game</button>
+<button onclick="pauseGame()">Pause</button>
+<button onclick="resumeGame()">Resume</button>
 <br>
-<button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">ACCELERATE</button>
-<p>Use the ACCELERATE button to stay in the air</p>
+<p>Use your arrow keys to maneuver your car
 <p>How long can you stay alive?</p>
 </body>
 </html>
