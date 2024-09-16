@@ -46,9 +46,13 @@ var myGameArea = {
         this.canvas.width = 600;
         this.canvas.height = 360;
         this.context = this.canvas.getContext("2d");
+
+        // Insert the canvas before the first child of the body
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
+        
         window.addEventListener('keydown', function (e) {
             myGameArea.keys = (myGameArea.keys || []);
             myGameArea.keys[e.keyCode] = true;
