@@ -43,6 +43,10 @@ function startGame() {
 var myGameArea = {
   canvas : document.createElement("canvas"),
   start : function() {
+    if (this.interval)
+    {
+        clearInterval(this.interval);
+    };
     this.canvas.width = 480;
     this.canvas.height = 270;
     this.context = this.canvas.getContext("2d");
@@ -235,7 +239,7 @@ function resumeGame() {
 <button onclick="pauseGame()" id="Pause_Button>Pause</button>
 <button onclick="resumeGame()" id="Resume_Button">Resume</button>
 <br>
-<p>Use your arrow keys to maneuver your car
+<p>Use your arrow keys to maneuver your car</p>
 <p>How long can you stay alive?</p>
 </body>
 </html>
