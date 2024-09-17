@@ -130,6 +130,16 @@ function gameObject(width, height, color, x, y, type) {
         var otherbottom = otherobj.y + (otherobj.height);
         return (mybottom >= othertop && mytop <= otherbottom && myright >= otherleft && myleft <= otherright);
     };
+
+    this.animateExplosion = function() {
+        // Increase the size of the explosion
+        this.width += 20;   // Increase width faster for more dramatic effect
+        this.height += 20;  // Increase height
+
+        // Adjust the x and y position so that the explosion stays centered
+        this.x -= 10; 
+        this.y -= 10;
+    };
 }
 
 function updateGameArea() {
@@ -169,9 +179,16 @@ function updateGameArea() {
             hit_sound.play();
             var explosion = new gameObject(200, 200, "./Images/Explosion.png", myGamePiece.x - 50, myGamePiece.y - 60, "image");
             explosion.update();
-            setTimeout(function() {
-                myGameArea.stopGame();
-            }, 1000);
+        let explosionInterval = setInterval(function() {
+        explosion.animateExplosion();
+        explosion.update();
+        
+        if (explosion.width >= 300) {
+            clearInterval(explosionInterval);
+            myGameArea.stopGame();  
+        }
+    }, 100); // Change size every 100ms
+
             document.getElementById("Pause_Button").style.display = "none";
             document.getElementById("Restart_Button").style.display = "block";
             return;
