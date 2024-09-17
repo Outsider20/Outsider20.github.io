@@ -16,8 +16,8 @@ canvas {
 var myGamePiece;
 var myObstacles = [];
 var myScore;
-var Paused = false;
-var PlayingAudio = true;
+var pause = false;
+var audioPlay = true;
 
 document.addEventListener("DOMContentLoaded", function() {
     hit_sound = document.getElementById("hit_audio");
@@ -130,7 +130,7 @@ function gameObject(width, height, color, x, y, type) {
 }
 
 function updateGameArea() {
-    if (Paused) return;
+    if (pause) return;
 
     if (!myGameArea.key) {
         myGamePiece.speedX = 0;
@@ -206,14 +206,14 @@ function click_start() {
 }
 
 function Pause() {
-    Paused = !Paused;
+    pause = !pause;
 }
 
 function Restart() {
     myObstacles = [];
     myScore.text = "SCORE: 0";
     myGameArea.frameNo = 0;
-    Paused = false;
+    pause = false;
 
     myGameArea.clear();
     document.getElementById("Pause_Button").style.display = "block";
@@ -223,12 +223,12 @@ function Restart() {
 }
 
 function PlayingToggle() {
-    PlayingAudio ? Music.pause() : Music.play();
+    audioPlay ? Music.pause() : Music.play();
     Music.onplaying = function() {
-        PlayingAudio = true;
+        audioPlay = true;
     };
     Music.onpause = function() {
-        PlayingAudio = false;
+        audioPlay = false;
     };
 }
 </script>
