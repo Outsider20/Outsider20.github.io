@@ -18,6 +18,9 @@ var myObstacles = [];
 var myScore;
 var pause = false;
 var audioPlay = true;
+var speed = 4;            // Start speed for the background and obstacles
+var minGap = 50;          // Minimum gap between obstacles
+var maxGap = 200;         // Maximum gap between obstacles
 
 document.addEventListener("DOMContentLoaded", function() {
     hit_sound = document.getElementById("hit_audio");
@@ -132,6 +135,13 @@ function gameObject(width, height, color, x, y, type) {
 function updateGameArea() {
     if (pause) return;
 
+     // Every 500 points, increase speed by 0.2 and the gap by 10 pixels
+    if (myGameArea.frameNo > 0 && myGameArea.frameNo % 500 === 0) {
+        speed += 0.1;       // Increase speed
+        minGap += 10;       // Increase minimum gap between obstacles
+        maxGap += 10;       // Increase maximum gap between obstacles
+    }
+    
     if (!myGameArea.key) {
         myGamePiece.speedX = 0;
         myGamePiece.speedY = 0;
@@ -139,17 +149,17 @@ function updateGameArea() {
     } else {
         switch (myGameArea.key) {
             case 37:
-                myGamePiece.speedX = -4;
+                myGamePiece.speedX = -3;
                 break;
             case 38:
-                myGamePiece.speedY = -4;
+                myGamePiece.speedY = -3;
                 break;
             case 39:
-                myGamePiece.speedX = 4;
+                myGamePiece.speedX = 3;
                 myGamePiece.image.src = "./Images/Car.png";
                 break;
             case 40:
-                myGamePiece.speedY = 4;
+                myGamePiece.speedY = 3;
                 break;
         }
     }
@@ -176,16 +186,17 @@ function updateGameArea() {
         var height = Math.floor(Math.random() * (200 - 20 + 1) + 20);
         var gap = Math.floor(Math.random() * (200 - 50 + 1) + 50);
 
-        myObstacles.push(new gameObject(10, height, "./Images/Barrier.png", x, 0, "image"));
-        myObstacles.push(new gameObject(10, x - height - gap, "./Images/Barrier.png", x, height + gap, "image"));
+        myObstacles.push(new gameObject(20, height, "./Images/Barrier.png", x, 0, "image"));
+        myObstacles.push(new gameObject(20, x - height - gap, "./Images/Barrier.png", x, height + gap, "image"));
     }
 
-    Background.speedX = -4;
+    // Move background and obstacles at the current speed
+    Background.speedX = -speed;
     Background.newPos();
     Background.update();
 
     for (var i = 0; i < myObstacles.length; i++) {
-        myObstacles[i].x += -6;
+        myObstacles[i].x += -speed;  // Apply current speed to obstacles
         myObstacles[i].update();
     }
 
