@@ -16,8 +16,7 @@ canvas {
 </audio>
 
 <audio id="explosionSound">
-    <source src="./audio/explosionSound.mp3" type="audio/">
-    Your browser does not support the audio element.
+    <source src="./audio/explosionSound.mp3" type="audio">
 </audio>
     
 <script>
@@ -33,7 +32,7 @@ var backgroundAudio = document.getElementById("explosionSound");
 function startGame() {
     myGamePiece = new gameObject(700, 320, "./Images/Road.jpg", 0, 0, "background")
     
-    myGamePiece = new gameObject(30, 30, "./Images/Car.png", 10, 120);
+    myGamePiece = new gameObject(30, 30, "./Images/Car.png", 10, 120, "image);
     
     myGamePiece.gravity = 0;
     myScore = new gameObject("30px", "Consolas", "black", 280, 40, "text");
