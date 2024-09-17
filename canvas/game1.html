@@ -167,7 +167,7 @@ function updateGameArea() {
     for (var i = 0; i < myObstacles.length; i++) {
         if (myGamePiece.crashWith(myObstacles[i])) {
             hit_sound.play();
-            var explosion = new gameObject(200, 200, "./Images/explosion.png", myGamePiece.x - 50, myGamePiece.y - 60, "image");
+            var explosion = new gameObject(200, 200, "./Images/Explosion.gif", myGamePiece.x - 50, myGamePiece.y - 60, "image");
             explosion.update();
             setTimeout(function() {
                 myGameArea.stopGame();
