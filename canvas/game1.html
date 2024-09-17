@@ -10,138 +10,113 @@ canvas {
 </style>
 </head>
 <body>
-    
-<audio id="backgroundAudio" loop>
-    <source src="./Audio/drift-action-sport-background-music-loop-157986.mp3" type="audio">
-</audio>
 
-<audio id="explosionSound">
-    <source src="./audio/explosionSound.mp3" type="audio">
-</audio>
-    
 <script>
 
 var myGamePiece;
 var myObstacles = [];
 var myScore;
-var gamePaused = false;
-var explosionTriggered = false;
-var backgroundAudio = document.getElementById("backgroundAudio");
-var backgroundAudio = document.getElementById("explosionSound");
-    
+var Paused = false;
+var PlayingAudio = true;
+
+document.addEventListener("DOMContentLoaded", function() {
+    hit_sound = document.getElementById("hit_audio");
+    Music = document.getElementById("music");
+});
+
 function startGame() {
-    myGamePiece = new gameObject(700, 320, "./Images/Road.jpg", 0, 0, "background")
-    
-    myGamePiece = new gameObject(30, 30, "./Images/Car.png", 10, 120, "image);
-    
-    myGamePiece.gravity = 0;
+    myGamePiece = new gameObject(50, 30, "./Images/Car.png", 20, 150, "image");
     myScore = new gameObject("30px", "Consolas", "black", 280, 40, "text");
 
-    backgroundAudio.play();
+    Background = new gameObject(700, 320, "./Images/Road.jpg", 0, 0, "background");
     myGameArea.start();
+
+    setTimeout(function() {
+        Music.play();
+    }, 600);
 }
 
 var myGameArea = {
-  canvas : document.createElement("canvas"),
-  start : function() {
-    if (this.interval)
-    {
-        clearInterval(this.interval);
-    };
-    this.canvas.width = 480;
-    this.canvas.height = 270;
-    this.context = this.canvas.getContext("2d");
-    console.log(this.canvas);
-    document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-    this.frameNo = 0;
-    this.interval = setInterval(updateGameArea, 20);
-    window.addEventListener('keydown', function (e) {
-      myGameArea.keys = (myGameArea.keys || []);
-      myGameArea.keys[e.keyCode] = true;
-    })
-    window.addEventListener('keyup', function (e) {
-      myGameArea.keys[e.keyCode] = false;
-    })
-  },
-  clear : function(){
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  },
-  stop : function() {
-    clearInterval(this.interval);
-    backgroundAudio.pause();
-  },
-  pause : function() {
-        clearInterval(this.interval);  // Pause the game
-        gamePaused = true;
-        backgroundAudio.pause();  // Pause the background audio
-  },
-  resume : function() {
-        if (gamePaused) {
-            this.interval = setInterval(updateGameArea, 20);  // Resume the game loop
-            gamePaused = false;
-            backgroundAudio.play();  // Resume the background audio
+    canvas: document.createElement("canvas"),
+    start: function() {
+        if (this.interval) {
+            clearInterval(this.interval);
         }
+
+        this.canvas.width = 500;
+        this.canvas.height = 320;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+
+        window.addEventListener("keydown", function(pressed) {
+            myGameArea.key = pressed.keyCode;
+        });
+        window.addEventListener("keyup", function() {
+            myGameArea.key = false;
+        });
+    },
+    stopGame: function() {
+        clearInterval(this.interval);
+        Music.pause();
+    },
+    clear: function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
-}
+};
 
 function gameObject(width, height, color, x, y, type) {
     this.type = type;
-    if (this.type == "image" || this.type == "background")
-    {
+    if (this.type == "image" || this.type == "background") {
         this.image = new Image();
         this.image.src = color;
     }
-    this.score = 0;
     this.width = width;
     this.height = height;
     this.speedX = 0;
-    this.speedY = 0;    
+    this.speedY = 0;
     this.x = x;
     this.y = y;
     this.gravity = 0;
     this.gravitySpeed = 0;
     this.update = function() {
-       this.update = function() {
-        ctx = myGameArea.context;
+        var ctx = myGameArea.context;
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
-
-        
-        } 
-        else if (this.type == "image"|| this.type == "background")
-        {
+        } else if (this.type == "image" || this.type == "background") {
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
-            if (this.type == "background")
-            {
+            if (this.type == "background") {
                 ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
             }
-        }
-        else 
-        {
+        } else {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
-    }
+    };
+
     this.newPos = function() {
         if (this.type == "background") {
             if (this.x <= -this.width) {
-                this.x = 0; 
-            }}
+                this.x = 0;
+            }
+        }
         this.x += this.speedX;
-        this.y += this.speedY //+ this.gravitySpeed;
+        this.y += this.speedY;
         this.hitBottom();
-    }
+    };
+
     this.hitBottom = function() {
         var rockbottom = myGameArea.canvas.height - this.height;
         if (this.y > rockbottom) {
             this.y = rockbottom;
             this.gravitySpeed = 0;
         }
-    }
+    };
+
     this.crashWith = function(otherobj) {
-        var crash = false
         var myleft = this.x;
         var myright = this.x + (this.width);
         var mytop = this.y;
@@ -150,37 +125,19 @@ function gameObject(width, height, color, x, y, type) {
         var otherright = otherobj.x + (otherobj.width);
         var othertop = otherobj.y;
         var otherbottom = otherobj.y + (otherobj.height);
-        var crash = true;
-        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
-            crash = false;
-        }
-        return crash;
-    }
+        return (mybottom >= othertop && mytop <= otherbottom && myright >= otherleft && myleft <= otherright);
+    };
 }
 
 function updateGameArea() {
-    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
-    if (!explosionTriggered) {
-        for (let i = 0; i < myObstacles.length; i += 1) {
-            if (myGamePiece.crashWith(myObstacles[i])) {
-                explosion();
-                return;
-            } 
-        }
-    }
-    
-    myGameArea.clear();
+    if (Paused) return;
 
-    if (myGameArea.keys == false)
-    {
-        myGamePiece.speedX=0;
-        myGamePiece.speedY=0;
+    if (!myGameArea.key) {
+        myGamePiece.speedX = 0;
+        myGamePiece.speedY = 0;
         myGamePiece.image.src = "./Images/Car.png";
-    }
-    else
-    {
-        switch (myGameArea.keys)
-        {
+    } else {
+        switch (myGameArea.key) {
             case 37:
                 myGamePiece.speedX = -4;
                 break;
@@ -196,61 +153,93 @@ function updateGameArea() {
                 break;
         }
     }
-    
-    myGameArea.frameNo += 1;
-    if (myGameArea.frameNo == 1 || everyinterval(150)) {
-        x = myGameArea.canvas.width;
-        minHeight = 20;
-        maxHeight = 200;
-        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
-        minGap = 50;
-        maxGap = 200;
-        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        myObstacles.push(new gameObject(50, height, "./Images/Barrier.png", x, 0, "image"));
-        myObstacles.push(new gameObject(50, x - height - gap, "./Images/Barrier.png", x, height + gap, "image"));
+
+    for (var i = 0; i < myObstacles.length; i++) {
+        if (myGamePiece.crashWith(myObstacles[i])) {
+            hit_sound.play();
+            var explosion = new gameObject(200, 200, "./Images/explosion.png", myGamePiece.x - 50, myGamePiece.y - 60, "image");
+            explosion.update();
+            setTimeout(function() {
+                myGameArea.stopGame();
+            }, 200);
+            document.getElementById("Pause_Button").style.display = "none";
+            document.getElementById("Restart_Button").style.display = "block";
+            return;
+        }
     }
-    for (i = 0; i < myObstacles.length; i += 1) {
-        myObstacles[i].x += -1;
+
+    myGameArea.clear();
+    myGameArea.frameNo++;
+
+    if (myGameArea.frameNo == 1 || everyinterval(50)) {
+        var x = myGameArea.canvas.width;
+        var height = Math.floor(Math.random() * (200 - 20 + 1) + 20);
+        var gap = Math.floor(Math.random() * (200 - 50 + 1) + 50);
+
+        myObstacles.push(new gameObject(10, height, "./Images/Barrier.png", x, 0, "image"));
+        myObstacles.push(new gameObject(10, x - height - gap, "./Images/Barrier.png", x, height + gap, "image"));
+    }
+
+    Background.speedX = -4;
+    Background.newPos();
+    Background.update();
+
+    for (var i = 0; i < myObstacles.length; i++) {
+        myObstacles[i].x += -6;
         myObstacles[i].update();
     }
-    myScore.text="SCORE: " + myGameArea.frameNo;
+
+    myScore.text = "SCORE: " + myGameArea.frameNo;
     myScore.update();
-    myBackground.newPos();
-    myBackground.update();
     myGamePiece.newPos();
     myGamePiece.update();
 }
 
 function everyinterval(n) {
-    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
-    return false;
+    return (myGameArea.frameNo / n) % 1 == 0;
 }
 
-function explosion() {
-    myGamePiece.image.src = "./Images/Explosion.png";  // Change car image to explosion
-    explosionSound.play();  // Play explosion sound
-    explosionTriggered = true;
-    myGameArea.stop();  // Stop the game loop
+function click_start() {
+    startGame();
+    document.getElementById("Start_Button").style.display = "none";
+    document.getElementById("Pause_Button").style.display = "block";
 }
 
-function clickToStart() {
+function Pause() {
+    Paused = !Paused;
+}
+
+function Restart() {
+    myObstacles = [];
+    myScore.text = "SCORE: 0";
+    myGameArea.frameNo = 0;
+    Paused = false;
+
+    myGameArea.clear();
+    document.getElementById("Pause_Button").style.display = "block";
+    document.getElementById("Restart_Button").style.display = "none";
+    Music.currentTime = 0;
     startGame();
 }
 
-function pauseGame() {
-    myGameArea.pause();
+function PlayingToggle() {
+    PlayingAudio ? Music.pause() : Music.play();
+    Music.onplaying = function() {
+        PlayingAudio = true;
+    };
+    Music.onpause = function() {
+        PlayingAudio = false;
+    };
 }
-
-function resumeGame() {
-    myGameArea.resume();
-}
-    
 </script>
-
-<button onclick="clickToStart()" id="Start_Button">Start Game</button>
-<button onclick="pauseGame()" id="Pause_Button>Pause</button>
-<button onclick="resumeGame()" id="Resume_Button">Resume</button>
 <br>
+
+<button onclick="click_start()" id="Start_Button">Start Game</button>
+<button onclick="Pause(); PlayingToggle()" id="Pause_Button">Pause Game/Resume Game</button>
+<button onclick="Restart()" id ="Restart_Button">Restart Game</button>
+<audio id="hit_audio" src="./game1assets/explosionSound.mp3" ></audio>
+<audio id="music" src="./game1assets/drift-action-sport-background-music-loop-157986.mp3" loop></audio>
+    
 <p>Use your arrow keys to maneuver your car</p>
 <p>How long can you stay alive?</p>
 </body>
