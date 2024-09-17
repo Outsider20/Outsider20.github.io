@@ -31,6 +31,8 @@ var backgroundAudio = document.getElementById("backgroundAudio");
 var backgroundAudio = document.getElementById("explosionSound");
     
 function startGame() {
+    myGamePiece = new gameObject(700, 320, "./Images/Road.jpg", 0, 0, "background")
+    
     myGamePiece = new gameObject(30, 30, "./Images/Car.png", 10, 120);
     
     myGamePiece.gravity = 0;
@@ -100,26 +102,36 @@ function gameObject(width, height, color, x, y, type) {
     this.gravity = 0;
     this.gravitySpeed = 0;
     this.update = function() {
+       this.update = function() {
         ctx = myGameArea.context;
-        if (type == "image") {
-      ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
-    } else {
-      ctx.fillStyle = color;
-      ctx.fillRect(this.x, this.y, this.width, this.height);
-    }
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
-        } else {
+
+        
+        } 
+        else if (this.type == "image"|| this.type == "background")
+        {
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            if (this.type == "background")
+            {
+                ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
+            }
+        }
+        else 
+        {
             ctx.fillStyle = color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
     }
     this.newPos = function() {
-        this.gravitySpeed += this.gravity;
+        if (this.type == "background") {
+            if (this.x <= -this.width) {
+                this.x = 0; 
+            }}
         this.x += this.speedX;
-        this.y += this.speedY + this.gravitySpeed;
+        this.y += this.speedY //+ this.gravitySpeed;
         this.hitBottom();
     }
     this.hitBottom = function() {
@@ -130,6 +142,7 @@ function gameObject(width, height, color, x, y, type) {
         }
     }
     this.crashWith = function(otherobj) {
+        var crash = false
         var myleft = this.x;
         var myright = this.x + (this.width);
         var mytop = this.y;
@@ -177,7 +190,7 @@ function updateGameArea() {
                 break;
             case 39:
                 myGamePiece.speedX = 4;
-                myGamePiece.image.src = "./game1assets/helicopter.png";
+                myGamePiece.image.src = "./Images/Car.png";
                 break;
             case 40:
                 myGamePiece.speedY = 4;
