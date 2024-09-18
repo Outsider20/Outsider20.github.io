@@ -20,7 +20,8 @@
 
   <h2>CSS:</h2>
     <p>The canvas is styled with a border and background color to distinguish the game area from the rest of the page.</p>
-
+  <img src="CSS.png"> </img>
+  
   <h1>Game Mechanics (JavaScript):</h1>
     <h2>Game Objects:</h2>
       <p>myGamePiece: Represents the player's car, an image rendered on the canvas.</p>
@@ -30,29 +31,41 @@
 
     <h2>Game Initialization:</h2>
       <p>startGame() initializes the game objects and starts the background music after a delay. It sets the initial state of the player’s car, score display, and background.</p>
-    
+    <img src="Initialization.png"> </img>
+  
     <h2>Game Loop:</h2>
       <h3>The game runs in intervals (setInterval(updateGameArea, 20)), which updates the canvas every 20 milliseconds (~50 frames per second).</h3>
       <h3>The updateGameArea() function handles:</h3>
         <p>Player Input (arrow keys): Updates the position of the player’s car.</p>
+      <img src="Playerinput.png"> </img>
         <p>Obstacle Creation: Random obstacles are generated at regular intervals with varying sizes and gaps.</p>
+      <img src="Obstaclecreation.png"> </img>
         <p>Collision Detection: If the player's car crashes into an obstacle, the game plays a crash sound and triggers an explosion animation, ending the game.</p>
+      <img src="Obstacaldetection.png"> </img>
         <p>Score Update: The score increases as the player survives longer.</p>
+      <img src="Scoreupdate.png"> </img>'
+      <img src="Scoreupdate2.png"> </img>
         <p>Dynamic Difficulty: Every 500 frames, the speed and the gap between obstacles increase to make the game progressively harder.</p>
-    
+      <img src="Difficulty.png"> </img>
+  
     <h2>Game Control Functions:</h2>
       <p>Pause(): Toggles between pausing and resuming the game.</p>
       <p>Restart(): Resets the game state to allow the player to start a new game after crashing.</p>
       <p>PlayingToggle(): Manages the background music, toggling between playing and pausing.</p>
+        <img src="Gamecontrols.png"> </img>
+
 
     <h2>Collision and Explosion Animation:</h2>
       <p>Collision detection is implemented via the crashWith() function, checking for overlap between the player’s car and obstacles.</p>
       <p>If a crash occurs, the explosion is animated using the animateExplosion() method, which progressively increases the explosion image size.</p>
+      <img src="Crashanimation.png"> </img>
 
     <h2>Audio:</h2>
       <p>There are two audio elements:</p>
       <p>hit_sound for the crash sound effect.</p>
       <p>Music for the looping background music.</p>
+        <img src="Audio.png"> </img>
+
     
 <h1>Summary of What You Did:</h1>
 <p>I created a basic yet engaging 2D car game using HTML5 canvas and JavaScript. The user controls the car using arrow keys to avoid obstacles that move toward the car, simulating forward motion. You implemented several game features such as:</p>
