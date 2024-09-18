@@ -1,124 +1,123 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<style>
-canvas {
-    border:1px solid #d3d3d3;
-    background-color: #f1f1f1;
-}
-</style>
-</head>
-<body>
+// Global variables used throughout the game
+var myGamePiece;         // The player's game piece (car)
+var myObstacles = [];    // Array to store obstacle objects
+var myScore;             // Object to display the score
+var pause = false;       // Toggle for pausing the game
+var audioPlay = true;    // Toggle for game background music
+var speed = 4;           // Initial speed of the background and obstacles
+var minGap = 50;         // Minimum gap between obstacles
+var maxGap = 200;        // Maximum gap between obstacles
 
-<script>
-
-var myGamePiece;
-var myObstacles = [];
-var myScore;
-var pause = false;
-var audioPlay = true;
-var speed = 4;            // Start speed for the background and obstacles
-var minGap = 50;          // Minimum gap between obstacles
-var maxGap = 200;         // Maximum gap between obstacles
-
+// Event listener to initialize sounds after DOM content is fully loaded
 document.addEventListener("DOMContentLoaded", function() {
-    hit_sound = document.getElementById("hit_audio");
-    Music = document.getElementById("music");
+    hit_sound = document.getElementById("hit_audio");   // Sound when collision occurs
+    Music = document.getElementById("music");           // Background music
 });
 
+// Function to start the game, initializes the game objects and starts the game loop
 function startGame() {
-    myGamePiece = new gameObject(40, 20, "./Images/Car.png", 20, 150, "image");
-    myScore = new gameObject("30px", "Consolas", "white", 280, 40, "text");
+    myGamePiece = new gameObject(40, 20, "./Images/Car.png", 20, 150, "image");   // Player's car
+    myScore = new gameObject("30px", "Consolas", "white", 280, 40, "text");       // Score display
 
+    // Background image for the game
     Background = new gameObject(700, 320, "./Images/Road.jpg", 0, 0, "background");
-    myGameArea.start();
+    myGameArea.start();  // Starts the game area, including the game loop
 
+    // Play background music after a 600ms delay
     setTimeout(function() {
         Music.play();
     }, 600);
 }
 
+// Object representing the game area, including the canvas and game loop
 var myGameArea = {
-    canvas: document.createElement("canvas"),
+    canvas: document.createElement("canvas"),  // Creates the game canvas
     start: function() {
         if (this.interval) {
-            clearInterval(this.interval);
+            clearInterval(this.interval);  // Clears any existing game loop
         }
 
+        // Set canvas dimensions
         this.canvas.width = 500;
         this.canvas.height = 320;
-        this.context = this.canvas.getContext("2d");
-        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-        this.frameNo = 0;
-        this.interval = setInterval(updateGameArea, 20);
+        this.context = this.canvas.getContext("2d");  // Get the 2D context for drawing
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);  // Inserts canvas at top of the body
+        this.frameNo = 0;  // Keeps track of the number of game frames
+        this.interval = setInterval(updateGameArea, 20);  // Starts the game loop, updating every 20ms
 
+        // Event listeners for detecting key presses (for controlling the car)
         window.addEventListener("keydown", function(pressed) {
-            myGameArea.key = pressed.keyCode;
+            myGameArea.key = pressed.keyCode;  // Store the key code when pressed
         });
         window.addEventListener("keyup", function() {
-            myGameArea.key = false;
+            myGameArea.key = false;  // Reset the key when released
         });
     },
     stopGame: function() {
-        clearInterval(this.interval);
-        Music.pause();
+        clearInterval(this.interval);  // Stops the game loop
+        Music.pause();                 // Pauses the background music
     },
     clear: function() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);  // Clears the canvas
     }
 };
 
+// Constructor for creating game objects like the player, obstacles, and background
 function gameObject(width, height, color, x, y, type) {
-    this.type = type;
+    this.type = type;  // Determines if the object is an image, background, text, etc.
     if (this.type == "image" || this.type == "background") {
-        this.image = new Image();
+        this.image = new Image();  // Load the image if it's an image or background
         this.image.src = color;
     }
     this.width = width;
     this.height = height;
-    this.speedX = 0;
-    this.speedY = 0;
-    this.x = x;
-    this.y = y;
-    this.gravity = 0;
-    this.gravitySpeed = 0;
+    this.speedX = 0;  // Horizontal speed
+    this.speedY = 0;  // Vertical speed
+    this.x = x;       // X position
+    this.y = y;       // Y position
+    this.gravity = 0; // Gravity (unused here)
+    this.gravitySpeed = 0;  // Speed due to gravity (unused)
+
+    // Method to update the object's appearance on the canvas
     this.update = function() {
         var ctx = myGameArea.context;
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
-            ctx.fillText(this.text, this.x, this.y);
+            ctx.fillText(this.text, this.x, this.y);  // Draw text
         } else if (this.type == "image" || this.type == "background") {
-            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);  // Draw image
             if (this.type == "background") {
-                ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
+                ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);  // Loop background image
             }
         } else {
-            ctx.fillStyle = color;
+            ctx.fillStyle = color;  // Draw rectangle (if it's neither an image nor text)
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
     };
 
+    // Method to update the object's position
     this.newPos = function() {
         if (this.type == "background") {
             if (this.x <= -this.width) {
-                this.x = 0;
+                this.x = 0;  // Reset background position to create an infinite scrolling effect
             }
         }
         this.x += this.speedX;
         this.y += this.speedY;
-        this.hitBottom();
+        this.hitBottom();  // Prevent the object from going off the bottom of the canvas
     };
 
+    // Ensure that the object doesn't fall through the bottom of the canvas
     this.hitBottom = function() {
         var rockbottom = myGameArea.canvas.height - this.height;
         if (this.y > rockbottom) {
-            this.y = rockbottom;
+            this.y = rockbottom;  // Lock the object at the bottom of the canvas
             this.gravitySpeed = 0;
         }
     };
 
+    // Detects collision between the player and obstacles
     this.crashWith = function(otherobj) {
         var myleft = this.x;
         var myright = this.x + (this.width);
@@ -128,146 +127,165 @@ function gameObject(width, height, color, x, y, type) {
         var otherright = otherobj.x + (otherobj.width);
         var othertop = otherobj.y;
         var otherbottom = otherobj.y + (otherobj.height);
-        return (mybottom >= othertop && mytop <= otherbottom && myright >= otherleft && myleft <= otherright);
+        return (mybottom >= othertop && mytop <= otherbottom && myright >= otherleft && myleft <= otherright);  // Return true if a collision occurs
     };
 
+    // Animate an explosion when the player crashes
     this.animateExplosion = function() {
-        // Increase the size of the explosion
-        this.width += 20;   // Increase width faster for more dramatic effect
-        this.height += 20;  // Increase height
-
-        // Adjust the x and y position so that the explosion stays centered
-        this.x -= 10; 
+        this.width += 20;   // Increase explosion size (width)
+        this.height += 20;  // Increase explosion size (height)
+        this.x -= 10;       // Adjust position to keep explosion centered
         this.y -= 10;
     };
 }
 
+// Function to update the game area (called in the game loop)
 function updateGameArea() {
-    if (pause) return;
+    if (pause) return;  // If game is paused, don't update
 
-     // Every 500 points, increase speed by 0.2 and the gap by 10 pixels
+    // Increase speed and obstacle gap every 500 frames
     if (myGameArea.frameNo > 0 && myGameArea.frameNo % 500 === 0) {
-        speed += 0.1;       // Increase speed
-        minGap += 10;       // Increase minimum gap between obstacles
-        maxGap += 10;       // Increase maximum gap between obstacles
+        speed += 0.1;   // Increase speed
+        minGap += 10;   // Increase minimum gap between obstacles
+        maxGap += 10;   // Increase maximum gap
     }
-    
+
+    // Reset player movement when no keys are pressed
     if (!myGameArea.key) {
         myGamePiece.speedX = 0;
         myGamePiece.speedY = 0;
-        myGamePiece.image.src = "./Images/Car.png";
+        myGamePiece.image.src = "./Images/Car.png";  // Reset car image
     } else {
+        // Handle key presses for movement
         switch (myGameArea.key) {
-            case 37:
+            case 37:  // Left arrow key
                 myGamePiece.speedX = -3;
                 break;
-            case 38:
+            case 38:  // Up arrow key
                 myGamePiece.speedY = -3;
                 break;
-            case 39:
+            case 39:  // Right arrow key
                 myGamePiece.speedX = 3;
-                myGamePiece.image.src = "./Images/Car.png";
                 break;
-            case 40:
+            case 40:  // Down arrow key
                 myGamePiece.speedY = 3;
                 break;
         }
     }
 
+    // Check for collisions between the player and obstacles
     for (var i = 0; i < myObstacles.length; i++) {
         if (myGamePiece.crashWith(myObstacles[i])) {
-            hit_sound.play();
+            hit_sound.play();  // Play collision sound
+
+            // Create and animate an explosion
             var explosion = new gameObject(200, 200, "./Images/Explosion.png", myGamePiece.x - 50, myGamePiece.y - 60, "image");
             explosion.update();
-        let explosionInterval = setInterval(function() {
-        explosion.animateExplosion();
-        explosion.update();
-        
-        if (explosion.width >= 300) {
-            clearInterval(explosionInterval);
-            myGameArea.stopGame();  
-        }
-    }, 100); // Change size every 100ms
+            let explosionInterval = setInterval(function() {
+                explosion.animateExplosion();
+                explosion.update();
 
+                if (explosion.width >= 300) {  // End explosion when it reaches a certain size
+                    clearInterval(explosionInterval);
+                    myGameArea.stopGame();  // Stop the game on crash
+                }
+            }, 100);  // Explosion grows every 100ms
+
+            // Hide pause button and show restart button
             document.getElementById("Pause_Button").style.display = "none";
             document.getElementById("Restart_Button").style.display = "block";
             return;
         }
     }
 
-    myGameArea.clear();
-    myGameArea.frameNo++;
+    myGameArea.clear();  // Clear the game area for the next frame
+    myGameArea.frameNo++;  // Increment the frame number (score)
 
+    // Create new obstacles at regular intervals
     if (myGameArea.frameNo == 1 || everyinterval(50)) {
         var x = myGameArea.canvas.width;
-        var height = Math.floor(Math.random() * (200 - 20 + 1) + 20);
-        var gap = Math.floor(Math.random() * (200 - 50 + 1) + 50);
+        var height = Math.floor(Math.random() * (200 - 20 + 1) + 20);  // Random obstacle height
+        var gap = Math.floor(Math.random() * (200 - 50 + 1) + 50);     // Random gap between obstacles
 
+        // Create upper and lower obstacles
         myObstacles.push(new gameObject(20, height, "./Images/Barrier.png", x, 0, "image"));
         myObstacles.push(new gameObject(20, x - height - gap, "./Images/Barrier.png", x, height + gap, "image"));
     }
 
-    // Move background and obstacles at the current speed
-    Background.speedX = -speed;
+    // Update the background and obstacles
+    Background.speedX = -speed;  // Move the background at the current speed
     Background.newPos();
     Background.update();
 
+    // Update the position and appearance of each obstacle
     for (var i = 0; i < myObstacles.length; i++) {
-        myObstacles[i].x += -speed;  // Apply current speed to obstacles
-        myObstacles[i].update();
+        myObstacles[i].x += -speed;  // Move obstacles to the left
+        myObstacles[i].update();     // Redraw obstacles
     }
 
+    // Update the score display
     myScore.text = "SCORE: " + myGameArea.frameNo;
     myScore.update();
+
+    // Update the player piece
     myGamePiece.newPos();
     myGamePiece.update();
 }
 
+// Function to check if an event occurs at regular intervals
 function everyinterval(n) {
     return (myGameArea.frameNo / n) % 1 == 0;
 }
 
+// Function to start the game when the start button is clicked
 function click_start() {
     startGame();
-    document.getElementById("Start_Button").style.display = "none";
-    document.getElementById("Pause_Button").style.display = "block";
+    document.getElementById("Start_Button").style.display = "none";  // Hide start button
+    document.getElementById("Pause_Button").style.display = "block"; // Show pause button
 }
 
+// Function to toggle pause/resume game
 function Pause() {
     pause = !pause;
 }
 
+// Function to restart the game
 function Restart() {
-    myObstacles = [];
-    myScore.text = "SCORE: 0";
-    myGameArea.frameNo = 0;
+    myObstacles = [];              // Reset obstacles
+    myScore.text = "SCORE: 0";     // Reset score
+    myGameArea.frameNo = 0;        // Reset frame number
     pause = false;
 
-    myGameArea.clear();
-    document.getElementById("Pause_Button").style.display = "block";
-    document.getElementById("Restart_Button").style.display = "none";
-    Music.currentTime = 0;
-    startGame();
+    myGameArea.clear();  // Clear the canvas
+    document.getElementById("Pause_Button").style.display = "block";  // Show pause button
+    document.getElementById("Restart_Button").style.display = "none"; // Hide restart button
+    Music.currentTime = 0;  // Reset music to the beginning
+    startGame();  // Start the game again
 }
 
+// Function to toggle background music on and off
 function PlayingToggle() {
-    audioPlay ? Music.pause() : Music.play();
+    audioPlay ? Music.pause() : Music.play();  // Play or pause music
     Music.onplaying = function() {
-        audioPlay = true;
+        audioPlay = true;  // Set audioPlay to true when music is playing
     };
     Music.onpause = function() {
-        audioPlay = false;
+        audioPlay = false;  // Set audioPlay to false when music is paused
     };
 }
 </script>
 <br>
 
+<!-- HTML buttons for controlling the game -->
 <button onclick="click_start()" id="Start_Button">Start Game</button>
 <button onclick="Pause(); PlayingToggle()" id="Pause_Button">Pause Game/Resume Game</button>
 <button onclick="Restart()" id ="Restart_Button">Restart Game</button>
+
+<!-- Audio elements for hit sound and background music -->
 <audio id="hit_audio" src="./Audio/explosionSound.mp3" ></audio>
 <audio id="music" src="./Audio/drift-action-sport-background-music-loop-157986.mp3" loop></audio>
-    
+
+<!-- Instructions for the player -->
 <p>Use your arrow keys to maneuver your car</p>
 <p>How long can you stay alive?</p>
 </body>
