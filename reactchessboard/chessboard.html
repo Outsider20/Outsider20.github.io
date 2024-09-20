@@ -6,9 +6,6 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>React Chessboard</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js" crossorigin></script>
   <style>
     .chessboard {
       display: grid;
@@ -40,10 +37,32 @@
 
   <script type="text/babel" data-presets="react,stage-3">
 
+    const pieces = {
+      'rook': ['♖', '♜'],
+      'knight': ['♘', '♞'],
+      'bishop': ['♗', '♝'],
+      'queen': ['♕', '♛'],
+      'king': ['♔', '♚'],
+      'pawn': ['♙', '♟']
+    };
+
+    // Define the initial board setup
+    const initialBoard = [
+      ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'],
+      ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn'],
+      [],
+      [],
+      [],
+      [],
+      ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn'],
+      ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook']
+    ];
+
     // Create a square component
     function Square({ isLight }) {
       const squareClass = isLight ? 'square light' : 'square dark';
-      return React.createElement('div', { className: squareClass });
+      const pieceSymbol = piece ? pieces[piece][isWhite ? 0 : 1] : ''; // Pick white or black piece
+      return React.createElement('div', { className: squareClass }, pieceSymbol);
     }
 
     // Create a chessboard component using a double for loop
@@ -55,6 +74,8 @@
         for (let col = 0; col < 8; col++) {
           // Light squares on even rows have even columns, dark squares on odd
           const isLight = (row + col) % 2 === 0;
+          const piece = initialBoard[row][col]; // Get the piece type
+          const isWhite = row < 2; // White pieces in the first two rows
           squares.push(React.createElement(Square, { key: row * 8 + col, isLight }));
         }
       }
