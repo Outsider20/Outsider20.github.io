@@ -125,7 +125,8 @@
                                 originY: 'center',
                                 hasControls: false,
                                 selectable: true,
-                                pieceColor: piece === piece.toUpperCase() ? 'white' : 'black'
+                                pieceColor: piece === piece.toUpperCase() ? 'white' : 'black',
+                                pieceType: piece.toLowerCase() // Store piece type
                             });
                             
                             // Mouse event handlers
@@ -163,6 +164,31 @@
             historyDiv.innerHTML = history.join('<br/>');
         }
 
+        // Function to validate a move based on piece type
+        function isValidMove(pieceType, from, to) {
+            const fromCoords = positionToCoords(from);
+            const toCoords = positionToCoords(to);
+            const dx = Math.abs(toCoords.x - fromCoords.x) / squareSize;
+            const dy = Math.abs(toCoords.y - fromCoords.y) / squareSize;
+
+            switch (pieceType) {
+                case 'p': // Pawn
+                    return dx === 0 && dy === 1;
+                case 'r': // Rook
+                    return dx === 0 || dy === 0;
+                case 'n': // Knight
+                    return (dx === 2 && dy === 1) || (dx === 1 && dy === 2);
+                case 'b': // Bishop
+                    return dx === dy;
+                case 'q': // Queen
+                    return dx === dy || dx === 0 || dy === 0;
+                case 'k': // King
+                    return dx <= 1 && dy <= 1;
+                default:
+                    return false;
+            }
+        }
+
         function movePiece(from, to) {
             const piece = canvas.getActiveObject();
             if (!piece) return;
@@ -170,16 +196,21 @@
             const fromCoords = positionToCoords(from);
             const toCoords = positionToCoords(to);
 
-            if (piece && piece.left === fromCoords.x && piece.top === fromCoords.y) {
-                piece.set({
-                    left: toCoords.x,
-                    top: toCoords.y,
-                });
-                piece.setCoords();
-                canvas.renderAll();
-                updateHistory(`${piece.pieceColor} moves from ${from} to ${to}`);
-                turn = turn === 'white' ? 'black' : 'white'; // Switch turns
-                startTimer(); // Restart timer for the next player
+            // Check if the move is valid
+            if (isValidMove(piece.pieceType, from, to)) {
+                if (piece.left === fromCoords.x && piece.top === fromCoords.y) {
+                    piece.set({
+                        left: toCoords.x,
+                        top: toCoords.y,
+                    });
+                    piece.setCoords();
+                    canvas.renderAll();
+                    updateHistory(`${piece.pieceColor} moves from ${from} to ${to}`);
+                    turn = turn === 'white' ? 'black' : 'white'; // Switch turns
+                    startTimer(); // Restart timer for the next player
+                }
+            } else {
+                alert("Invalid move for this piece!");
             }
         }
 
