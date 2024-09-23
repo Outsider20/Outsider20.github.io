@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fabric.js Chessboard with Enhanced Features</title>
+    <title>Fabric.js Chessboard with Full Chess Rules</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         canvas {
@@ -39,6 +39,7 @@
         let whiteTime = 300; // 5 minutes
         let blackTime = 300; // 5 minutes
         let timerInterval;
+        let boardState = Array(8).fill().map(() => Array(8).fill('.')); // 8x8 board
 
         // Initialize the timers
         function startTimer() {
@@ -125,8 +126,9 @@
                                 originY: 'center',
                                 hasControls: false,
                                 selectable: true,
+                                pieceType: piece.toLowerCase(),
                                 pieceColor: piece === piece.toUpperCase() ? 'white' : 'black',
-                                pieceType: piece.toLowerCase() // Store piece type
+                                hasMoved: false
                             });
                             
                             // Mouse event handlers
@@ -141,8 +143,12 @@
                                 const activeObject = canvas.getActiveObject();
                                 if (activeObject === this) {
                                     const fromPosition = coordsToPosition(this.left, this.top);
-                                    console.log(`Move from: ${fromPosition}`);
-                                    alert(`Select destination square for ${piece} (current position: ${fromPosition})`);
+                                    const to = prompt(`Move ${piece} from ${fromPosition}:`);
+                                    if (to && isValidMove(this, fromPosition, to, boardState)) {
+                                        movePiece(fromPosition, to);
+                                    } else {
+                                        alert("Invalid move!");
+                                    }
                                 }
                             });
                             canvas.add(svgPiece);
@@ -164,31 +170,6 @@
             historyDiv.innerHTML = history.join('<br/>');
         }
 
-        // Function to validate a move based on piece type
-        function isValidMove(pieceType, from, to) {
-            const fromCoords = positionToCoords(from);
-            const toCoords = positionToCoords(to);
-            const dx = Math.abs(toCoords.x - fromCoords.x) / squareSize;
-            const dy = Math.abs(toCoords.y - fromCoords.y) / squareSize;
-
-            switch (pieceType) {
-                case 'p': // Pawn
-                    return dx === 0 && dy === 1;
-                case 'r': // Rook
-                    return dx === 0 || dy === 0;
-                case 'n': // Knight
-                    return (dx === 2 && dy === 1) || (dx === 1 && dy === 2);
-                case 'b': // Bishop
-                    return dx === dy;
-                case 'q': // Queen
-                    return dx === dy || dx === 0 || dy === 0;
-                case 'k': // King
-                    return dx <= 1 && dy <= 1;
-                default:
-                    return false;
-            }
-        }
-
         function movePiece(from, to) {
             const piece = canvas.getActiveObject();
             if (!piece) return;
@@ -196,41 +177,117 @@
             const fromCoords = positionToCoords(from);
             const toCoords = positionToCoords(to);
 
-            // Check if the move is valid
-            if (isValidMove(piece.pieceType, from, to)) {
-                if (piece.left === fromCoords.x && piece.top === fromCoords.y) {
-                    piece.set({
-                        left: toCoords.x,
-                        top: toCoords.y,
-                    });
-                    piece.setCoords();
-                    canvas.renderAll();
-                    updateHistory(`${piece.pieceColor} moves from ${from} to ${to}`);
-                    turn = turn === 'white' ? 'black' : 'white'; // Switch turns
-                    startTimer(); // Restart timer for the next player
-                }
-            } else {
-                alert("Invalid move for this piece!");
+            if (piece && piece.left === fromCoords.x && piece.top === fromCoords.y) {
+                piece.set({
+                    left: toCoords.x,
+                    top: toCoords.y,
+                });
+                piece.setCoords();
+                piece.hasMoved = true;
+                canvas.renderAll();
+                updateHistory(`${piece.pieceColor} moves from ${from} to ${to}`);
+                turn = turn === 'white' ? 'black' : 'white'; // Switch turns
+                startTimer(); // Restart timer for the next player
             }
+        }
+
+        function isValidMove(piece, from, to, boardState) {
+            const fromCoords = positionToCoords(from);
+            const toCoords = positionToCoords(to);
+            const dx = Math.abs(toCoords.x - fromCoords.x) / squareSize;
+            const dy = Math.abs(toCoords.y - fromCoords.y) / squareSize;
+
+            switch (piece.pieceType) {
+                case 'p':
+                    return isValidPawnMove(piece, from, to, boardState);
+                case 'r':
+                    return dx === 0 || dy === 0 && isPathClear(from, to, boardState);
+                case 'n':
+                    return (dx === 2 && dy === 1) || (dx === 1 && dy === 2);
+                case 'b':
+                    return dx === dy && isPathClear(from, to, boardState);
+                case 'q':
+                    return (dx === 0 || dy === 0 || dx === dy) && isPathClear(from, to, boardState);
+                case 'k':
+                    return (dx <= 1 && dy <= 1) && isKingMoveValid(piece, from, to, boardState);
+                default:
+                    return false;
+            }
+        }
+
+        function isValidPawnMove(piece, from, to, boardState) {
+            const fromCoords = positionToCoords(from);
+            const toCoords = positionToCoords(to);
+            const dx = toCoords.x - fromCoords.x;
+            const dy = toCoords.y - fromCoords.y;
+            const direction = piece.pieceColor === 'white' ? -1 : 1;
+            const initialRow = piece.pieceColor === 'white' ? 6 : 1;
+
+            if (dx === 0) {
+                if (dy === direction * squareSize && boardState[to[1]][to[0]] === '.') {
+                    return true; // Single square move
+                } else if (dy === 2 * direction * squareSize && from[1] === initialRow && boardState[to[1]][to[0]] === '.') {
+                    return true; // Two-square move on the first move
+                }
+            } else if (Math.abs(dx) === squareSize && dy === direction * squareSize) {
+                if (boardState[to[1]][to[0]].pieceColor !== piece.pieceColor) {
+                    return true; // Capture move
+                }
+            }
+            return false;
         }
 
         function positionToCoords(position) {
             const col = position.charCodeAt(0) - 'a'.charCodeAt(0);
-            const row = 8 - parseInt(position[1]);
-            return {
-                x: col * squareSize + squareSize / 2,
-                y: row * squareSize + squareSize / 2
-            };
+            const row = 8 - parseInt(position[1], 10);
+            return { x: col * squareSize, y: row * squareSize };
         }
 
-        window.addEventListener('keydown', function(event) {
-            if (event.key.match(/[a-h][1-8]/)) { // Check for valid square
-                const from = prompt("Enter the piece's current position (e.g., e2):");
-                if (from) {
-                    movePiece(from, event.key); // Move to the square indicated by the key
+        function isPathClear(from, to, boardState) {
+            const fromCoords = positionToCoords(from);
+            const toCoords = positionToCoords(to);
+            const dx = toCoords.x - fromCoords.x;
+            const dy = toCoords.y - fromCoords.y;
+            const steps = Math.max(Math.abs(dx), Math.abs(dy)) / squareSize;
+            const stepX = dx / steps;
+            const stepY = dy / steps;
+
+            for (let step = 1; step < steps; step++) {
+                const intermediateX = fromCoords.x + step * stepX;
+                const intermediateY = fromCoords.y + step * stepY;
+                if (boardState[intermediateY / squareSize][intermediateX / squareSize] !== '.') {
+                    return false; // Path is blocked
                 }
             }
-        });
+            return true; // Path is clear
+        }
+
+        function isKingMoveValid(king, from, to, boardState) {
+            const newBoardState = simulateMove(king, from, to, boardState);
+            return !isKingInCheck(king, newBoardState);
+        }
+
+        function isKingInCheck(king, boardState) {
+            const kingCoords = positionToCoords(king);
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = boardState[row][col];
+                    if (piece && piece.pieceColor !== king.pieceColor) {
+                        if (isValidMove(piece, coordsToPosition(row, col), kingCoords, boardState)) {
+                            return true; // King is in check
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function simulateMove(piece, from, to, boardState) {
+            const newBoardState = JSON.parse(JSON.stringify(boardState));
+            newBoardState[to[1]][to[0]] = piece;
+            newBoardState[from[1]][from[0]] = '.';
+            return newBoardState;
+        }
 
         createChessboard();
         addPieces();
