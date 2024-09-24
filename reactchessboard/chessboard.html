@@ -40,6 +40,7 @@
         let blackTime = 30; 
         let timerInterval;
         let boardState = Array(8).fill().map(() => Array(8).fill('.')); // 8x8 board
+        let selectedPiece = null;
 
         // Initialize the timers
         function startTimer() {
@@ -136,19 +137,20 @@
                                 console.log(`Piece selected: ${piece}`);
                                 if ((turn === 'white' && this.pieceColor === 'white') || 
                                     (turn === 'black' && this.pieceColor === 'black')) {
+                                    selectedPiece = this;
                                     canvas.setActiveObject(this);
                                 }
                             });
                             svgPiece.on('mouseup', function() {
-                                const activeObject = canvas.getActiveObject();
-                                if (activeObject === this) {
+                                if (selectedPiece === this) {
                                     const fromPosition = coordsToPosition(this.left, this.top);
-                                    const to = prompt(`Move ${piece} from ${fromPosition}:`);
-                                    if (to && isValidMove(this, fromPosition, to, boardState)) {
+                                    const to = coordsToPosition(event.clientX - canvas.left, event.clientY - canvas.top);
+                                    if (isValidMove(this, fromPosition, to, boardState)) {
                                         movePiece(fromPosition, to);
                                     } else {
                                         alert("Invalid move!");
                                     }
+                                    selectedPiece = null;
                                 }
                             });
                             canvas.add(svgPiece);
@@ -164,6 +166,12 @@
             return String.fromCharCode(col + 'a'.charCodeAt(0)) + row;
         }
 
+        function positionToCoords(position) {
+            const col = position.charCodeAt(0) - 'a'.charCodeAt(0);
+            const row = 8 - parseInt(position[1], 10);
+            return { x: col * squareSize, y: row * squareSize };
+        }
+
         function updateHistory(move) {
             history.push(move);
             const historyDiv = document.getElementById('history');
@@ -171,7 +179,7 @@
         }
 
         function movePiece(from, to) {
-            const piece = canvas.getActiveObject();
+            const piece = selectedPiece;
             if (!piece) return;
 
             const fromCoords = positionToCoords(from);
@@ -230,17 +238,11 @@
                     return true; // Two-square move on the first move
                 }
             } else if (Math.abs(dx) === squareSize && dy === direction * squareSize) {
-                if (boardState[to[1]][to[0]].pieceColor !== piece.pieceColor) {
+                if (boardState[to[1]][to[0]] !== '.') {
                     return true; // Capture move
                 }
             }
             return false;
-        }
-
-        function positionToCoords(position) {
-            const col = position.charCodeAt(0) - 'a'.charCodeAt(0);
-            const row = 8 - parseInt(position[1], 10);
-            return { x: col * squareSize, y: row * squareSize };
         }
 
         function isPathClear(from, to, boardState) {
@@ -262,24 +264,24 @@
             return true; // Path is clear
         }
 
-        function isKingMoveValid(king, from, to, boardState) {
-            const newBoardState = simulateMove(king, from, to, boardState);
-            return !isKingInCheck(king, newBoardState);
-        }
-
         function isKingInCheck(king, boardState) {
-            const kingCoords = positionToCoords(king);
+            const kingCoords = positionToCoords(coordsToPosition(king.left, king.top));
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
                     const piece = boardState[row][col];
                     if (piece && piece.pieceColor !== king.pieceColor) {
-                        if (isValidMove(piece, coordsToPosition(row, col), kingCoords, boardState)) {
+                        if (isValidMove(piece, coordsToPosition(col, row), kingCoords, boardState)) {
                             return true; // King is in check
                         }
                     }
                 }
             }
             return false;
+        }
+
+        function isKingMoveValid(king, from, to, boardState) {
+            const newBoardState = simulateMove(king, from, to, boardState);
+            return !isKingInCheck(king, newBoardState);
         }
 
         function simulateMove(piece, from, to, boardState) {
