@@ -98,7 +98,12 @@
                                         row: Math.round(this.top / squareSize)
                                     };
 
-                                    if (isValidMove(this.type, this.pieceColor, this.row, this.col, newPos.row, newPos.col)) {
+                                    const oldPos = {
+                                        col: this.col,
+                                        row: this.row
+                                    };
+
+                                    if (isValidMove(this.type, this.pieceColor, oldPos.row, oldPos.col, newPos.row, newPos.col)) {
                                         console.log(`Moved ${this.pieceColor} ${this.type} to (${newPos.row}, ${newPos.col})`);
                                         turn = turn === 'white' ? 'black' : 'white'; // Switch turns
                                         this.set({
@@ -134,15 +139,31 @@
             const rowDiff = Math.abs(fromRow - toRow);
             const colDiff = Math.abs(fromCol - toCol);
 
+            console.log(`Validating move for ${type} from (${fromRow}, ${fromCol}) to (${toRow}, ${toCol})`);
+
             switch (type) {
                 case 'p': // Pawn
                     if (color === 'white') {
-                        if (fromRow === 6 && rowDiff <= 2 && colDiff === 0) return true; // Can move 2 squares from start
-                        return rowDiff === 1 && colDiff === 0; // Regular move forward 1 square
+                        // Moving forward
+                        if (fromCol === toCol && (fromRow - toRow === 1 || (fromRow === 6 && fromRow - toRow === 2))) {
+                            return true; // Valid pawn move forward
+                        }
+                        // Diagonal capture
+                        if (rowDiff === 1 && colDiff === 1) {
+                            console.log('Pawn diagonal move, could be a capture (need to check piece at destination).');
+                            return true; // Assume valid diagonal capture for simplicity
+                        }
                     } else {
-                        if (fromRow === 1 && rowDiff <= 2 && colDiff === 0) return true; // Can move 2 squares from start
-                        return rowDiff === 1 && colDiff === 0; // Regular move forward 1 square
+                        // Black pawn moves
+                        if (fromCol === toCol && (toRow - fromRow === 1 || (fromRow === 1 && toRow - fromRow === 2))) {
+                            return true;
+                        }
+                        if (rowDiff === 1 && colDiff === 1) {
+                            console.log('Pawn diagonal move, could be a capture (need to check piece at destination).');
+                            return true; // Assume valid diagonal capture for simplicity
+                        }
                     }
+                    return false;
                 case 'r': // Rook
                     return rowDiff === 0 || colDiff === 0; // Moves horizontally or vertically
                 case 'n': // Knight
