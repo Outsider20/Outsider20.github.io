@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chessboard with Piece Images and Move Validation</title>
+  <title>Chessboard with Piece Images</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js" crossorigin></script>
@@ -41,67 +41,76 @@
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
     };
 
-    // New function to validate moves
-    function isValidMove(game, startRow, startCol, endRow, endCol) {
-      const piece = game[startRow][startCol];
-      const isWhitePiece = piece === piece.toUpperCase();
-      const targetPiece = game[endRow][endCol];
-
-      // Check if the target square is occupied by a piece of the same color
-      if (targetPiece !== '' && isWhitePiece === targetPiece.toUpperCase()) {
-        return false;
-      }
-
-      // Pawn movement
-      if (piece.toLowerCase() === 'p') {
-        const direction = isWhitePiece ? -1 : 1;
-        const initialRow = isWhitePiece ? 6 : 1;
-
-        // Moving forward
-        if (startCol === endCol && game[endRow][endCol] === '') {
-          if (endRow === startRow + direction) {
-            return true;
-          }
-          // Initial double move
-          if (startRow === initialRow && endRow === startRow + 2 * direction && 
-              game[startRow + direction][startCol] === '') {
-            return true;
-          }
-        }
-        // Capturing diagonally
-        if (Math.abs(startCol - endCol) === 1 && endRow === startRow + direction) {
-          if (game[endRow][endCol] !== '') {
-            return true;
-          }
-        }
-      }
-
-      // Add logic for other pieces here
-      // For now, we'll allow any move for other pieces
-      return true;
-    }
-
     function Game() {
       const [game, setGame] = React.useState(initialGameState);
       const [selectedSquare, setSelectedSquare] = React.useState(null);
-      const [currentPlayer, setCurrentPlayer] = React.useState('white');
+      const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
 
-      // Handle square click for moving pieces
+      // Function to determine if a move is valid based on the piece
+      function isValidMove(piece, fromRow, fromCol, toRow, toCol, game) {
+        const rowDiff = Math.abs(toRow - fromRow);
+        const colDiff = Math.abs(toCol - fromCol);
+
+        // Check the piece type and implement movement rules
+        switch (piece.toLowerCase()) {
+          case 'p': // Pawn
+            if (piece === 'P') { // White pawn
+              if (fromRow === 6 && toRow === 4 && colDiff === 0 && game[toRow][toCol] === '') return true; // 2-square move
+              if (toRow === fromRow - 1 && colDiff === 0 && game[toRow][toCol] === '') return true; // 1-square move
+              if (toRow === fromRow - 1 && colDiff === 1 && game[toRow][toCol] !== '') return true; // Capture move
+            } else { // Black pawn
+              if (fromRow === 1 && toRow === 3 && colDiff === 0 && game[toRow][toCol] === '') return true; // 2-square move
+              if (toRow === fromRow + 1 && colDiff === 0 && game[toRow][toCol] === '') return true; // 1-square move
+              if (toRow === fromRow + 1 && colDiff === 1 && game[toRow][toCol] !== '') return true; // Capture move
+            }
+            return false;
+
+          case 'r': // Rook
+            if (rowDiff === 0 || colDiff === 0) return true; // Horizontal or vertical movement
+            return false;
+
+          case 'n': // Knight
+            if ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)) return true; // L-shaped movement
+            return false;
+
+          case 'b': // Bishop
+            if (rowDiff === colDiff) return true; // Diagonal movement
+            return false;
+
+          case 'q': // Queen
+            if (rowDiff === colDiff || rowDiff === 0 || colDiff === 0) return true; // Bishop or rook-like movement
+            return false;
+
+          case 'k': // King
+            if (rowDiff <= 1 && colDiff <= 1) return true; // Move one square in any direction
+            return false;
+
+          default:
+            return false;
+        }
+      }
+
+      // Handle square click for moving pieces with validation
       function handleClick(row, col) {
         if (selectedSquare) {
+          const newGame = game.map(row => row.slice());
           const [selectedRow, selectedCol] = selectedSquare;
-          if (isValidMove(game, selectedRow, selectedCol, row, col)) {
-            const newGame = game.map(row => row.slice());
-            newGame[row][col] = newGame[selectedRow][selectedCol];
-            newGame[selectedRow][selectedCol] = '';
-            setGame(newGame);
-            setCurrentPlayer(currentPlayer === 'white' ? 'black' : 'white');
+          const piece = newGame[selectedRow][selectedCol];
+
+          // Ensure it's the correct player's turn
+          if ((isWhiteTurn && piece === piece.toUpperCase()) || (!isWhiteTurn && piece === piece.toLowerCase())) {
+            // Check if the move is valid
+            if (isValidMove(piece, selectedRow, selectedCol, row, col, game)) {
+              // Move the piece to the new location
+              newGame[row][col] = piece;
+              newGame[selectedRow][selectedCol] = '';
+              setGame(newGame);
+              setIsWhiteTurn(!isWhiteTurn); // Switch turns
+            }
           }
           setSelectedSquare(null);
         } else {
-          const piece = game[row][col];
-          if (piece && ((currentPlayer === 'white' && piece === piece.toUpperCase()) ||
-                        (currentPlayer === 'black' && piece === piece.toLowerCase()))) {
+          if (game[row][col]) {
             setSelectedSquare([row, col]);
           }
         }
@@ -110,7 +119,6 @@
       return (
         <div>
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
-          <div>Current Player: {currentPlayer}</div>
         </div>
       );
     }
