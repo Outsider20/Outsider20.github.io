@@ -103,9 +103,7 @@ Frook<!DOCTYPE html>
         case 'r': // Rook
           // Regular rook movement (horizontal or vertical movement)
           const regularMove = (startRow === endRow || startCol === endCol) && isPathClear(game, startRow, startCol, endRow, endCol);
-          // Check for castling conditions
-          const canCastle = isCastlingMove(startRow, startCol, endRow, endCol, game);
-          return regularMove || canCastle;
+          return regularMove 
 
 
         case 'n': // Knight
