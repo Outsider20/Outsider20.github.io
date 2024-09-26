@@ -1,10 +1,10 @@
-Frook<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chessboard with Piece Images and Full Move Validation</title>
+  <title>Chessboard with Piece Images and Move Validation</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js" crossorigin></script>
@@ -12,7 +12,7 @@ Frook<!DOCTYPE html>
 <body>
   <div id="root"></div>
 
-  <script type="text/babel">
+  <script type="text/babel" data-presets="react,stage-3">
     // Model: Starting state of the chessboard in 2D array
     const initialGameState = [
       ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -41,131 +41,45 @@ Frook<!DOCTYPE html>
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
     };
 
-    // Helper function to check if a move is within the board
-    function isWithinBoard(row, col) {
-      return row >= 0 && row < 8 && col >= 0 && col < 8;
-    }
-
-    // Helper function to check if a path is clear
-    function isPathClear(game, startRow, startCol, endRow, endCol) {
-      const rowStep = startRow < endRow ? 1 : startRow > endRow ? -1 : 0;
-      const colStep = startCol < endCol ? 1 : startCol > endCol ? -1 : 0;
-      let currentRow = startRow + rowStep;
-      let currentCol = startCol + colStep;
-
-      while (currentRow !== endRow || currentCol !== endCol) {
-        if (game[currentRow][currentCol] !== '') {
-          return false;
-        }
-        currentRow += rowStep;
-        currentCol += colStep;
-      }
-      return true;
-    }
-
-    // New function to validate moves for all pieces
+    // New function to validate moves
     function isValidMove(game, startRow, startCol, endRow, endCol) {
       const piece = game[startRow][startCol];
       const isWhitePiece = piece === piece.toUpperCase();
       const targetPiece = game[endRow][endCol];
 
       // Check if the target square is occupied by a piece of the same color
-      if (targetPiece !== '' && isWhitePiece === (targetPiece === targetPiece.toUpperCase())) {
+      if (targetPiece !== '' && isWhitePiece === targetPiece.toUpperCase()) {
         return false;
       }
 
-      const pieceType = piece.toLowerCase();
+      // Pawn movement
+      if (piece.toLowerCase() === 'p') {
+        const direction = isWhitePiece ? -1 : 1;
+        const initialRow = isWhitePiece ? 6 : 1;
 
-      switch (pieceType) {
-        case 'p': // Pawn
-          const direction = isWhitePiece ? -1 : 1;
-          const initialRow = isWhitePiece ? 6 : 1;
-
-          // Moving forward
-          if (startCol === endCol && game[endRow][endCol] === '') {
-            if (endRow === startRow + direction) {
-              return true;
-            }
-            // Initial double move
-            if (startRow === initialRow && endRow === startRow + 2 * direction && 
-                game[startRow + direction][startCol] === '') {
-              return true;
-            }
+        // Moving forward
+        if (startCol === endCol && game[endRow][endCol] === '') {
+          if (endRow === startRow + direction) {
+            return true;
           }
-          // Capturing diagonally
-          if (Math.abs(startCol - endCol) === 1 && endRow === startRow + direction) {
-            if (game[endRow][endCol] !== '') {
-              return true;
-            }
+          // Initial double move
+          if (startRow === initialRow && endRow === startRow + 2 * direction && 
+              game[startRow + direction][startCol] === '') {
+            return true;
           }
-          return false;
-
-        case 'r': // Rook
-          // Regular rook movement (horizontal or vertical movement)
-          const regularMove = (startRow === endRow || startCol === endCol) && isPathClear(game, startRow, startCol, endRow, endCol);
-          return regularMove;
-
-
-        case 'n': // Knight
-          const rowDiff = Math.abs(endRow - startRow);
-          const colDiff = Math.abs(endCol - startCol);
-          return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
-
-        case 'b': // Bishop
-          return Math.abs(endRow - startRow) === Math.abs(endCol - startCol) && 
-                 isPathClear(game, startRow, startCol, endRow, endCol);
-
-        case 'q': // Queen
-          return ((startRow === endRow || startCol === endCol) || 
-                  (Math.abs(endRow - startRow) === Math.abs(endCol - startCol))) && 
-                 isPathClear(game, startRow, startCol, endRow, endCol);
-
-        case 'k': // King
-          return Math.abs(endRow - startRow) <= 1 && Math.abs(endCol - startCol) <= 1;
-
-        default:
-          return false;
+        }
+        // Capturing diagonally
+        if (Math.abs(startCol - endCol) === 1 && endRow === startRow + direction) {
+          if (game[endRow][endCol] !== '') {
+            return true;
+          }
+        }
       }
+
+      // Add logic for other pieces here
+      // For now, we'll allow any move for other pieces
+      return true;
     }
-
-    function isCastlingMove(startRow, startCol, endRow, endCol, game) {
-     const isWhite = game.turn === 'white';
-     const kingStartCol = 4; // King starts in column 4
-     const kingRow = isWhite ? 7 : 0; // King starts on row 7 for white, row 0 for black
-    
-     // Check if the rook is in its initial position (on the same row as the king)
-     const isRookInitialPosition = (startRow === kingRow) && (startCol === 0 || startCol === 7);
-
-     // Ensure castling ends with the king moving two squares to either side
-     const isQueensideCastling = (startCol === 0) && (endRow === kingRow) && (endCol === kingStartCol - 2);
-     const isKingsideCastling = (startCol === 7) && (endRow === kingRow) && (endCol === kingStartCol + 2);
-     const isCastlingMove = isQueensideCastling || isKingsideCastling;
-
-     if (!isRookInitialPosition || !isCastlingMove) {
-         return false; // Not a valid castling attempt
-     }
-
-     // The path between the king and rook must be clear
-     const pathIsClear = isPathClear(game, kingRow, Math.min(startCol, kingStartCol) + 1, kingRow, Math.max(startCol, kingStartCol) - 1);
-
-     // Ensure neither the rook nor the king has moved yet
-     const rookHasMoved = game.rookHasMoved[isWhite ? 'white' : 'black'][startCol === 0 ? 'left' : 'right'];
-     const kingHasMoved = game.kingHasMoved[isWhite ? 'white' : 'black'];
-
-     if (rookHasMoved || kingHasMoved || !pathIsClear) {
-         return false;
-     }
-
-     // Ensure the king is not in check, and does not pass through or end up in check
-     const isKingSafe = !isKingInCheck(game, isWhite) &&
-                        !isSquareAttacked(game, kingRow, kingStartCol - (isQueensideCastling ? 2 : 1), isWhite) &&
-                        !isSquareAttacked(game, kingRow, kingStartCol, isWhite) &&
-                        !isSquareAttacked(game, kingRow, endCol, isWhite); // Final position check
-
-     return isKingSafe;
-    }
-  }
-
 
     function Game() {
       const [game, setGame] = React.useState(initialGameState);
@@ -177,7 +91,7 @@ Frook<!DOCTYPE html>
         if (selectedSquare) {
           const [selectedRow, selectedCol] = selectedSquare;
           if (isValidMove(game, selectedRow, selectedCol, row, col)) {
-            const newGame = game.map(row => [...row]);
+            const newGame = game.map(row => row.slice());
             newGame[row][col] = newGame[selectedRow][selectedCol];
             newGame[selectedRow][selectedCol] = '';
             setGame(newGame);
