@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Frook<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -101,7 +101,12 @@
           return false;
 
         case 'r': // Rook
-          return (startRow === endRow || startCol === endCol) && isPathClear(game, startRow, startCol, endRow, endCol);
+          // Regular rook movement (horizontal or vertical movement)
+          const regularMove = (startRow === endRow || startCol === endCol) && isPathClear(game, startRow, startCol, endRow, endCol);
+          // Check for castling conditions
+          const canCastle = isCastlingMove(startRow, startCol, endRow, endCol, game);
+          return regularMove || canCastle;
+
 
         case 'n': // Knight
           const rowDiff = Math.abs(endRow - startRow);
@@ -124,6 +129,35 @@
           return false;
       }
     }
+
+    function isCastlingMove(startRow, startCol, endRow, endCol, game) {
+      // Castling happens only on the rook's initial row (for white rook, row 7; for black rook, row 0)
+      const isWhite = game.turn === 'white';
+      const kingStartCol = 4; // King starts in column 4
+      const kingRow = isWhite ? 7 : 0; // King starts on row 7 for white, row 0 for black
+
+      // The rook must be in its initial position
+      const isRookInitialPosition = (startRow === kingRow) && (startCol === 0 || startCol === 7);
+
+      // The king must be in its initial position
+      const isKingInitialPosition = (endRow === kingRow) && (endCol === kingStartCol);
+
+      // The path between the king and rook must be clear
+      const pathIsClear = isPathClear(game, kingRow, Math.min(startCol, kingStartCol) + 1, kingRow, Math.max(startCol, kingStartCol) - 1);
+
+      // Neither the king nor the rook must have moved yet
+      const rookHasMoved = game.rookHasMoved[isWhite ? 'white' : 'black'][startCol === 0 ? 'left' : 'right'];
+      const kingHasMoved = game.kingHasMoved[isWhite ? 'white' : 'black'];
+
+      // Ensure the king is not in check, nor does it pass through or end in check
+      const isKingSafe = !isKingInCheck(game, isWhite) &&
+                         !isSquareAttacked(game, kingRow, kingStartCol - 1, isWhite) &&
+                         !isSquareAttacked(game, kingRow, kingStartCol, isWhite);
+
+      // Castling is only allowed if all these conditions are met
+      return isRookInitialPosition && isKingInitialPosition && pathIsClear && !rookHasMoved && !kingHasMoved && isKingSafe;
+  }
+
 
     function Game() {
       const [game, setGame] = React.useState(initialGameState);
