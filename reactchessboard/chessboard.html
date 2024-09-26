@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chessboard with Piece Images</title>
+  <title>Chessboard with Piece Images and Full Move Validation</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js" crossorigin></script>
@@ -12,7 +12,7 @@
 <body>
   <div id="root"></div>
 
-  <script type="text/babel" data-presets="react,stage-3">
+  <script type="text/babel">
     // Model: Starting state of the chessboard in 2D array
     const initialGameState = [
       ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -41,23 +41,111 @@
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
     };
 
+    // Helper function to check if a move is within the board
+    function isWithinBoard(row, col) {
+      return row >= 0 && row < 8 && col >= 0 && col < 8;
+    }
+
+    // Helper function to check if a path is clear
+    function isPathClear(game, startRow, startCol, endRow, endCol) {
+      const rowStep = startRow < endRow ? 1 : startRow > endRow ? -1 : 0;
+      const colStep = startCol < endCol ? 1 : startCol > endCol ? -1 : 0;
+      let currentRow = startRow + rowStep;
+      let currentCol = startCol + colStep;
+
+      while (currentRow !== endRow || currentCol !== endCol) {
+        if (game[currentRow][currentCol] !== '') {
+          return false;
+        }
+        currentRow += rowStep;
+        currentCol += colStep;
+      }
+      return true;
+    }
+
+    // New function to validate moves for all pieces
+    function isValidMove(game, startRow, startCol, endRow, endCol) {
+      const piece = game[startRow][startCol];
+      const isWhitePiece = piece === piece.toUpperCase();
+      const targetPiece = game[endRow][endCol];
+
+      // Check if the target square is occupied by a piece of the same color
+      if (targetPiece !== '' && isWhitePiece === (targetPiece === targetPiece.toUpperCase())) {
+        return false;
+      }
+
+      const pieceType = piece.toLowerCase();
+
+      switch (pieceType) {
+        case 'p': // Pawn
+          const direction = isWhitePiece ? -1 : 1;
+          const initialRow = isWhitePiece ? 6 : 1;
+
+          // Moving forward
+          if (startCol === endCol && game[endRow][endCol] === '') {
+            if (endRow === startRow + direction) {
+              return true;
+            }
+            // Initial double move
+            if (startRow === initialRow && endRow === startRow + 2 * direction && 
+                game[startRow + direction][startCol] === '') {
+              return true;
+            }
+          }
+          // Capturing diagonally
+          if (Math.abs(startCol - endCol) === 1 && endRow === startRow + direction) {
+            if (game[endRow][endCol] !== '') {
+              return true;
+            }
+          }
+          return false;
+
+        case 'r': // Rook
+          return (startRow === endRow || startCol === endCol) && isPathClear(game, startRow, startCol, endRow, endCol);
+
+        case 'n': // Knight
+          const rowDiff = Math.abs(endRow - startRow);
+          const colDiff = Math.abs(endCol - startCol);
+          return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+
+        case 'b': // Bishop
+          return Math.abs(endRow - startRow) === Math.abs(endCol - startCol) && 
+                 isPathClear(game, startRow, startCol, endRow, endCol);
+
+        case 'q': // Queen
+          return ((startRow === endRow || startCol === endCol) || 
+                  (Math.abs(endRow - startRow) === Math.abs(endCol - startCol))) && 
+                 isPathClear(game, startRow, startCol, endRow, endCol);
+
+        case 'k': // King
+          return Math.abs(endRow - startRow) <= 1 && Math.abs(endCol - startCol) <= 1;
+
+        default:
+          return false;
+      }
+    }
+
     function Game() {
       const [game, setGame] = React.useState(initialGameState);
       const [selectedSquare, setSelectedSquare] = React.useState(null);
+      const [currentPlayer, setCurrentPlayer] = React.useState('white');
 
       // Handle square click for moving pieces
       function handleClick(row, col) {
         if (selectedSquare) {
-          const newGame = game.map(row => row.slice());
           const [selectedRow, selectedCol] = selectedSquare;
-
-          // Move the piece to the new location
-          newGame[row][col] = newGame[selectedRow][selectedCol];
-          newGame[selectedRow][selectedCol] = '';
-          setGame(newGame);
+          if (isValidMove(game, selectedRow, selectedCol, row, col)) {
+            const newGame = game.map(row => [...row]);
+            newGame[row][col] = newGame[selectedRow][selectedCol];
+            newGame[selectedRow][selectedCol] = '';
+            setGame(newGame);
+            setCurrentPlayer(currentPlayer === 'white' ? 'black' : 'white');
+          }
           setSelectedSquare(null);
         } else {
-          if (game[row][col]) {
+          const piece = game[row][col];
+          if (piece && ((currentPlayer === 'white' && piece === piece.toUpperCase()) ||
+                        (currentPlayer === 'black' && piece === piece.toLowerCase()))) {
             setSelectedSquare([row, col]);
           }
         }
@@ -66,6 +154,7 @@
       return (
         <div>
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
+          <div>Current Player: {currentPlayer}</div>
         </div>
       );
     }
