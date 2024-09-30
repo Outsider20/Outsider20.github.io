@@ -146,29 +146,31 @@
       }
 
       return (
-        <div>
+        <div className="game-container">
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
-          <button onClick={restartGame} style={{
-            marginTop: '10px',
-            padding: '10px 20px',
-            fontSize: '16px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}>
-            Restart Game
-          </button>
-          {winner && (
-            <div style={{
-              marginTop: '20px',
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#1976D2'
+          <div className="side-panel">
+            <button onClick={restartGame} style={{
+              marginTop: '10px',
+              padding: '10px 20px',
+              fontSize: '16px',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
             }}>
-              {winner} wins!
-            </div>
+              Restart Game
+            </button>
+            {winner && (
+              <div style={{
+                marginTop: '20px',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#1976D2'
+              }}>
+                {winner} wins!
+              </div>
+          </div>
           )}
         </div>
       );
