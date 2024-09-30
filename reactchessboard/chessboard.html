@@ -45,6 +45,7 @@
       const [game, setGame] = React.useState(initialGameState);
       const [selectedSquare, setSelectedSquare] = React.useState(null);
       const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
+      const [winner, setWinner] = React.useState(null);
 
       // Function to determine if a move is valid based on the piece
       function isValidMove(piece, fromRow, fromCol, toRow, toCol, game) {
@@ -90,23 +91,43 @@
         }
       }
 
+      function checkForWin(game) {
+        let whiteKingPresent = false;
+        let blackKingPresent = false;
+
+        for (let row of game) {
+          for (let piece of row) {
+            if (piece === 'K') whiteKingPresent = true;
+            if (piece === 'k') blackKingPresent = true;
+          }
+        }
+
+        if (!whiteKingPresent) return 'Black';
+        if (!blackKingPresent) return 'White';
+         return null;
+      }
+
       // Handle square click for moving pieces with validation
       function handleClick(row, col) {
+        if (winner) return; // If there's a winner, don't allow further moves
         if (selectedSquare) {
           const newGame = game.map(row => row.slice());
           const [selectedRow, selectedCol] = selectedSquare;
           const piece = newGame[selectedRow][selectedCol];
-
           // Ensure it's the correct player's turn
           if ((isWhiteTurn && piece === piece.toUpperCase()) || (!isWhiteTurn && piece === piece.toLowerCase())) {
-            // Check if the move is valid
-            if (isValidMove(piece, selectedRow, selectedCol, row, col, game)) {
-              // Move the piece to the new location
-              newGame[row][col] = piece;
-              newGame[selectedRow][selectedCol] = '';
-              setGame(newGame);
-              setIsWhiteTurn(!isWhiteTurn); // Switch turns
-            }
+              // Check if the move is valid
+              if (isValidMove(piece, selectedRow, selectedCol, row, col, game)) {
+                // Move the piece to the new location
+                newGame[row][col] = piece;
+                newGame[selectedRow][selectedCol] = '';
+                setGame(newGame);
+                const gameWinner = checkForWin(newGame);
+                  if (gameWinner) {
+                    setWinner(gameWinner);
+                  }
+                setIsWhiteTurn(!isWhiteTurn); // Switch turns
+              }
           }
           setSelectedSquare(null);
         } else {
@@ -116,9 +137,39 @@
         }
       }
 
+      // Function to restart the game
+      function restartGame() {
+        setGame(initialGameState);
+        setSelectedSquare(null);
+        setIsWhiteTurn(true);
+        setWinner(null);
+      }
+
       return (
         <div>
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
+          <button onClick={restartGame} style={{
+            marginTop: '10px',
+            padding: '10px 20px',
+            fontSize: '16px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}>
+            Restart Game
+          </button>
+          {winner && (
+            <div style={{
+              marginTop: '20px',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#1976D2'
+            }}>
+              {winner} wins!
+            </div>
+          )}
         </div>
       );
     }
