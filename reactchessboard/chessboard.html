@@ -177,15 +177,15 @@ function isSameColor(piece1, piece2) {
         <div className="game-container">
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
           <div className="side-panel">
-            <button onClick={restartGame} style={{...}}>
+            <button onClick={restartGame}>
               Restart Game
             </button>
             {winner ? (
-              <div style={{...}}>
+              <div>
                 {winner} wins!
               </div>
             ) : (
-              <div style={{...}}>
+              <div>
                 {isWhiteTurn ? "White's turn" : "Black's turn"}
               </div>
             )}
