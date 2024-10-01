@@ -24,6 +24,21 @@
       background-color: #f0f0f0;
       border-radius: 10px;
     }
+    .toggle-button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .toggle-button:hover {
+      background-color: #1976D2;
+    }
   </style>
 </head>
 <body>
@@ -60,11 +75,12 @@
 
     // Text-to-speech utility function
     function speak(text) {
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(utterance);
+        if (isSpeechEnabled && window.speechSynthesis) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          window.speechSynthesis.cancel(); // Cancel any ongoing speech
+          window.speechSynthesis.speak(utterance);
+        }
       }
-    }
 
     // Function to get piece name
     function getPieceName(piece) {
@@ -97,11 +113,13 @@
       const [selectedSquare, setSelectedSquare] = React.useState(null);
       const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
       const [winner, setWinner] = React.useState(null);
+      const [isSpeechEnabled, setIsSpeechEnabled] = React.useState(false);
 
     React.useEffect(() => {
-        // Announce initial turn
-        speak(isWhiteTurn ? "White's turn" : "Black's turn");
-      }, []); // Empty dependency array means this runs once on mount
+        if (isSpeechEnabled) {
+          speak(`${isWhiteTurn ? "White" : "Black"}'s turn`);
+        }
+      }, [isWhiteTurn, isSpeechEnabled]);
       
     function isSameColor(piece1, piece2) {
         if (!piece1 || !piece2) return false;
@@ -175,6 +193,22 @@
          return null;
       }
 
+      function announceMove(piece, fromRow, fromCol, toRow, toCol, capturedPiece) {
+        const pieceName = getPieceName(piece);
+        const fromSquare = getSquareName(fromRow, fromCol);
+        const toSquare = getSquareName(toRow, toCol);
+        let moveText = `${pieceName} from ${fromSquare} to ${toSquare}`;
+        if (capturedPiece) {
+          moveText += `, capturing ${getPieceName(capturedPiece)}`;
+        }
+        speak(moveText);
+      }
+
+      function toggleSpeech() {
+        setIsSpeechEnabled(!isSpeechEnabled);
+        speak(isSpeechEnabled ? "Voice announcements off" : "Voice announcements on");
+      }
+
       // Handle square click for moving pieces with validation
       function handleClick(row, col) {
         if (winner) return; // If there's a winner, don't allow further moves
@@ -236,6 +270,9 @@
         <div className="game-container">
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
           <div className="side-panel">
+            <button onClick={toggleSpeech} className="toggle-button">
+              {isSpeechEnabled ? "🔊 Voice On" : "🔈 Voice Off"}
+            </button>
             <button onClick={restartGame}>
               Restart Game
             </button>
