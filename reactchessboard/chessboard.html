@@ -8,6 +8,23 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js" crossorigin></script>
+  <style>
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background-color: #f0f0f0;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
@@ -146,30 +163,22 @@
       }
 
       return (
-        <div>
+        <div className="game-container">
           <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
-          <button onClick={restartGame} style={{
-            marginTop: '10px',
-            padding: '10px 20px',
-            fontSize: '16px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}>
-            Restart Game
-          </button>
-          {winner && (
-            <div style={{
-              marginTop: '20px',
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#1976D2'
-            }}>
-              {winner} wins!
-            </div>
-          )}
+          <div className="side-panel">
+            <button onClick={restartGame} style={{...}}>
+              Restart Game
+            </button>
+            {winner ? (
+              <div style={{...}}>
+                {winner} wins!
+              </div>
+            ) : (
+              <div style={{...}}>
+                {isWhiteTurn ? "White's turn" : "Black's turn"}
+              </div>
+            )}
+          </div>
         </div>
       );
     }
