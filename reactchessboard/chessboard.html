@@ -45,6 +45,11 @@
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react,stage-3">
+
+    function toggleSpeech() {
+        setIsSpeechEnabled(!isSpeechEnabled);
+        speak(isSpeechEnabled ? "Voice announcements off" : "Voice announcements on");
+      }
     
     // Model: Starting state of the chessboard in 2D array
     const initialGameState = [
@@ -203,11 +208,6 @@
           moveText += `, capturing ${getPieceName(capturedPiece)}`;
         }
         speak(moveText);
-      }
-
-      function toggleSpeech() {
-        setIsSpeechEnabled(!isSpeechEnabled);
-        speak(isSpeechEnabled ? "Voice announcements off" : "Voice announcements on");
       }
 
       // Handle square click for moving pieces with validation
