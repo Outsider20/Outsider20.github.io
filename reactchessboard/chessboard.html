@@ -63,23 +63,34 @@
       const [selectedSquare, setSelectedSquare] = React.useState(null);
       const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
       const [winner, setWinner] = React.useState(null);
+function isSameColor(piece1, piece2) {
+        if (!piece1 || !piece2) return false;
+        const isWhite1 = piece1 === piece1.toUpperCase();
+        const isWhite2 = piece2 === piece2.toUpperCase();
+        return isWhite1 === isWhite2;
+      }
 
-      // Function to determine if a move is valid based on the piece
       function isValidMove(piece, fromRow, fromCol, toRow, toCol, game) {
         const rowDiff = Math.abs(toRow - fromRow);
         const colDiff = Math.abs(toCol - fromCol);
+        const targetPiece = game[toRow][toCol];
 
-        // Check the piece type and implement movement rules
+        // First, check if the target square contains a piece of the same color
+        if (isSameColor(piece, targetPiece)) {
+          return false;
+        }
+
+        // Rest of the movement rules remain the same
         switch (piece.toLowerCase()) {
           case 'p': // Pawn
             if (piece === 'P') { // White pawn
-              if (fromRow === 6 && toRow === 4 && colDiff === 0 && game[toRow][toCol] === '') return true; // 2-square move
-              if (toRow === fromRow - 1 && colDiff === 0 && game[toRow][toCol] === '') return true; // 1-square move
-              if (toRow === fromRow - 1 && colDiff === 1 && game[toRow][toCol] !== '') return true; // Capture move
+              if (fromRow === 6 && toRow === 4 && colDiff === 0 && !targetPiece) return true; // 2-square move
+              if (toRow === fromRow - 1 && colDiff === 0 && !targetPiece) return true; // 1-square move
+              if (toRow === fromRow - 1 && colDiff === 1 && targetPiece) return true; // Capture move
             } else { // Black pawn
-              if (fromRow === 1 && toRow === 3 && colDiff === 0 && game[toRow][toCol] === '') return true; // 2-square move
-              if (toRow === fromRow + 1 && colDiff === 0 && game[toRow][toCol] === '') return true; // 1-square move
-              if (toRow === fromRow + 1 && colDiff === 1 && game[toRow][toCol] !== '') return true; // Capture move
+              if (fromRow === 1 && toRow === 3 && colDiff === 0 && !targetPiece) return true; // 2-square move
+              if (toRow === fromRow + 1 && colDiff === 0 && !targetPiece) return true; // 1-square move
+              if (toRow === fromRow + 1 && colDiff === 1 && targetPiece) return true; // Capture move
             }
             return false;
 
