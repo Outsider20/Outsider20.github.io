@@ -58,12 +58,52 @@
       'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
     };
 
+    // Text-to-speech utility function
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // Function to get piece name
+    function getPieceName(piece) {
+      const pieceNames = {
+        'p': 'black pawn',
+        'r': 'black rook',
+        'n': 'black knight',
+        'b': 'black bishop',
+        'q': 'black queen',
+        'k': 'black king',
+        'P': 'white pawn',
+        'R': 'white rook',
+        'N': 'white knight',
+        'B': 'white bishop',
+        'Q': 'white queen',
+        'K': 'white king'
+      };
+      return pieceNames[piece] || piece;
+    }
+
+    // Function to convert board position to chess notation
+    function positionToNotation(row, col) {
+      const columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+      const rows = ['8', '7', '6', '5', '4', '3', '2', '1'];
+      return columns[col] + rows[row];
+    }
+
     function Game() {
       const [game, setGame] = React.useState(initialGameState);
       const [selectedSquare, setSelectedSquare] = React.useState(null);
       const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
       const [winner, setWinner] = React.useState(null);
-function isSameColor(piece1, piece2) {
+
+    React.useEffect(() => {
+        // Announce initial turn
+        speak(isWhiteTurn ? "White's turn" : "Black's turn");
+      }, []); // Empty dependency array means this runs once on mount
+      
+    function isSameColor(piece1, piece2) {
         if (!piece1 || !piece2) return false;
         const isWhite1 = piece1 === piece1.toUpperCase();
         const isWhite2 = piece2 === piece2.toUpperCase();
@@ -146,21 +186,39 @@ function isSameColor(piece1, piece2) {
           if ((isWhiteTurn && piece === piece.toUpperCase()) || (!isWhiteTurn && piece === piece.toLowerCase())) {
               // Check if the move is valid
               if (isValidMove(piece, selectedRow, selectedCol, row, col, game)) {
+                
                 // Move the piece to the new location
                 newGame[row][col] = piece;
                 newGame[selectedRow][selectedCol] = '';
+                
+                // Announce the move
+                const fromPosition = positionToNotation(selectedRow, selectedCol);
+                const toPosition = positionToNotation(row, col);
+                const moveAnnouncement = `${getPieceName(piece)} moves from ${fromPosition} to ${toPosition}`;
+                speak(moveAnnouncement);
+                
                 setGame(newGame);
                 const gameWinner = checkForWin(newGame);
                   if (gameWinner) {
                     setWinner(gameWinner);
+                    speak(`${gameWinner} wins!`);
+                  } else {
+                    // Announce next turn after a short delay
+                  setTimeout(() => {
+                    speak(!isWhiteTurn ? "White's turn" : "Black's turn");
+                  }, 1500);
                   }
                 setIsWhiteTurn(!isWhiteTurn); // Switch turns
               }
           }
           setSelectedSquare(null);
         } else {
-          if (game[row][col]) {
+          const piece = game[row][col];
+          if (piece && ((isWhiteTurn && piece === piece.toUpperCase()) || 
+                        (!isWhiteTurn && piece === piece.toLowerCase()))) {
             setSelectedSquare([row, col]);
+            // Announce selected piece
+            speak(`Selected ${getPieceName(piece)}`);
           }
         }
       }
@@ -171,6 +229,7 @@ function isSameColor(piece1, piece2) {
         setSelectedSquare(null);
         setIsWhiteTurn(true);
         setWinner(null);
+        speak("Game restarted. White's turn");
       }
 
       return (
