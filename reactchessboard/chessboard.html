@@ -45,11 +45,6 @@
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react,stage-3">
-
-    function toggleSpeech() {
-        setIsSpeechEnabled(!isSpeechEnabled);
-        speak(isSpeechEnabled ? "Voice announcements off" : "Voice announcements on");
-      }
     
     // Model: Starting state of the chessboard in 2D array
     const initialGameState = [
@@ -120,6 +115,11 @@
       const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
       const [winner, setWinner] = React.useState(null);
       const [isSpeechEnabled, setIsSpeechEnabled] = React.useState(false);
+
+      function toggleSpeech() {
+        setIsSpeechEnabled(!isSpeechEnabled);
+        speak(isSpeechEnabled ? "Voice announcements off" : "Voice announcements on");
+      }
 
     React.useEffect(() => {
         if (isSpeechEnabled) {
