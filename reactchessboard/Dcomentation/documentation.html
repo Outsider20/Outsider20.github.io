@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Tic-Tac-Toe with Explanation</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .game-container {
+            flex: 1;
+            min-width: 300px;
+        }
+        .explanation {
+            flex: 2;
+            min-width: 300px;
+        }
+        .game {
+            display: flex;
+            flex-direction: row;
+        }
+        .game-board {
+            margin-right: 20px;
+        }
+        .board-row {
+            display: flex;
+        }
+        .square {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border: 1px solid #999;
+            float: left;
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 60px;
+            margin-right: -1px;
+            margin-top: -1px;
+            padding: 0;
+            text-align: center;
+            cursor: pointer;
+        }
+        .game-info {
+            margin-left: 20px;
+        }
+        .status {
+            margin-bottom: 10px;
+        }
+        h1, h2 {
+            color: #1a73e8;
+        }
+        code {
+            background-color: #f1f3f4;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-container">
+            <h1>Tic-Tac-Toe Game</h1>
+            <div id="root"></div>
+        </div>
+        <div class="explanation">
+            <h1>Code Explanation</h1>
+            <h2>Components</h2>
+            <h3>1. Square Component</h3>
+            <p>Represents an individual square in the game board:</p>
+            <pre><code>
+function Square({ value, onSquareClick }) {
+    return (
+        <button className="square" onClick={onSquareClick}>
+            {value}
+        </button>
+    );
+}
+            </code></pre>
+
+            <h3>2. Board Component</h3>
+            <p>Manages the game grid and displays status:</p>
+            <ul>
+                <li>Handles player moves</li>
+                <li>Shows game status</li>
+                <li>Renders 9 Square components</li>
+            </ul>
+
+            <h3>3. Game Component</h3>
+            <p>Main component that:</p>
+            <ul>
+                <li>Manages game history</li>
+                <li>Handles time travel feature</li>
+                <li>Determines current player</li>
+            </ul>
+
+            <h2>Key Features</h2>
+            <ul>
+                <li>Interactive gameplay</li>
+                <li>Automatic win detection</li>
+                <li>Move history tracking</li>
+                <li>Time travel to previous moves</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        function Square({ value, onSquareClick }) {
+            return (
+                <button className="square" onClick={onSquareClick}>
+                    {value}
+                </button>
+            );
+        }
+
+        function Board({ xIsNext, squares, onPlay }) {
+            function handleClick(i) {
+                if (calculateWinner(squares) || squares[i]) {
+                    return;
+                }
+                const nextSquares = squares.slice();
+                nextSquares[i] = xIsNext ? 'X' : 'O';
+                onPlay(nextSquares);
+            }
+
+            const winner = calculateWinner(squares);
+            let status = winner 
+                ? 'Winner: ' + winner 
+                : 'Next player: ' + (xIsNext ? 'X' : 'O');
+
+            return (
+                <>
+                    <div className="status">{status}</div>
+                    <div className="board-row">
+                        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+                        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+                        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+                    </div>
+                    <div className="board-row">
+                        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+                        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+                        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+                    </div>
+                    <div className="board-row">
+                        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+                        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+                        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+                    </div>
+                </>
+            );
+        }
+
+        function Game() {
+            const [history, setHistory] = React.useState([Array(9).fill(null)]);
+            const [currentMove, setCurrentMove] = React.useState(0);
+            const xIsNext = currentMove % 2 === 0;
+            const currentSquares = history[currentMove];
+
+            function handlePlay(nextSquares) {
+                const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+                setHistory(nextHistory);
+                setCurrentMove(nextHistory.length - 1);
+            }
+
+            function jumpTo(nextMove) {
+                setCurrentMove(nextMove);
+            }
+
+            const moves = history.map((squares, move) => {
+                const description = move > 0
+                    ? 'Go to move #' + move
+                    : 'Go to game start';
+                return (
+                    <li key={move}>
+                        <button onClick={() => jumpTo(move)}>{description}</button>
+                    </li>
+                );
+            });
+
+            return (
+                <div className="game">
+                    <div className="game-board">
+                        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+                    </div>
+                    <div className="game-info">
+                        <ol>{moves}</ol>
+                    </div>
+                </div>
+            );
+        }
+
+        function calculateWinner(squares) {
+            const lines = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            for (const [a, b, c] of lines) {
+                if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+                    return squares[a];
+                }
+            }
+            return null;
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<Game />);
+    </script>
+</body>
+</html>
