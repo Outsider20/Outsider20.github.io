@@ -221,16 +221,16 @@
           if ((isWhiteTurn && piece === piece.toUpperCase()) || (!isWhiteTurn && piece === piece.toLowerCase())) {
               // Check if the move is valid
               if (isValidMove(piece, selectedRow, selectedCol, row, col, game)) {
+
+                // Capture the piece that's being taken (if any)
+                const capturedPiece = newGame[row][col];
                 
                 // Move the piece to the new location
                 newGame[row][col] = piece;
                 newGame[selectedRow][selectedCol] = '';
-                
+
                 // Announce the move
-                const fromPosition = positionToNotation(selectedRow, selectedCol);
-                const toPosition = positionToNotation(row, col);
-                const moveAnnouncement = `${getPieceName(piece)} moves from ${fromPosition} to ${toPosition}`;
-                speak(moveAnnouncement);
+                announceMove(piece, selectedRow, selectedCol, row, col, capturedPiece);
                 
                 setGame(newGame);
                 const gameWinner = checkForWin(newGame);
