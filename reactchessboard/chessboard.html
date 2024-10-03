@@ -230,8 +230,14 @@
                 newGame[row][col] = piece;
                 newGame[selectedRow][selectedCol] = '';
 
-                // Announce the move
-                announceMove(piece, selectedRow, selectedCol, row, col, capturedPiece);
+               // Try to announce the move, but don't let it prevent the actual move
+                try {
+                  announceMove(piece, selectedRow, selectedCol, row, col, capturedPiece);
+                } catch (announceError) {
+                  console.error('Error in announceMove:', announceError);
+                  // Still speak something even if the detailed announcement fails
+                  speak(`${getPieceName(piece)} moved`);
+                }
                 
                 setGame(newGame);
                 const gameWinner = checkForWin(newGame);
