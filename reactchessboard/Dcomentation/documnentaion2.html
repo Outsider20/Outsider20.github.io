@@ -1,1 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Chess Game Documentation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-jsx.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #2980b9;
+            margin-top: 20px;
+        }
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .code-block {
+            margin: 15px 0;
+        }
+        .explanation {
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin: 15px 0;
+            background-color: #ecf0f1;
+            border-radius: 0 4px 4px 0;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .summary {
+            background-color: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .nav {
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .nav li {
+            margin-bottom: 5px;
+        }
+        .nav a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>React Chess Game Documentation</h1>
 
+    <div class="nav">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#summary">Summary</a></li>
+            <li><a href="#core">Core Functionalities</a></li>
+            <li><a href="#react">React Features Used</a></li>
+            <li><a href="#complete">Complete Code</a></li>
+        </ul>
+    </div>
+
+    <div id="summary" class="summary section">
+        <h2>Summary of the Code</h2>
+        <p>This is a chessboard web application built using React, featuring:</p>
+        <ul>
+            <li>Interactive chessboard with piece images</li>
+            <li>Voice announcements using Web Speech API</li>
+            <li>Basic move validations</li>
+            <li>Game state management (turns, winner detection)</li>
+            <li>Restart functionality</li>
+        </ul>
+    </div>
+
+    <div id="core" class="section">
+        <h2>Core Functionalities</h2>
+
+        <h3>1. Chessboard Rendering</h3>
+        <div class="code-block">
+            <pre><code class="language-jsx">function Board({ game, selectedSquare, onSquareClick }) {
+  return (
+    <div>
+      {game.map((row, rowIndex) => (
+        <div key={rowIndex} style={{ display: 'flex' }}>
+          {row.map((value, colIndex) => (
+            <Square
+              key={colIndex}
+              value={value}
+              onClick={() => onSquareClick(rowIndex, colIndex)}
+              isLight={(rowIndex + colIndex) % 2 === 0}
+              isSelected={selectedSquare && 
+                selectedSquare[0] === rowIndex && 
+                selectedSquare[1] === colIndex}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}</code></pre>
+        </div>
+        <div class="explanation">
+            The Board component dynamically renders the chess board using nested mapping over the game state array. Each square is rendered using the Square component with appropriate props for styling and interaction.
+        </div>
+
+        <h3>2. Move Validation</h3>
+        <div class="code-block">
+            <pre><code class="language-jsx">function isValidMove(selectedSquare, destinationSquare, game) {
+  const [startRow, startCol] = selectedSquare;
+  const [endRow, endCol] = destinationSquare;
+  const piece = game[startRow][startCol];
+
+  if (piece === 'rook') {
+    return startRow === endRow || startCol === endCol;
+  }
+  // Additional piece-specific validation logic
+  return false;
+}</code></pre>
+        </div>
+        <div class="explanation">
+            Move validation checks if a proposed move follows chess rules for the specific piece type. This example shows validation for a rook, ensuring it only moves in straight lines.
+        </div>
+
+        <h3>3. Game State Management</h3>
+        <div class="code-block">
+            <pre><code class="language-jsx">function Game() {
+  const [game, setGame] = React.useState(initialGameState);
+  const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
+  const [winner, setWinner] = React.useState(null);
+
+  function handleMove(startSquare, endSquare) {
+    if (isValidMove(startSquare, endSquare, game)) {
+      const newGame = [...game];
+      newGame[endRow][endCol] = newGame[startRow][startCol];
+      newGame[startRow][startCol] = null;
+      setGame(newGame);
+      setIsWhiteTurn(!isWhiteTurn);
+      checkForWinner(newGame);
+    }
+  }
+
+  return (
+    <div className="game-container">
+      <Board 
+        game={game} 
+        onSquareClick={handleSquareClick}
+        selectedSquare={selectedSquare}
+      />
+      <div className="game-info">
+        {winner ? `${winner} wins!` : `${isWhiteTurn ? 'White' : 'Black'}'s turn`}
+      </div>
+    </div>
+  );
+}</code></pre>
+        </div>
+        <div class="explanation">
+            The Game component manages the overall game state, including the board configuration, current turn, and winner status. It handles moves and updates the game state accordingly.
+        </div>
+    </div>
+
+    <div id="react" class="section">
+        <h2>React Features Used</h2>
+
+        <h3>1. State Management (useState)</h3>
+        <div class="code-block">
+            <pre><code class="language-jsx">const [game, setGame] = React.useState(initialGameState);
+const [selectedSquare, setSelectedSquare] = React.useState(null);
+const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
+const [winner, setWinner] = React.useState(null);
+const [isSpeechEnabled, setIsSpeechEnabled] = React.useState(false);</code></pre>
+        </div>
+        <div class="explanation">
+            Multiple useState hooks manage different aspects of the game state, providing a reactive way to update the UI when game state changes.
+        </div>
+
+        <h3>2. Side Effects (useEffect)</h3>
+        <div class="code-block">
+            <pre><code class="language-jsx">React.useEffect(() => {
+  if (isSpeechEnabled) {
+    speak(`${isWhiteTurn ? "White" : "Black"}'s turn`);
+  }
+}, [isWhiteTurn, isSpeechEnabled]);</code></pre>
+        </div>
+        <div class="explanation">
+            useEffect handles side effects like voice announcements when the game state changes, such as when turns switch between players.
+        </div>
+    </div>
+
+    <div id="complete" class="section">
+        <h2>Complete Code</h2>
+        <div class="code-block">
+            <pre><code class="language-jsx">import React from 'react';
+import './ChessGame.css';
+
+const initialGameState = [
+  ['rook_black', 'knight_black', 'bishop_black', 'queen_black', 'king_black', 'bishop_black', 'knight_black', 'rook_black'],
+  ['pawn_black', 'pawn_black', 'pawn_black', 'pawn_black', 'pawn_black', 'pawn_black', 'pawn_black', 'pawn_black'],
+  [null, null, null, null, null, null, null, null],
+  [null, null, null, null, null, null, null, null],
+  [null, null, null, null, null, null, null, null],
+  [null, null, null, null, null, null, null, null],
+  ['pawn_white', 'pawn_white', 'pawn_white', 'pawn_white', 'pawn_white', 'pawn_white', 'pawn_white', 'pawn_white'],
+  ['rook_white', 'knight_white', 'bishop_white', 'queen_white', 'king_white', 'bishop_white', 'knight_white', 'rook_white']
+];
+
+function Square({ value, onClick, isLight, isSelected }) {
+  const squareStyle = {
+    width: '80px',
+    height: '80px',
+    backgroundColor: isSelected ? '#ffeb3b' : (isLight ? '#f0d9b5' : '#b58863'),
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer'
+  };
+
+  return (
+    <button style={squareStyle} onClick={onClick}>
+      {value ? <img src={`/chess-pieces/${value}.png`} alt={value} style={{ width: '60px' }} /> : null}
+    </button>
+  );
+}
+
+function Board({ game, selectedSquare, onSquareClick }) {
+  return (
+    <div>
+      {game.map((row, rowIndex) => (
+        <div key={rowIndex} style={{ display: 'flex' }}>
+          {row.map((value, colIndex) => (
+            <Square
+              key={colIndex}
+              value={value}
+              onClick={() => onSquareClick(rowIndex, colIndex)}
+              isLight={(rowIndex + colIndex) % 2 === 0}
+              isSelected={selectedSquare && selectedSquare[0] === rowIndex && selectedSquare[1] === colIndex}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Game() {
+  const [game, setGame] = React.useState(initialGameState);
+  const [selectedSquare, setSelectedSquare] = React.useState(null);
+  const [isWhiteTurn, setIsWhiteTurn] = React.useState(true);
+  const [winner, setWinner] = React.useState(null);
+  const [isSpeechEnabled, setIsSpeechEnabled] = React.useState(false);
+
+  function speak(text) {
+    if (isSpeechEnabled && window.speechSynthesis) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  React.useEffect(() => {
+    if (isSpeechEnabled) {
+      speak(`${isWhiteTurn ? "White" : "Black"}'s turn`);
+    }
+  }, [isWhiteTurn, isSpeechEnabled]);
+
+  function isValidMove(startSquare, endSquare) {
+    const [startRow, startCol] = startSquare;
+    const [endRow, endCol] = endSquare;
+    const piece = game[startRow][startCol];
+    
+    if (!piece) return false;
+    
+    const isWhitePiece = piece.includes('white');
+    if (isWhitePiece !== isWhiteTurn) return false;
+    
+    // Simple move validation (can be expanded for more accurate chess rules)
+    return true;
+  }
+
+  function handleSquareClick(rowIndex, colIndex) {
+    if (winner) return;
+
+    if (selectedSquare === null) {
+      const piece = game[rowIndex][colIndex];
+      if (piece && piece.includes(isWhiteTurn ? 'white' : 'black')) {
+        setSelectedSquare([rowIndex, colIndex]);
+      }
+    } else {
+      const [startRow, startCol] = selectedSquare;
+      if (isValidMove(selectedSquare, [rowIndex, colIndex])) {
+        const newGame = game.map(row => [...row]);
+        newGame[rowIndex][colIndex] = newGame[startRow][startCol];
+        newGame[startRow][startCol] = null;
+        
+        setGame(newGame);
+        setIsWhiteTurn(!isWhiteTurn);
+        checkForWinner(newGame);
+        
+        if (isSpeechEnabled) {
+          speak(`Piece moved to ${String.fromCharCode(97 + colIndex)}${8 - rowIndex}`);
+        }
+      }
+      setSelectedSquare(null);
+    }
+  }
+
+  function checkForWinner(gameState) {
+    const pieces = gameState.flat();
+    if (!pieces.includes('king_white')) {
+      setWinner('Black');
+    } else if (!pieces.includes('king_black')) {
+      setWinner('White');
+    }
+  }
+
+  function restartGame() {
+    setGame(initialGameState);
+    setSelectedSquare(null);
+    setIsWhiteTurn(true);
+    setWinner(null);
+    if (isSpeechEnabled) {
+      speak("Game restarted");
+    }
+  }
+
+  return (
+    <div className="game-container">
+      <Board 
+        game={game}
+        selectedSquare={selectedSquare}
+        onSquareClick={handleSquareClick}
+      />
+      <div className="side-panel">
+        <div className="game-info">
