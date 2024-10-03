@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fabric.js Chessboard with Annotations</title>
+    <title>Fabric.js Chessboard with Enhanced Features</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         canvas {
@@ -22,10 +22,6 @@
             justify-content: space-between;
             margin-bottom: 10px;
         }
-        #instructions {
-            margin-top: 10px;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
@@ -35,21 +31,6 @@
     </div>
     <canvas id="canvas" width="400" height="400"></canvas>
     <div id="history"></div>
-    <div id="instructions">
-        <h4>How to Play Chess:</h4>
-        <p>1. Each player takes turns moving one piece.</p>
-        <p>2. The objective is to checkmate the opponent's king.</p>
-        <p>3. Each piece has its own movement rules:</p>
-        <ul>
-            <li>King: Moves one square in any direction.</li>
-            <li>Queen: Moves any number of squares in any direction.</li>
-            <li>Rook: Moves any number of squares horizontally or vertically.</li>
-            <li>Bishop: Moves any number of squares diagonally.</li>
-            <li>Knight: Moves in an L-shape (two squares in one direction and then one square perpendicular).</li>
-            <li>Pawn: Moves forward one square, but captures diagonally.</li>
-        </ul>
-        <p>4. Use algebraic notation (e.g., e2 to e4) for moves.</p>
-    </div>
     <script>
         const canvas = new fabric.Canvas('canvas');
         const squareSize = 50;
@@ -59,6 +40,7 @@
         let blackTime = 300; // 5 minutes
         let timerInterval;
 
+        // Initialize the timers
         function startTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -84,6 +66,7 @@
             }
         }
 
+        // Create the chessboard
         function createChessboard() {
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
@@ -99,34 +82,9 @@
                     canvas.add(square);
                 }
             }
-
-            // Mark ranks (1-8)
-            for (let i = 0; i < 8; i++) {
-                const text = new fabric.Text((8 - i).toString(), {
-                    left: 0,
-                    top: i * squareSize + squareSize / 2,
-                    fontSize: 20,
-                    originX: 'center',
-                    originY: 'center',
-                    selectable: false
-                });
-                canvas.add(text);
-            }
-
-            // Mark files (a-h)
-            for (let i = 0; i < 8; i++) {
-                const text = new fabric.Text(String.fromCharCode(97 + i), {
-                    left: i * squareSize + squareSize / 2,
-                    top: 400,
-                    fontSize: 20,
-                    originX: 'center',
-                    originY: 'center',
-                    selectable: false
-                });
-                canvas.add(text);
-            }
         }
 
+        // Load SVG pieces onto the chessboard
         function addPieces() {
             const pieces = {
                 'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
@@ -169,7 +127,7 @@
                                 selectable: true,
                                 pieceColor: piece === piece.toUpperCase() ? 'white' : 'black'
                             });
-
+                            
                             // Mouse event handlers
                             svgPiece.on('mousedown', function() {
                                 console.log(`Piece selected: ${piece}`);
@@ -206,4 +164,46 @@
         }
 
         function movePiece(from, to) {
-            const piece
+            const piece = canvas.getActiveObject();
+            if (!piece) return;
+
+            const fromCoords = positionToCoords(from);
+            const toCoords = positionToCoords(to);
+
+            if (piece && piece.left === fromCoords.x && piece.top === fromCoords.y) {
+                piece.set({
+                    left: toCoords.x,
+                    top: toCoords.y,
+                });
+                piece.setCoords();
+                canvas.renderAll();
+                updateHistory(`${piece.pieceColor} moves from ${from} to ${to}`);
+                turn = turn === 'white' ? 'black' : 'white'; // Switch turns
+                startTimer(); // Restart timer for the next player
+            }
+        }
+
+        function positionToCoords(position) {
+            const col = position.charCodeAt(0) - 'a'.charCodeAt(0);
+            const row = 8 - parseInt(position[1]);
+            return {
+                x: col * squareSize + squareSize / 2,
+                y: row * squareSize + squareSize / 2
+            };
+        }
+
+        window.addEventListener('keydown', function(event) {
+            if (event.key.match(/[a-h][1-8]/)) { // Check for valid square
+                const from = prompt("Enter the piece's current position (e.g., e2):");
+                if (from) {
+                    movePiece(from, event.key); // Move to the square indicated by the key
+                }
+            }
+        });
+
+        createChessboard();
+        addPieces();
+        startTimer();
+    </script>
+</body>
+</html>
