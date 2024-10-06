@@ -47,6 +47,7 @@
         let blackTime = 300;
         let timerInterval;
         let moveNumber = 1;
+        let selectedPiece = null;
         let gameState = [
             ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
             ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
@@ -58,7 +59,6 @@
             ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
         ];
 
-        // Add the missing createChessboard function
         function createChessboard() {
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
@@ -76,7 +76,6 @@
             }
         }
 
-        // Add the missing addPieces function
         function addPieces() {
             const pieces = {
                 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
@@ -94,7 +93,10 @@
                             fill: piece === piece.toUpperCase() ? 'white' : 'black',
                             originX: 'center',
                             originY: 'center',
-                            selectable: false
+                            selectable: true,
+                            hasBorders: false,
+                            hasControls: false,
+                            piece: piece
                         });
                         canvas.add(text);
                     }
@@ -102,7 +104,6 @@
             }
         }
 
-        // Add the missing startTimer function
         function startTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -139,13 +140,18 @@
             return pieceNames[piece.toLowerCase()];
         }
 
-        function updateHistory(move) {
+        function updateHistory(from, to, piece, capturedPiece) {
             const historyDiv = document.getElementById('history');
             const moveEntry = document.createElement('div');
             moveEntry.className = 'move-entry';
             
             const color = turn === 'black' ? 'White' : 'Black';
-            moveEntry.textContent = `${moveNumber}. ${color}: ${move}`;
+            let moveText = `${getPieceName(piece)} from ${from} to ${to}`;
+            if (capturedPiece !== '.') {
+                moveText += ` capturing ${getPieceName(capturedPiece)}`;
+            }
+            
+            moveEntry.textContent = `${moveNumber}. ${color}: ${moveText}`;
             
             historyDiv.appendChild(moveEntry);
             historyDiv.scrollTop = historyDiv.scrollHeight;
@@ -155,54 +161,14 @@
             }
         }
 
-        function movePiece(from, to) {
-            const fromCoords = positionToArrayIndices(from);
-            const toCoords = positionToArrayIndices(to);
-            
-            const piece = gameState[fromCoords.row][fromCoords.col];
-            if (piece === '.') {
-                alert("No piece at this position!");
-                return false;
-            }
-            
-            const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
-            
-            if (pieceColor !== turn) {
-                alert("It's not your turn!");
-                return false;
-            }
-            
-            if (!isValidMove(piece, fromCoords.row, fromCoords.col, toCoords.row, toCoords.col)) {
-                alert("Invalid move!");
-                return false;
-            }
-
-            const capturedPiece = gameState[toCoords.row][toCoords.col];
-            
-            // Update game state
-            gameState[toCoords.row][toCoords.col] = piece;
-            gameState[fromCoords.row][fromCoords.col] = '.';
-
-            // Update visual representation
-            updateBoard();
-            
-            // Create move description
-            let moveText = `${getPieceName(piece)} on ${from} moves to ${to}`;
-            if (capturedPiece !== '.') {
-                moveText += ` capturing ${getPieceName(capturedPiece)}`;
-            }
-            
-            // Update history and turn
-            updateHistory(moveText);
-            turn = turn === 'white' ? 'black' : 'white';
-            startTimer();
-            
-            return true;
-        }
-
-        function isSameColor(piece1, piece2) {
-            if (!piece1 || !piece2 || piece1 === '.' || piece2 === '.') return false;
-            return (piece1.toUpperCase() === piece1) === (piece2.toUpperCase() === piece2);
+        function coordsToPosition(left, top) {
+            const col = Math.floor(left / squareSize);
+            const row = Math.floor(top / squareSize);
+            return {
+                algebraic: `${String.fromCharCode(97 + col)}${8 - row}`,
+                row: row,
+                col: col
+            };
         }
 
         function isValidMove(piece, fromRow, fromCol, toRow, toCol) {
@@ -215,13 +181,13 @@
             switch (piece.toLowerCase()) {
                 case 'p':
                     if (piece === 'P') {
-                        if (fromRow === 6 && toRow === 4 && fromCol === toCol && !targetPiece) return true;
-                        if (toRow === fromRow - 1 && fromCol === toCol && !targetPiece) return true;
-                        if (toRow === fromRow - 1 && colDiff === 1 && targetPiece && targetPiece.toLowerCase() === targetPiece) return true;
+                        if (fromRow === 6 && toRow === 4 && fromCol === toCol && gameState[5][fromCol] === '.' && gameState[4][fromCol] === '.') return true;
+                        if (toRow === fromRow - 1 && fromCol === toCol && gameState[toRow][toCol] === '.') return true;
+                        if (toRow === fromRow - 1 && Math.abs(toCol - fromCol) === 1 && gameState[toRow][toCol] !== '.' && gameState[toRow][toCol].toLowerCase() === gameState[toRow][toCol]) return true;
                     } else {
-                        if (fromRow === 1 && toRow === 3 && fromCol === toCol && !targetPiece) return true;
-                        if (toRow === fromRow + 1 && fromCol === toCol && !targetPiece) return true;
-                        if (toRow === fromRow + 1 && colDiff === 1 && targetPiece && targetPiece.toUpperCase() === targetPiece) return true;
+                        if (fromRow === 1 && toRow === 3 && fromCol === toCol && gameState[2][fromCol] === '.' && gameState[3][fromCol] === '.') return true;
+                        if (toRow === fromRow + 1 && fromCol === toCol && gameState[toRow][toCol] === '.') return true;
+                        if (toRow === fromRow + 1 && Math.abs(toCol - fromCol) === 1 && gameState[toRow][toCol] !== '.' && gameState[toRow][toCol].toUpperCase() === gameState[toRow][toCol]) return true;
                     }
                     return false;
                 case 'r': return rowDiff === 0 || colDiff === 0;
@@ -233,10 +199,9 @@
             }
         }
 
-        function positionToArrayIndices(position) {
-            const col = position.charCodeAt(0) - 'a'.charCodeAt(0);
-            const row = 8 - parseInt(position[1]);
-            return { row, col };
+        function isSameColor(piece1, piece2) {
+            if (!piece1 || !piece2 || piece1 === '.' || piece2 === '.') return false;
+            return (piece1.toUpperCase() === piece1) === (piece2.toUpperCase() === piece2);
         }
 
         function updateBoard() {
@@ -244,14 +209,62 @@
             createChessboard();
             addPieces();
         }
-        
-        window.addEventListener('keydown', function(event) {
-            if (event.key.match(/[a-h][1-8]/)) {
-                const from = prompt("Enter the piece's current position (e.g., e2):");
-                if (from) {
-                    movePiece(from, event.key);
+
+        canvas.on('object:moving', function(e) {
+            const piece = e.target;
+            // Snap to grid
+            const gridSize = squareSize;
+            piece.set({
+                left: Math.round(piece.left / gridSize) * gridSize + gridSize / 2,
+                top: Math.round(piece.top / gridSize) * gridSize + gridSize / 2
+            });
+        });
+
+        canvas.on('mouse:down', function(e) {
+            if (e.target && e.target.piece) {
+                const pieceColor = e.target.piece === e.target.piece.toUpperCase() ? 'white' : 'black';
+                if (pieceColor === turn) {
+                    selectedPiece = e.target;
                 }
             }
+        });
+
+        canvas.on('mouse:up', function(e) {
+            if (selectedPiece) {
+                const fromPos = coordsToPosition(selectedPiece.__originalLeft, selectedPiece.__originalTop);
+                const toPos = coordsToPosition(selectedPiece.left, selectedPiece.top);
+                
+                if (fromPos.algebraic !== toPos.algebraic) {
+                    const piece = selectedPiece.piece;
+                    const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
+                    
+                    if (pieceColor === turn && 
+                        isValidMove(piece, fromPos.row, fromPos.col, toPos.row, toPos.col)) {
+                        
+                        const capturedPiece = gameState[toPos.row][toPos.col];
+                        gameState[toPos.row][toPos.col] = gameState[fromPos.row][fromPos.col];
+                        gameState[fromPos.row][fromPos.col] = '.';
+                        
+                        updateHistory(fromPos.algebraic, toPos.algebraic, piece, capturedPiece);
+                        turn = turn === 'white' ? 'black' : 'white';
+                        updateBoard();
+                        startTimer();
+                    } else {
+                        // Invalid move, return piece to original position
+                        selectedPiece.set({
+                            left: selectedPiece.__originalLeft,
+                            top: selectedPiece.__originalTop
+                        });
+                        canvas.renderAll();
+                    }
+                }
+                selectedPiece = null;
+            }
+        });
+
+        canvas.on('object:moving', function(e) {
+            e.target.__originalLeft = e.target.__originalLeft || e.target.left;
+            e.target.__originalTop = e.target.__originalTop || e.target.top;
         });
 
         createChessboard();
