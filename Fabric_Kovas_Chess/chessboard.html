@@ -58,6 +58,75 @@
             ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
         ];
 
+        // Add the missing createChessboard function
+        function createChessboard() {
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const isLightSquare = (row + col) % 2 === 0;
+                    const square = new fabric.Rect({
+                        left: col * squareSize,
+                        top: row * squareSize,
+                        width: squareSize,
+                        height: squareSize,
+                        fill: isLightSquare ? '#f0d9b5' : '#b58863',
+                        selectable: false
+                    });
+                    canvas.add(square);
+                }
+            }
+        }
+
+        // Add the missing addPieces function
+        function addPieces() {
+            const pieces = {
+                'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+                'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+            };
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = gameState[row][col];
+                    if (piece !== '.') {
+                        const text = new fabric.Text(pieces[piece], {
+                            left: col * squareSize + squareSize / 2,
+                            top: row * squareSize + squareSize / 2,
+                            fontSize: 40,
+                            fill: piece === piece.toUpperCase() ? 'white' : 'black',
+                            originX: 'center',
+                            originY: 'center',
+                            selectable: false
+                        });
+                        canvas.add(text);
+                    }
+                }
+            }
+        }
+
+        // Add the missing startTimer function
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (turn === 'white') {
+                    whiteTime--;
+                } else {
+                    blackTime--;
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const whiteMinutes = Math.floor(whiteTime / 60);
+            const whiteSeconds = whiteTime % 60;
+            const blackMinutes = Math.floor(blackTime / 60);
+            const blackSeconds = blackTime % 60;
+            
+            document.getElementById('white-timer').textContent = 
+                `White: ${String(whiteMinutes).padStart(2, '0')}:${String(whiteSeconds).padStart(2, '0')}`;
+            document.getElementById('black-timer').textContent = 
+                `Black: ${String(blackMinutes).padStart(2, '0')}:${String(blackSeconds).padStart(2, '0')}`;
+        }
+
         function getPieceName(piece) {
             const pieceNames = {
                 'p': 'Pawn',
@@ -70,7 +139,6 @@
             return pieceNames[piece.toLowerCase()];
         }
 
-        // Updated updateHistory function
         function updateHistory(move) {
             const historyDiv = document.getElementById('history');
             const moveEntry = document.createElement('div');
@@ -132,7 +200,6 @@
             return true;
         }
 
-        // Your existing functions here (isSameColor, isValidMove, etc.)
         function isSameColor(piece1, piece2) {
             if (!piece1 || !piece2 || piece1 === '.' || piece2 === '.') return false;
             return (piece1.toUpperCase() === piece1) === (piece2.toUpperCase() === piece2);
@@ -177,8 +244,6 @@
             createChessboard();
             addPieces();
         }
-
-        // Rest of your existing functions (createChessboard, startTimer, etc.)
         
         window.addEventListener('keydown', function(event) {
             if (event.key.match(/[a-h][1-8]/)) {
