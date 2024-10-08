@@ -49,7 +49,6 @@
         let timerInterval;
         let boardState = Array(8).fill().map(() => Array(8).fill(null));
         let dragStartPosition = null;
-        let gameOver = false;
 
         function startTimer() {
             clearInterval(timerInterval);
@@ -175,6 +174,9 @@
         }
 
         function addPieces() {
+            
+            let gameOver = false;
+            
             const pieces = {
                 'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
                 'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
