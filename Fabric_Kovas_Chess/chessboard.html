@@ -287,7 +287,6 @@
                                 // Switch turns only after a valid move
                                 turn = turn === 'white' ? 'black' : 'white';
                                 if (turn === 'white') moveCount++;
-                                updateTurnIndicator();
                                 startTimer();
                             } else {
                                 // Invalid move - revert position and allow retry
