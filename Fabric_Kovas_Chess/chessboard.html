@@ -49,6 +49,7 @@
         let timerInterval;
         let boardState = Array(8).fill().map(() => Array(8).fill(null));
         let dragStartPosition = null;
+        let gameIsOver = false;
 
         function startTimer() {
             clearInterval(timerInterval);
@@ -222,7 +223,6 @@
                             boardState[row][col] = svgPiece;
                             canvas.add(svgPiece);
 
-                            let gameOver = false;
                             // Add mouse event listeners
                             svgPiece.on('mousedown', function() {
                                 if (gameIsOver || this.pieceColor !== turn) {
