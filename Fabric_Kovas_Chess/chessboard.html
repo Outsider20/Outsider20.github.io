@@ -208,6 +208,7 @@
                     if (piece !== '.') {
                         fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
                             const svgPiece = fabric.util.groupSVGElements(objects, options);
+                            const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
                             svgPiece.set({
                                 left: col * squareSize + squareSize / 2,
                                 top: row * squareSize + squareSize / 2,
@@ -216,7 +217,7 @@
                                 hasControls: false,
                                 hasBorders: false,
                                 selectable: true,
-                                pieceColor: piece === piece.toUpperCase() ? 'white' : 'black',
+                                pieceColor: pieceColor,
                                 pieceType: piece.toLowerCase()
                             });
                             
@@ -238,7 +239,7 @@
                             });
 
                             svgPiece.on('moving', function() {
-                                if (!dragStartPosition) return;
+                                if (!dragStartPosition || this.pieceColor !== turn) return;
                                 
                                 const currentRow = Math.floor(this.top / squareSize);
                                 const currentCol = Math.floor(this.left / squareSize);
@@ -251,40 +252,51 @@
                             });
 
                             svgPiece.on('mouseup', function() {
-                                if (!dragStartPosition) return;
-
+                                 if (!dragStartPosition || this.pieceColor !== turn) {
+                                    // Reset piece position if it's not their turn
+                                    if (dragStartPosition) {
+                                        this.set({
+                                            left: dragStartPosition.left,
+                                            top: dragStartPosition.top
+                                        });
+                                        canvas.renderAll();
+                                    }
+                                    dragStartPosition = null;
+                                    return false;
+                                }
+                                
                                 const toRow = Math.floor(this.top / squareSize);
                                 const toCol = Math.floor(this.left / squareSize);
                                 const fromRow = dragStartPosition.row;
                                 const fromCol = dragStartPosition.col;
 
                                 if (isValidMove(fromRow, fromCol, toRow, toCol, this)) {
-                                    // Valid move
-                                    const destPiece = boardState[toRow][toCol];
-                                    if (destPiece) {
-                                        canvas.remove(destPiece);
-                                    }
-
-                                    // Update board state
-                                    boardState[toRow][toCol] = this;
-                                    boardState[fromRow][fromCol] = null;
-
-                                    // Update move history
-                                    const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
-                                    const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
-                                    updateHistory(this, from, to, destPiece);
-
-                                    // Switch turns
-                                    turn = turn === 'white' ? 'black' : 'white';
-                                    if (turn === 'white') moveCount++;
-                                    startTimer();
-                                } else {
-                                    // Invalid move - revert position
-                                    this.set({
-                                        left: dragStartPosition.left,
-                                        top: dragStartPosition.top
-                                    });
+                                // Valid move logic
+                                const destPiece = boardState[toRow][toCol];
+                                if (destPiece) {
+                                    canvas.remove(destPiece);
                                 }
+    
+                                boardState[toRow][toCol] = this;
+                                boardState[fromRow][fromCol] = null;
+    
+                                const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
+                                const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
+                                updateHistory(this, from, to, destPiece);
+    
+                                // Switch turns only after a valid move
+                                turn = turn === 'white' ? 'black' : 'white';
+                                if (turn === 'white') moveCount++;
+                                updateTurnIndicator();
+                                startTimer();
+                            } else {
+                                // Invalid move - revert position and allow retry
+                                this.set({
+                                    left: dragStartPosition.left,
+                                    top: dragStartPosition.top
+                                });
+                                alert("This is an invalid move. Try again")
+                            }
                                 
                                 dragStartPosition = null;
                                 canvas.renderAll();
