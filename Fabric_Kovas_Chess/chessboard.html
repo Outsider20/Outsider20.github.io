@@ -223,7 +223,7 @@
 
                             // Add mouse event listeners
                             svgPiece.on('mousedown', function() {
-                                if (this.pieceColor !== turn) {
+                                if (gameIsOver || this.pieceColor !== turn) {
                                     canvas.discardActiveObject();
                                     return false;
                                 }
