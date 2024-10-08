@@ -315,28 +315,27 @@
                 'p': 'Pawn'
             };
             
-            if (piece.pieceColor === 'white') {
-                moveText += `<span class="move-number">${moveCount}.</span> `;
-            }
+            
+            moveText += `<span class="move-number">${moveCount}.</span> `;
             
             const pieceName = pieceNames[piece.pieceType.toLowerCase()];
             const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
             
             moveText += `${playerColor} ${pieceName} on ${from} `;
             
+            if (!gameIsOver) {
+                moveText += `moved to ${to}`;
+            }
+
             if (capturedPiece) {
                 const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
-                moveText += `captured ${capturedPiece.pieceColor} ${capturedPieceName} `;
+                moveText += `captureing ${capturedPiece.pieceColor} ${capturedPieceName} `;
                 
                 // Check if a king was captured
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
                     gameIsOver = true;
                     moveText += `- ${playerColor} wins the game!`;
                 }
-            }
-            
-            if (!gameIsOver) {
-                moveText += `moved to ${to}`;
             }
             
             history.push(moveText);
