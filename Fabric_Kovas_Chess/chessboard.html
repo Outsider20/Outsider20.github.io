@@ -49,6 +49,7 @@
         let timerInterval;
         let boardState = Array(8).fill().map(() => Array(8).fill(null));
         let dragStartPosition = null;
+        let gameOver = false;
 
         function startTimer() {
             clearInterval(timerInterval);
@@ -322,7 +323,6 @@
             
             moveText += `${playerColor} ${pieceName} on ${from} `;
             
-            let gameOver = false;
             if (capturedPiece) {
                 const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
                 moveText += `captured ${capturedPiece.pieceColor} ${capturedPieceName} `;
