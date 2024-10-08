@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fabric.js Chessboard with Enhanced Features</title>
+    <title>Fabric.js Chessboard with Drag and Drop</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         canvas {
@@ -16,18 +16,17 @@
             border: 1px solid #000;
             margin-top: 10px;
             padding: 5px;
+            font-family: monospace;
         }
         #hud {
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
         }
-        .move-entry {
-            margin-bottom: 5px;
-            padding: 2px 5px;
-        }
-        .move-entry:nth-child(odd) {
-            background-color: #f5f5f5;
+        .move-number {
+            display: inline-block;
+            width: 30px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -43,21 +42,37 @@
         const squareSize = 50;
         let turn = 'white';
         const history = [];
+        let moveCount = 1;
         let whiteTime = 300;
         let blackTime = 300;
         let timerInterval;
-        let moveNumber = 1;
-        let selectedPiece = null;
-        let gameState = [
-            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
-        ];
+        let boardState = Array(8).fill().map(() => Array(8).fill(null));
+        let dragStartPosition = null;
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (turn === 'white') {
+                    whiteTime--;
+                    updateTimerDisplay('white');
+                } else {
+                    blackTime--;
+                    updateTimerDisplay('black');
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(color) {
+            const timerElement = document.getElementById(`${color}-timer`);
+            const time = color === 'white' ? whiteTime : blackTime;
+            const minutes = String(Math.floor(time / 60)).padStart(2, '0');
+            const seconds = String(time % 60).padStart(2, '0');
+            timerElement.innerText = `${color.charAt(0).toUpperCase() + color.slice(1)}: ${minutes}:${seconds}`;
+            if (time <= 0) {
+                clearInterval(timerInterval);
+                alert(`${color.charAt(0).toUpperCase() + color.slice(1)} time's up!`);
+            }
+        }
 
         function createChessboard() {
             for (let row = 0; row < 8; row++) {
@@ -66,9 +81,9 @@
                     const square = new fabric.Rect({
                         left: col * squareSize,
                         top: row * squareSize,
+                        fill: isLightSquare ? '#eee' : '#8B4513',
                         width: squareSize,
                         height: squareSize,
-                        fill: isLightSquare ? '#f0d9b5' : '#b58863',
                         selectable: false
                     });
                     canvas.add(square);
@@ -76,196 +91,235 @@
             }
         }
 
+        function isValidMove(fromRow, fromCol, toRow, toCol, piece) {
+            if (fromRow === toRow && fromCol === toCol) return false;
+            
+            const pieceType = piece.pieceType.toLowerCase();
+            const color = piece.pieceColor;
+
+            const destPiece = getPieceAt(toRow, toCol);
+            if (destPiece && destPiece.pieceColor === color) {
+                return false;
+            }
+
+            const rowDiff = toRow - fromRow;
+            const colDiff = toCol - fromCol;
+            const absRowDiff = Math.abs(rowDiff);
+            const absColDiff = Math.abs(colDiff);
+
+            switch (pieceType) {
+                case 'p':
+                    const direction = color === 'white' ? -1 : 1;
+                    const startRow = color === 'white' ? 6 : 1;
+                    
+                    if (colDiff === 0 && !destPiece) {
+                        if (rowDiff === direction) return true;
+                        if (fromRow === startRow && 
+                            rowDiff === 2 * direction && 
+                            !getPieceAt(fromRow + direction, fromCol)) {
+                            return true;
+                        }
+                    }
+                    
+                    if (absColDiff === 1 && rowDiff === direction && destPiece) {
+                        return true;
+                    }
+                    return false;
+
+                case 'r':
+                    if (fromRow !== toRow && fromCol !== toCol) return false;
+                    return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+
+                case 'n':
+                    return (absRowDiff === 2 && absColDiff === 1) || 
+                           (absRowDiff === 1 && absColDiff === 2);
+
+                case 'b':
+                    if (absRowDiff !== absColDiff) return false;
+                    return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+
+                case 'q':
+                    if (fromRow === toRow || fromCol === toCol || absRowDiff === absColDiff) {
+                        return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+                    }
+                    return false;
+
+                case 'k':
+                    return absRowDiff <= 1 && absColDiff <= 1;
+
+                default:
+                    return false;
+            }
+        }
+
+        function isPathBlocked(fromRow, fromCol, toRow, toCol) {
+            const rowDir = fromRow === toRow ? 0 : (toRow - fromRow) / Math.abs(toRow - fromRow);
+            const colDir = fromCol === toCol ? 0 : (toCol - fromCol) / Math.abs(toCol - fromCol);
+            
+            let currentRow = fromRow + rowDir;
+            let currentCol = fromCol + colDir;
+            
+            while (currentRow !== toRow || currentCol !== toCol) {
+                if (getPieceAt(currentRow, currentCol)) return true;
+                currentRow += rowDir;
+                currentCol += colDir;
+            }
+            
+            return false;
+        }
+
+        function getPieceAt(row, col) {
+            return boardState[row][col];
+        }
+
         function addPieces() {
             const pieces = {
-                'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
-                'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+                'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+                'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+                'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+                'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+                'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+                'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+                'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+                'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+                'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+                'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+                'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+                'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
             };
+
+            const initialBoardState = [
+                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+            ];
 
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
-                    const piece = gameState[row][col];
+                    const piece = initialBoardState[row][col];
                     if (piece !== '.') {
-                        const text = new fabric.Text(pieces[piece], {
-                            left: col * squareSize + squareSize / 2,
-                            top: row * squareSize + squareSize / 2,
-                            fontSize: 40,
-                            fill: piece === piece.toUpperCase() ? 'white' : 'black',
-                            originX: 'center',
-                            originY: 'center',
-                            selectable: true,
-                            hasBorders: false,
-                            hasControls: false,
-                            piece: piece
+                        fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
+                            const svgPiece = fabric.util.groupSVGElements(objects, options);
+                            svgPiece.set({
+                                left: col * squareSize + squareSize / 2,
+                                top: row * squareSize + squareSize / 2,
+                                originX: 'center',
+                                originY: 'center',
+                                hasControls: false,
+                                hasBorders: false,
+                                selectable: true,
+                                pieceColor: piece === piece.toUpperCase() ? 'white' : 'black',
+                                pieceType: piece.toLowerCase()
+                            });
+                            
+                            boardState[row][col] = svgPiece;
+                            canvas.add(svgPiece);
+
+                            // Add mouse event listeners
+                            svgPiece.on('mousedown', function() {
+                                if (this.pieceColor !== turn) {
+                                    canvas.discardActiveObject();
+                                    return false;
+                                }
+                                dragStartPosition = {
+                                    row: Math.floor(this.top / squareSize),
+                                    col: Math.floor(this.left / squareSize),
+                                    left: this.left,
+                                    top: this.top
+                                };
+                            });
+
+                            svgPiece.on('moving', function() {
+                                if (!dragStartPosition) return;
+                                
+                                const currentRow = Math.floor(this.top / squareSize);
+                                const currentCol = Math.floor(this.left / squareSize);
+                                
+                                // Snap to grid while dragging
+                                this.set({
+                                    left: currentCol * squareSize + squareSize / 2,
+                                    top: currentRow * squareSize + squareSize / 2
+                                });
+                            });
+
+                            svgPiece.on('mouseup', function() {
+                                if (!dragStartPosition) return;
+
+                                const toRow = Math.floor(this.top / squareSize);
+                                const toCol = Math.floor(this.left / squareSize);
+                                const fromRow = dragStartPosition.row;
+                                const fromCol = dragStartPosition.col;
+
+                                if (isValidMove(fromRow, fromCol, toRow, toCol, this)) {
+                                    // Valid move
+                                    const destPiece = boardState[toRow][toCol];
+                                    if (destPiece) {
+                                        canvas.remove(destPiece);
+                                    }
+
+                                    // Update board state
+                                    boardState[toRow][toCol] = this;
+                                    boardState[fromRow][fromCol] = null;
+
+                                    // Update move history
+                                    const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
+                                    const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
+                                    updateHistory(this, from, to, destPiece);
+
+                                    // Switch turns
+                                    turn = turn === 'white' ? 'black' : 'white';
+                                    if (turn === 'white') moveCount++;
+                                    startTimer();
+                                } else {
+                                    // Invalid move - revert position
+                                    this.set({
+                                        left: dragStartPosition.left,
+                                        top: dragStartPosition.top
+                                    });
+                                }
+                                
+                                dragStartPosition = null;
+                                canvas.renderAll();
+                            });
                         });
-                        canvas.add(text);
                     }
                 }
             }
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (turn === 'white') {
-                    whiteTime--;
-                } else {
-                    blackTime--;
-                }
-                updateTimerDisplay();
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const whiteMinutes = Math.floor(whiteTime / 60);
-            const whiteSeconds = whiteTime % 60;
-            const blackMinutes = Math.floor(blackTime / 60);
-            const blackSeconds = blackTime % 60;
-            
-            document.getElementById('white-timer').textContent = 
-                `White: ${String(whiteMinutes).padStart(2, '0')}:${String(whiteSeconds).padStart(2, '0')}`;
-            document.getElementById('black-timer').textContent = 
-                `Black: ${String(blackMinutes).padStart(2, '0')}:${String(blackSeconds).padStart(2, '0')}`;
-        }
-
-        function getPieceName(piece) {
-            const pieceNames = {
-                'p': 'Pawn',
-                'r': 'Rook',
-                'n': 'Knight',
-                'b': 'Bishop',
-                'q': 'Queen',
-                'k': 'King'
+        function getPieceSymbol(piece) {
+            const symbols = {
+                'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙',
+                'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟'
             };
-            return pieceNames[piece.toLowerCase()];
+            const symbol = symbols[piece.pieceType.toUpperCase()];
+            return piece.pieceColor === 'white' ? symbol : symbol.toLowerCase();
         }
 
-        function updateHistory(from, to, piece, capturedPiece) {
+        function updateHistory(piece, from, to, capturedPiece) {
+            let moveText = '';
+            if (piece.pieceColor === 'white') {
+                moveText += `<span class="move-number">${moveCount}.</span> `;
+            }
+            
+            moveText += getPieceSymbol(piece);
+            
+            if (capturedPiece) {
+                moveText += 'x' + getPieceSymbol(capturedPiece);
+            }
+            
+            moveText += to;
+            
+            history.push(moveText);
             const historyDiv = document.getElementById('history');
-            const moveEntry = document.createElement('div');
-            moveEntry.className = 'move-entry';
-            
-            const color = turn === 'black' ? 'White' : 'Black';
-            let moveText = `${getPieceName(piece)} from ${from} to ${to}`;
-            if (capturedPiece !== '.') {
-                moveText += ` capturing ${getPieceName(capturedPiece)}`;
-            }
-            
-            moveEntry.textContent = `${moveNumber}. ${color}: ${moveText}`;
-            
-            historyDiv.appendChild(moveEntry);
+            historyDiv.innerHTML = history.join(' ');
             historyDiv.scrollTop = historyDiv.scrollHeight;
-            
-            if (turn === 'black') {
-                moveNumber++;
-            }
         }
-
-        function coordsToPosition(left, top) {
-            const col = Math.floor(left / squareSize);
-            const row = Math.floor(top / squareSize);
-            return {
-                algebraic: `${String.fromCharCode(97 + col)}${8 - row}`,
-                row: row,
-                col: col
-            };
-        }
-
-        function isValidMove(piece, fromRow, fromCol, toRow, toCol) {
-            const rowDiff = Math.abs(toRow - fromRow);
-            const colDiff = Math.abs(toCol - fromCol);
-            const targetPiece = gameState[toRow][toCol];
-
-            if (isSameColor(piece, targetPiece)) return false;
-
-            switch (piece.toLowerCase()) {
-                case 'p':
-                    if (piece === 'P') {
-                        if (fromRow === 6 && toRow === 4 && fromCol === toCol && gameState[5][fromCol] === '.' && gameState[4][fromCol] === '.') return true;
-                        if (toRow === fromRow - 1 && fromCol === toCol && gameState[toRow][toCol] === '.') return true;
-                        if (toRow === fromRow - 1 && Math.abs(toCol - fromCol) === 1 && gameState[toRow][toCol] !== '.' && gameState[toRow][toCol].toLowerCase() === gameState[toRow][toCol]) return true;
-                    } else {
-                        if (fromRow === 1 && toRow === 3 && fromCol === toCol && gameState[2][fromCol] === '.' && gameState[3][fromCol] === '.') return true;
-                        if (toRow === fromRow + 1 && fromCol === toCol && gameState[toRow][toCol] === '.') return true;
-                        if (toRow === fromRow + 1 && Math.abs(toCol - fromCol) === 1 && gameState[toRow][toCol] !== '.' && gameState[toRow][toCol].toUpperCase() === gameState[toRow][toCol]) return true;
-                    }
-                    return false;
-                case 'r': return rowDiff === 0 || colDiff === 0;
-                case 'n': return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
-                case 'b': return rowDiff === colDiff;
-                case 'q': return rowDiff === colDiff || rowDiff === 0 || colDiff === 0;
-                case 'k': return rowDiff <= 1 && colDiff <= 1;
-                default: return false;
-            }
-        }
-
-        function isSameColor(piece1, piece2) {
-            if (!piece1 || !piece2 || piece1 === '.' || piece2 === '.') return false;
-            return (piece1.toUpperCase() === piece1) === (piece2.toUpperCase() === piece2);
-        }
-
-        function updateBoard() {
-            canvas.clear();
-            createChessboard();
-            addPieces();
-        }
-
-        canvas.on('object:moving', function(e) {
-            const piece = e.target;
-            // Snap to grid
-            const gridSize = squareSize;
-            piece.set({
-                left: Math.round(piece.left / gridSize) * gridSize + gridSize / 2,
-                top: Math.round(piece.top / gridSize) * gridSize + gridSize / 2
-            });
-        });
-
-        canvas.on('mouse:down', function(e) {
-            if (e.target && e.target.piece) {
-                const pieceColor = e.target.piece === e.target.piece.toUpperCase() ? 'white' : 'black';
-                if (pieceColor === turn) {
-                    selectedPiece = e.target;
-                }
-            }
-        });
-
-        canvas.on('mouse:up', function(e) {
-            if (selectedPiece) {
-                const fromPos = coordsToPosition(selectedPiece.__originalLeft, selectedPiece.__originalTop);
-                const toPos = coordsToPosition(selectedPiece.left, selectedPiece.top);
-                
-                if (fromPos.algebraic !== toPos.algebraic) {
-                    const piece = selectedPiece.piece;
-                    const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
-                    
-                    if (pieceColor === turn && 
-                        isValidMove(piece, fromPos.row, fromPos.col, toPos.row, toPos.col)) {
-                        
-                        const capturedPiece = gameState[toPos.row][toPos.col];
-                        gameState[toPos.row][toPos.col] = gameState[fromPos.row][fromPos.col];
-                        gameState[fromPos.row][fromPos.col] = '.';
-                        
-                        updateHistory(fromPos.algebraic, toPos.algebraic, piece, capturedPiece);
-                        turn = turn === 'white' ? 'black' : 'white';
-                        updateBoard();
-                        startTimer();
-                    } else {
-                        // Invalid move, return piece to original position
-                        selectedPiece.set({
-                            left: selectedPiece.__originalLeft,
-                            top: selectedPiece.__originalTop
-                        });
-                        canvas.renderAll();
-                    }
-                }
-                selectedPiece = null;
-            }
-        });
-
-        canvas.on('object:moving', function(e) {
-            e.target.__originalLeft = e.target.__originalLeft || e.target.left;
-            e.target.__originalTop = e.target.__originalTop || e.target.top;
-        });
 
         createChessboard();
         addPieces();
