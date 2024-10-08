@@ -330,12 +330,12 @@
                 
                 // Check if a king was captured
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    gameOver = true;
+                    gameIsOver = true;
                     moveText += `- ${playerColor} wins the game!`;
                 }
             }
             
-            if (!gameOver) {
+            if (!gameIsOver) {
                 moveText += `moved to ${to}`;
             }
             
@@ -344,7 +344,7 @@
             historyDiv.innerHTML = history.join('<br>');
             historyDiv.scrollTop = historyDiv.scrollHeight;
             
-            if (gameOver) {
+            if (gameIsOver) {
                 clearInterval(timerInterval); // Stop the timer
                 setTimeout(() => {
                     alert(`${playerColor} wins the game by capturing the ${capturedPiece.pieceColor} King!`);
