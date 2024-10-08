@@ -175,8 +175,6 @@
 
         function addPieces() {
             
-            let gameOver = false;
-            
             const pieces = {
                 'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
                 'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
@@ -224,6 +222,7 @@
                             boardState[row][col] = svgPiece;
                             canvas.add(svgPiece);
 
+                            let gameOver = false;
                             // Add mouse event listeners
                             svgPiece.on('mousedown', function() {
                                 if (gameIsOver || this.pieceColor !== turn) {
