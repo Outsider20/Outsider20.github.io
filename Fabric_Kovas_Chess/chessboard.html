@@ -15,8 +15,9 @@
             overflow-y: auto;
             border: 1px solid #000;
             margin-top: 10px;
-            padding: 5px;
-            font-family: monospace;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
         }
         #hud {
             display: flex;
@@ -303,22 +304,51 @@
 
         function updateHistory(piece, from, to, capturedPiece) {
             let moveText = '';
+            const pieceNames = {
+                'k': 'King',
+                'q': 'Queen',
+                'r': 'Rook',
+                'b': 'Bishop',
+                'n': 'Knight',
+                'p': 'Pawn'
+            };
+            
             if (piece.pieceColor === 'white') {
                 moveText += `<span class="move-number">${moveCount}.</span> `;
             }
             
-            moveText += getPieceSymbol(piece);
+            const pieceName = pieceNames[piece.pieceType.toLowerCase()];
+            const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
             
+            moveText += `${playerColor} ${pieceName} on ${from} `;
+            
+            let gameOver = false;
             if (capturedPiece) {
-                moveText += 'x' + getPieceSymbol(capturedPiece);
+                const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
+                moveText += `captured ${capturedPiece.pieceColor} ${capturedPieceName} `;
+                
+                // Check if a king was captured
+                if (capturedPiece.pieceType.toLowerCase() === 'k') {
+                    gameOver = true;
+                    moveText += `- ${playerColor} wins the game!`;
+                }
             }
             
-            moveText += to;
+            if (!gameOver) {
+                moveText += `moved to ${to}`;
+            }
             
             history.push(moveText);
             const historyDiv = document.getElementById('history');
-            historyDiv.innerHTML = history.join(' ');
+            historyDiv.innerHTML = history.join('<br>');
             historyDiv.scrollTop = historyDiv.scrollHeight;
+            
+            if (gameOver) {
+                clearInterval(timerInterval); // Stop the timer
+                setTimeout(() => {
+                    alert(`${playerColor} wins the game by capturing the ${capturedPiece.pieceColor} King!`);
+                }, 100);
+            }
         }
 
         createChessboard();
