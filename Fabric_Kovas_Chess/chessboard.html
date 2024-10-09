@@ -152,6 +152,13 @@ function restartGame() {
     canvas.renderAll();
 }
 
+function endGame(winner) {
+    gameIsOver = true;
+    clearInterval(timerInterval);
+    alert(`Game Over! ${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!`);
+    restartButton.disabled = false;
+}
+
 // Modify your startTimer function
 function startTimer() {
     clearInterval(timerInterval);
@@ -499,12 +506,7 @@ function startTimer() {
                 moveText += ` capturing ${capturedPiece.pieceColor.charAt(0).toUpperCase() + capturedPiece.pieceColor.slice(1)} ${capturedPieceName}`;
                 
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    winner = playerColor;
-                    gameIsOver = true;
-                    clearInterval(timeInterval);
-                    updateTimerDisplay('white');
-                    updateTimerDisplay('black');
-                    alert(`Game Over! ${winner} wins!`);
+                    endGame(piece.pieceColor);;
                     restartButton.disabled = false;
                     moveText += ` - ${playerColor} wins!`;
                 }
