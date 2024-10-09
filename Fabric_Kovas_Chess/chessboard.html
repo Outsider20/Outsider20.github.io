@@ -224,19 +224,38 @@
                             boardState[row][col] = svgPiece;
                             canvas.add(svgPiece);
 
-                                // Add mouse event listeners
-                                svgPiece.on('mousedown', function() {
+                                svgPiece.on('mousedown', function(event) {
+                                    // Reset the piece's state
                                     this.setCoords();
                                     
+                                    // If it's not this piece's turn or the game is over, prevent selection
                                     if (gameIsOver || this.pieceColor !== turn) {
                                         this.selectable = false;
                                         canvas.discardActiveObject();
-                                        canvas.rendAll();
+                                        canvas.renderAll();
                                         return false;
                                     }
+                                    
+                                    const currentRow = Math.floor(this.top / squareSize);
+                                    const currentCol = Math.floor(this.left / squareSize);
+                                    
+                                    // If there's an existing dragStartPosition and we're clicking the same square
+                                    if (dragStartPosition && 
+                                        dragStartPosition.row === currentRow && 
+                                        dragStartPosition.col === currentCol) {
+                                        // Deselect the piece
+                                        dragStartPosition = null;
+                                        canvas.discardActiveObject();
+                                        canvas.renderAll();
+                                        return false;
+                                    }
+                                    
+                                    // Make sure the piece is selectable and movable
+                                    this.selectable = true;
+                                    
                                     dragStartPosition = {
-                                        row: Math.floor(this.top / squareSize),
-                                        col: Math.floor(this.left / squareSize),
+                                        row: currentRow,
+                                        col: currentCol,
                                         left: this.left,
                                         top: this.top
                                     };
