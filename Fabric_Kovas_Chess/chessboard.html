@@ -396,7 +396,7 @@
 
             if (capturedPiece) {
                 const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
-                moveText += ` captureing ${capturedPiece.pieceColor} ${capturedPieceName} `;
+                moveText += ` captureing ${capturedPiece.pieceColor.toUpperCase()} ${capturedPieceName} `;
                 
                 // Check if a king was captured
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
