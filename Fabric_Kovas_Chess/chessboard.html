@@ -495,11 +495,14 @@ function startTimer() {
             moveText += `${playerColor} ${pieceName} ${from} to ${to}`;
             
             if (capturedPiece) {
-                const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
-                moveText += ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
+                const capturedPieceName = pieceNames[capturedPiece.pieceType];
+                moveText += ` capturing ${capturedPiece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1)} ${capturedPieceName}`;
                 
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    endGame(piece.pieceColor);
+                    gameIsOver = true;
+                    clearInterval(timerInterval);
+                    alert(`Game Over! ${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!`);
+                    restartButton.disabled = false;
                     moveText += ` - ${playerColor} wins!`;
                 }
             }
