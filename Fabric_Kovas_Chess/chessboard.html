@@ -502,7 +502,7 @@ function startTimer() {
                     winner = piece.pieceColor.charAt(0);
                     gameIsOver = true;
                     clearInterval(timerInterval);
-                    alert(`Game Over! ${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!`);
+                    alert(`Game Over! ${winner.toUpperCase() + winner.slice(1)} wins!`);
                     restartButton.disabled = false;
                     moveText += ` - ${playerColor} wins!`;
                 }
