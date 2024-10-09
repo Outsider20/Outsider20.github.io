@@ -499,10 +499,10 @@ function startTimer() {
                 moveText += ` capturing ${capturedPiece.pieceColor.charAt(0).toUpperCase() + capturedPiece.pieceColor.slice(1)} ${capturedPieceName}`;
                 
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    winner = piece.pieceColor.charAt(0);
+                    winner = playerColor;
                     gameIsOver = true;
                     clearInterval(timerInterval);
-                    alert(`Game Over! ${winner.toUpperCase() + winner.slice(1)} wins!`);
+                    alert(`Game Over! ${winner} wins!`);
                     restartButton.disabled = false;
                     moveText += ` - ${playerColor} wins!`;
                 }
