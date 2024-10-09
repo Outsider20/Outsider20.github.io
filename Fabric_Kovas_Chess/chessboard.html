@@ -224,7 +224,6 @@
                             boardState[row][col] = svgPiece;
                             canvas.add(svgPiece);
 
-                            do{
                                 // Add mouse event listeners
                                 svgPiece.on('mousedown', function() {
                                     if (gameIsOver || this.pieceColor !== turn) {
@@ -300,7 +299,6 @@
                                     });
                                     alert("This is an invalid move. Try again")
                                 }
-                            }while(valid = false);
                                 
                                 dragStartPosition = null;
                                 canvas.renderAll();
