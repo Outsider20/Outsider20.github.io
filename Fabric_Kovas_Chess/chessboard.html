@@ -301,6 +301,8 @@
                                             left: dragStartPosition.left,
                                             top: dragStartPosition.top
                                     });
+                                    obj.setCoords(); 
+
                                     alert("This is an invalid move. Try again")
                                 }
                                 
@@ -317,6 +319,7 @@
             canvas.forEachObject(function(obj) {
                 if (obj.pieceColor) { // Check if it's a chess piece
                     obj.selectable = obj.pieceColor === turn;
+                    obj.setCoords(); // Ensure all pieces update their coordinates
                 }
             });
             canvas.renderAll();
