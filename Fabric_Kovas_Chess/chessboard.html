@@ -501,9 +501,10 @@ function startTimer() {
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
                     winner = playerColor;
                     gameIsOver = true;
-                    clearInterval(timerInterval);
-                    updateTimeDisplay(white);
-                    updateTimeDisplay(black);
+                    clearInterval(whiteTimerInterval);
+                    clearInterval(blackTimerInterval);
+                    updateTimerDisplay('white');
+                    updateTimerDisplay('black');
                     alert(`Game Over! ${winner} wins!`);
                     restartButton.disabled = false;
                     moveText += ` - ${playerColor} wins!`;
