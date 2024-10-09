@@ -6,15 +6,51 @@
     <title>Fabric.js Chessboard with Drag and Drop</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        .board-container {
+            flex-shrink: 0;
+        }
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
         canvas {
             border: 1px solid #000;
         }
+        .history-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
         #history {
-            width: 400px;
-            height: 200px;
+            flex-grow: 1;
+            width: 300px;
+            height: 400px;
             overflow-y: auto;
             border: 1px solid #000;
-            margin-top: 10px;
             padding: 10px;
             font-family: Arial, sans-serif;
             line-height: 1.4;
@@ -32,16 +68,31 @@
     </style>
 </head>
 <body>
-    <div id="hud">
-        <div id="white-timer">White: 00:00</div>
-        <div id="black-timer">Black: 00:00</div>
+    <div class="container">
+        <div class="board-container">
+            <div class="game-controls">
+                <button id="startButton">Start Game</button>
+                <button id="restartButton" disabled>Restart Game</button>
+            </div>
+            <div id="hud">
+                <div id="white-timer">White: 05:00</div>
+                <div id="black-timer">Black: 05:00</div>
+            </div>
+            <canvas id="canvas" width="400" height="400"></canvas>
+        </div>
+        <div class="history-container">
+            <h2>Move History</h2>
+            <div id="history"></div>
+        </div>
     </div>
-    <canvas id="canvas" width="400" height="400"></canvas>
-    <div id="history"></div>
     <script>
+        let gameStarted = false;
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        
         const canvas = new fabric.Canvas('canvas');
         const squareSize = 50;
-        let turn = 'white';
+        let turn = null;
         const history = [];
         let moveCount = 1;
         let whiteTime = 300;
@@ -51,19 +102,77 @@
         let dragStartPosition = null;
         let gameIsOver = false;
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (turn === 'white') {
-                    whiteTime--;
-                    updateTimerDisplay('white');
-                } else {
-                    blackTime--;
-                    updateTimerDisplay('black');
-                }
-            }, 1000);
-        }
+        // Add event listeners for buttons
+startButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', restartGame);
 
+// Add these functions for game control
+function startGame() {
+    gameStarted = true;
+    gameIsOver = false;
+    turn = 'white';
+    startButton.disabled = true;
+    restartButton.disabled = false;
+    updateSelectableState();
+    startTimer();
+}
+
+function restartGame() {
+    // Clear the canvas and recreate the board
+    canvas.clear();
+    createChessboard();
+    addPieces();
+    
+    // Reset all game variables
+    gameStarted = false;
+    gameIsOver = false;
+    turn = null;
+    whiteTime = 300;
+    blackTime = 300;
+    moveCount = 1;
+    history.length = 0;
+    dragStartPosition = null;
+    boardState = Array(8).fill().map(() => Array(8).fill(null));
+    
+    // Clear the history display
+    document.getElementById('history').innerHTML = '';
+    
+    // Reset timers
+    clearInterval(timerInterval);
+    updateTimerDisplay('white');
+    updateTimerDisplay('black');
+    
+    // Reset buttons
+    startButton.disabled = false;
+    restartButton.disabled = true;
+    
+    // Make all pieces unselectable until game starts
+    updateSelectableState();
+    
+    canvas.renderAll();
+}
+
+// Modify your startTimer function
+function startTimer() {
+    clearInterval(timerInterval);
+    if (!gameStarted) return;
+    
+    timerInterval = setInterval(() => {
+        if (turn === 'white') {
+            whiteTime--;
+            updateTimerDisplay('white');
+            if (whiteTime <= 0) {
+                endGame('black');
+            }
+        } else {
+            blackTime--;
+            updateTimerDisplay('black');
+            if (blackTime <= 0) {
+                endGame('white');
+            }
+        }
+    }, 1000);
+}
         function updateTimerDisplay(color) {
             const timerElement = document.getElementById(`${color}-timer`);
             const time = color === 'white' ? whiteTime : blackTime;
@@ -229,7 +338,7 @@
                                     this.setCoords();
                                     
                                     // If it's not this piece's turn or the game is over, prevent selection
-                                    if (gameIsOver || this.pieceColor !== turn) {
+                                    if (!gameStarted || gameIsOver || this.pieceColor !== turn) {
                                         this.selectable = false;
                                         canvas.discardActiveObject();
                                         canvas.renderAll();
@@ -374,34 +483,24 @@
         function updateHistory(piece, from, to, capturedPiece) {
             let moveText = '';
             const pieceNames = {
-                'k': 'King',
-                'q': 'Queen',
-                'r': 'Rook',
-                'b': 'Bishop',
-                'n': 'Knight',
-                'p': 'Pawn'
+                'k': 'King', 'q': 'Queen', 'r': 'Rook',
+                'b': 'Bishop', 'n': 'Knight', 'p': 'Pawn'
             };
-            
             
             moveText += `<span class="move-number">${moveCount}.</span> `;
             
             const pieceName = pieceNames[piece.pieceType.toLowerCase()];
             const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
             
-            moveText += `${playerColor} ${pieceName} on ${from} `;
+            moveText += `${playerColor} ${pieceName} ${from} to ${to}`;
             
-            if (!gameIsOver) {
-                moveText += `moved to ${to}`;
-            }
-
             if (capturedPiece) {
                 const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
-                moveText += ` captureing ${capturedPiece.pieceColor.toUpperCase()} ${capturedPieceName} `;
+                moveText += ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
                 
-                // Check if a king was captured
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    gameIsOver = true;
-                    moveText += ` - ${playerColor} wins the game!`;
+                    endGame(piece.pieceColor);
+                    moveText += ` - ${playerColor} wins!`;
                 }
             }
             
@@ -409,13 +508,6 @@
             const historyDiv = document.getElementById('history');
             historyDiv.innerHTML = history.join('<br>');
             historyDiv.scrollTop = historyDiv.scrollHeight;
-            
-            if (gameIsOver) {
-                clearInterval(timerInterval); // Stop the timer
-                setTimeout(() => {
-                    alert(`${playerColor} wins the game by capturing the ${capturedPiece.pieceColor} King!`);
-                }, 100);
-            }
         }
 
         createChessboard();
