@@ -502,8 +502,8 @@ function startTimer() {
                     winner = playerColor;
                     gameIsOver = true;
                     clearInterval(timerInterval);
-                    updateTimerDisplay('white');
-                    updateTimerDisplay('black');
+                    updateTimeDisplay(white);
+                    updateTimeDisplay(black);
                     alert(`Game Over! ${winner} wins!`);
                     restartButton.disabled = false;
                     moveText += ` - ${playerColor} wins!`;
