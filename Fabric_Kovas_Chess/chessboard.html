@@ -226,6 +226,8 @@
 
                                 // Add mouse event listeners
                                 svgPiece.on('mousedown', function() {
+                                    this.setCoord();
+                                    
                                     if (gameIsOver || this.pieceColor !== turn) {
                                         canvas.preventDefault(); // Prevent the drag operation from starting
                                         canvas.discardActiveObject();
@@ -239,6 +241,8 @@
                                         top: this.top
                                     };
                                 });
+
+                                this.selectable = true
     
                                 svgPiece.on('moving', function() {
                                     if (!dragStartPosition || this.pieceColor !== turn) return;
