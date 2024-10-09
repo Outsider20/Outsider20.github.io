@@ -216,7 +216,7 @@
                                 originY: 'center',
                                 hasControls: false,
                                 hasBorders: false,
-                                selectable: true,
+                                selectable: pieceColor === 'white', // Only white pieces selectable at start
                                 pieceColor: pieceColor,
                                 pieceType: piece.toLowerCase()
                             });
@@ -228,7 +228,9 @@
                                 // Add mouse event listeners
                                 svgPiece.on('mousedown', function() {
                                     if (gameIsOver || this.pieceColor !== turn) {
+                                        canvas.preventDefault(); // Prevent the drag operation from starting
                                         canvas.discardActiveObject();
+                                        canvas.rendAll();
                                         return false;
                                     }
                                     dragStartPosition = {
@@ -259,6 +261,7 @@
                                             this.set({
                                                 left: dragStartPosition.left,
                                                 top: dragStartPosition.top
+                                                selectable: true
                                             });
                                             canvas.renderAll();
                                         }
@@ -273,7 +276,6 @@
     
                                     if (isValidMove(fromRow, fromCol, toRow, toCol, this)) {
                                     // Valid move logic
-                                        let valid = true;
                                     const destPiece = boardState[toRow][toCol];
                                     if (destPiece) {
                                         canvas.remove(destPiece);
@@ -289,10 +291,10 @@
                                     // Switch turns only after a valid move
                                     turn = turn === 'white' ? 'black' : 'white';
                                     if (turn === 'white') moveCount++;
+                                        updateSelectableState(); // Update which pieces are selectable
                                         startTimer();
                                     } else {
                                         // Invalid move - revert position and allow retry
-                                        let valid = false;
                                         this.set({
                                             left: dragStartPosition.left,
                                             top: dragStartPosition.top
@@ -309,6 +311,16 @@
                 }
             }
         }
+
+        function updateSelectableState() {
+            canvas.forEachObject(function(obj) {
+                if (obj.pieceColor) { // Check if it's a chess piece
+                    obj.selectable = obj.pieceColor === turn;
+                }
+            });
+            canvas.renderAll();
+        }
+
 
         function getPieceSymbol(piece) {
             const symbols = {
