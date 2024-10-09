@@ -226,7 +226,7 @@
 
                                 // Add mouse event listeners
                                 svgPiece.on('mousedown', function() {
-                                    this.setCoord();
+                                    this.setCoords();
                                     
                                     if (gameIsOver || this.pieceColor !== turn) {
                                         canvas.preventDefault(); // Prevent the drag operation from starting
@@ -301,7 +301,7 @@
                                             left: dragStartPosition.left,
                                             top: dragStartPosition.top
                                     });
-                                    obj.setCoords(); 
+                                    obj.setCoordss(); 
 
                                     alert("This is an invalid move. Try again")
                                 }
@@ -319,7 +319,7 @@
             canvas.forEachObject(function(obj) {
                 if (obj.pieceColor) { // Check if it's a chess piece
                     obj.selectable = obj.pieceColor === turn;
-                    obj.setCoords(); // Ensure all pieces update their coordinates
+                    obj.setCoordss(); // Ensure all pieces update their coordinates
                 }
             });
             canvas.renderAll();
