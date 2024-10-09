@@ -229,7 +229,7 @@
                                     this.setCoords();
                                     
                                     if (gameIsOver || this.pieceColor !== turn) {
-                                        canvas.preventDefault(); // Prevent the drag operation from starting
+                                        this.selectable = false;
                                         canvas.discardActiveObject();
                                         canvas.rendAll();
                                         return false;
