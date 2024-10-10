@@ -155,16 +155,42 @@ function restartGame() {
 function endGame(winner) {
     gameIsOver = true;
     clearInterval(timerInterval);
-    alert(`Game Over! ${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!`);
+    
+    // Update history to show game end
+    const winnerColor = winner.charAt(0).toUpperCase() + winner.slice(1);
+    history.push(`<strong>${winnerColor} wins the game!</strong>`);
+    const historyDiv = document.getElementById('history');
+    historyDiv.innerHTML = history.join('<br>');
+    historyDiv.scrollTop = historyDiv.scrollHeight;
+    
+    // Disable piece movement
+    canvas.forEachObject(function(obj) {
+        if (obj.pieceColor) {
+            obj.selectable = false;
+        }
+    });
+    canvas.renderAll();
+    
+    // Enable restart button
     restartButton.disabled = false;
+    
+    // Use setTimeout to prevent the alert from blocking the UI update
+    setTimeout(() => {
+        alert(`Game Over! ${winnerColor} wins!`);
+    }, 100);
 }
 
 // Modify your startTimer function
 function startTimer() {
     clearInterval(timerInterval);
-    if (!gameStarted) return;
+    if (!gameStarted || gameIsOver) return;
     
     timerInterval = setInterval(() => {
+        if (gameIsOver) {
+            clearInterval(timerInterval);
+            return;
+        }
+        
         if (turn === 'white') {
             whiteTime--;
             updateTimerDisplay('white');
@@ -332,7 +358,7 @@ function startTimer() {
                                 originY: 'center',
                                 hasControls: false,
                                 hasBorders: false,
-                                selectable: pieceColor === 'white', // Only white pieces selectable at start
+                                selectable: false,
                                 pieceColor: pieceColor,
                                 pieceType: piece.toLowerCase()
                             });
@@ -470,7 +496,7 @@ function startTimer() {
         function updateSelectableState() {
             canvas.forEachObject(function(obj) {
                 if (obj.pieceColor) { // Check if it's a chess piece
-                    obj.selectable = obj.pieceColor === turn;
+                    obj.selectable = gameStarted && !gameIsOver && obj.pieceColor === turn;
                     obj.setCoords(); // Ensure all pieces update their coordinates
                 }
             });
@@ -502,13 +528,18 @@ function startTimer() {
             moveText += `${playerColor} ${pieceName} ${from} to ${to}`;
             
             if (capturedPiece) {
-                const capturedPieceName = pieceNames[capturedPiece.pieceType];
-                moveText += ` capturing ${capturedPiece.pieceColor.charAt(0).toUpperCase() + capturedPiece.pieceColor.slice(1)} ${capturedPieceName}`;
+                const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
+                moveText += ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
                 
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    endGame(piece.pieceColor);;
-                    restartButton.disabled = false;
-                    moveText += ` - ${playerColor} wins!`;
+                    moveText += ` - Checkmate!`;
+                    history.push(moveText);
+                    const historyDiv = document.getElementById('history');
+                    historyDiv.innerHTML = history.join('<br>');
+                    historyDiv.scrollTop = historyDiv.scrollHeight;
+                    
+                    endGame(piece.pieceColor);
+                    return;
                 }
             }
             
