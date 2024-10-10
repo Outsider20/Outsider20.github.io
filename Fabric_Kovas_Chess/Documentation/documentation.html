@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game Development Using Fabric.js</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #f7f9fb;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .key-features {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        #table-of-contents {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        #table-of-contents ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #table-of-contents ul ul {
+            padding-left: 20px;
+        }
+        .toc-link {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .toc-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chess Game Development Using Fabric.js</h1>
+    
+    <div id="table-of-contents">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#introduction" class="toc-link">1. Introduction</a></li>
+            <li><a href="#initializing" class="toc-link">2. Initializing the Canvas</a></li>
+            <li><a href="#creating-chessboard" class="toc-link">3. Creating the Chessboard</a></li>
+            <li><a href="#loading-pieces" class="toc-link">4. Loading and Adding Chess Pieces</a></li>
+            <li><a href="#interactivity" class="toc-link">5. Enabling Drag-and-Drop Interactivity</a></li>
+            <li><a href="#move-history" class="toc-link">6. Move History Management</a></li>
+            <li><a href="#summary" class="toc-link">7. Summary of Fabric.js Features Utilized</a></li>
+        </ul>
+    </div>
+
+    <section id="introduction">
+        <h2>1. Introduction</h2>
+        <p>This document reflects on the development of a chess game using Fabric.js, focusing on the key features utilized, implementation details, and code snippets.</p>
+    </section>
+
+    <section id="initializing">
+        <h2>2. Initializing the Canvas</h2>
+        <p>Fabric.js simplifies the creation of an interactive canvas for the chessboard.</p>
+        <h3>Code Snippet:</h3>
+        <pre><code>let canvas = new fabric.Canvas('chessboard');</code></pre>
+        <p><strong>Description:</strong> This line initializes the &lt;canvas&gt; element with the ID chessboard, preparing it for drawing.</p>
+    </section>
+
+    <section id="creating-chessboard">
+        <h2>3. Creating the Chessboard</h2>
+        <p>The chessboard consists of alternating squares and is created programmatically.</p>
+        <h3>Code Snippet:</h3>
+        <pre><code>function createChessboard() {
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const squareColor = (row + col) % 2 === 0 ? 'white' : 'gray';
+            const square = new fabric.Rect({
+                left: col * squareSize,
+                top: row * squareSize,
+                fill: squareColor,
+                width: squareSize,
+                height: squareSize,
+                selectable: false
+            });
+            canvas.add(square);
+        }
+    }
+}</code></pre>
+        <div class="key-features">
+            <h3>Key Fabric.js Features:</h3>
+            <ul>
+                <li><strong>fabric.Rect:</strong> Used to create rectangular objects for the chessboard squares.</li>
+                <li><strong>selectable: false:</strong> Squares are non-interactive, allowing for a clean user experience.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="loading-pieces">
+        <h2>4. Loading and Adding Chess Pieces</h2>
+        <p>Chess pieces are represented as SVG images, dynamically loaded and placed on the board.</p>
+        <h3>Code Snippet:</h3>
+        <pre><code>function addPieces() {
+    const pieces = {
+        'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+        'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+        // ... other pieces
+    };
+
+    // ... initialization code ...
+
+    fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
+        const svgPiece = fabric.util.groupSVGElements(objects, options);
+        svgPiece.set({
+            left: col * squareSize + squareSize / 2,
+            top: row * squareSize + squareSize / 2,
+            originX: 'center',
+            originY: 'center',
+            hasControls: false,
+            hasBorders: false,
+            selectable: false
+        });
+        boardState[row][col] = svgPiece;
+        canvas.add(svgPiece);
+    });
+}</code></pre>
+        <div class="key-features">
+            <h3>Key Fabric.js Features:</h3>
+            <ul>
+                <li><strong>fabric.loadSVGFromURL:</strong> Loads SVG images for each chess piece dynamically.</li>
+                <li><strong>fabric.util.groupSVGElements:</strong> Groups SVG elements into a single object for manipulation.</li>
+                <li><strong>selectable: false:</strong> Prevents pieces from being interacted with initially.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Additional sections follow the same pattern -->
+
+    <section id="summary">
+        <h2>7. Summary of Fabric.js Features Utilized</h2>
+        <p>Fabric.js provides powerful tools for creating interactive and dynamic canvas applications:</p>
+        <ul>
+            <li><strong>Vector Graphics (SVG):</strong> Ensures high-quality rendering of chess pieces.</li>
+            <li><strong>Interactive Objects:</strong> Each piece can be dragged and dropped, enhancing gameplay.</li>
+            <li
