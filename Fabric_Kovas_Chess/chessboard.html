@@ -101,7 +101,7 @@
         let gameStarted = false;
         const startButton = document.getElementById('startButton');
         const restartButton = document.getElementById('restartButton');
-        const toogleSpeech = document.getElemtentById('speechToggle');
+        const toggleSpeech = document.getElementById('speechToggle');
         
         const canvas = new fabric.Canvas('canvas');
         const squareSize = 50;
@@ -114,33 +114,43 @@
         let boardState = Array(8).fill().map(() => Array(8).fill(null));
         let dragStartPosition = null;
         let gameIsOver = false;
+        let gameState = {speechEnabled: false};
 
         // Add event listeners for buttons
-startButton.addEventListener('click', startGame);
-restartButton.addEventListener('click', restartGame);
-toggleSpeech.addEventListener('change', function(e) {
-                gameState.speechEnabled = e.target.checked;
-                if (gameState.speechEnabled && 'speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance("Speech enabled");
-                    window.speechSynthesis.speak(utterance);
-                };
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', restartGame);
+        toggleSpeech.addEventListener('change', function(e) {
+            gameState.speechEnabled = e.target.checked;
+            if (gameState.speechEnabled && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance("Speech enabled");
+                window.speechSynthesis.speak(utterance);
+            }
+        });
 
-// Add these functions for game control
-function startGame() {
-    gameStarted = true;
-    gameIsOver = false;
-    turn = 'white';
-    startButton.disabled = true;
-    restartButton.disabled = false;
-    updateSelectableState();
-    startTimer();
-}
-
-function restartGame() {
-    // Clear the canvas and recreate the board
-    canvas.clear();
-    createChessboard();
-    addPieces();
+        function speak(text) {
+            if (gameState.speechEnabled && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.2; // Slightly faster than normal speed
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+    
+    // Add these functions for game control
+    function startGame() {
+        gameStarted = true;
+        gameIsOver = false;
+        turn = 'white';
+        startButton.disabled = true;
+        restartButton.disabled = false;
+        updateSelectableState();
+        startTimer();
+    }
+    
+    function restartGame() {
+        // Clear the canvas and recreate the board
+        canvas.clear();
+        createChessboard();
+        addPieces();
     
     // Reset all game variables
     gameStarted = false;
@@ -530,14 +540,6 @@ function startTimer() {
             };
             const symbol = symbols[piece.pieceType.toUpperCase()];
             return piece.pieceColor === 'white' ? symbol : symbol.toLowerCase();
-        }
-
-        function speak(text) {
-            if (gameState.speechEnabled && 'speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 1.2; // Slightly faster than normal speed
-                window.speechSynthesis.speak(utterance);
-            }
         }
 
         function updateHistory(piece, from, to, capturedPiece) {
