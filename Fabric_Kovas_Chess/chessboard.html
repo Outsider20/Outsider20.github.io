@@ -543,47 +543,51 @@ function startTimer() {
         }
 
         function updateHistory(piece, from, to, capturedPiece) {
-            let moveText = '';
+            let moveTextHtml = '';
+            let moveTextSpeech = '';
             const pieceNames = {
                 'k': 'King', 'q': 'Queen', 'r': 'Rook',
                 'b': 'Bishop', 'n': 'Knight', 'p': 'Pawn'
             };
             
-            moveText += `<span class="move-number">${moveCount}.</span> `;
+            moveTextHtml += `<span class="move-number">${moveCount}.</span> `;
+            moveTextSpeech += `Move ${moveCount}. `;
             
             const pieceName = pieceNames[piece.pieceType.toLowerCase()];
             const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
             
-            moveText += `${playerColor} ${pieceName} ${from} to ${to}`;
+            const moveDescription = `${playerColor} ${pieceName} ${from} to ${to}`;
+            moveTextHtml += moveDescription;
+            moveTextSpeech += moveDescription;
             
             if (capturedPiece) {
                 const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
-                moveText += ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
+                const captureText = ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
+                moveTextHtml += captureText;
+                moveTextSpeech += captureText;
                 
                 if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    moveText += ` - Checkmate!`;
-                    history.push(moveText);
+                    const checkmateText = ` - Checkmate!`;
+                    moveTextHtml += checkmateText;
+                    moveTextSpeech += checkmateText;
+                    history.push(moveTextHtml);
                     const historyDiv = document.getElementById('history');
                     historyDiv.innerHTML = history.join('<br>');
                     historyDiv.scrollTop = historyDiv.scrollHeight;
                     
+                    speak(moveTextSpeech);
                     endGame(piece.pieceColor);
                     return;
                 }
             }
             
-            history.push(moveText);
+            history.push(moveTextHtml);
             const historyDiv = document.getElementById('history');
             historyDiv.innerHTML = history.join('<br>');
             historyDiv.scrollTop = historyDiv.scrollHeight;
 
             // Speak the move
-            if (gameState.speechEnabled && 'speechSynthesis' in window) {
-                let speechText = moveText;
-                const utterance = new SpeechSynthesisUtterance(speechText);
-                utterance.rate = 1.2; // Slightly faster than normal speed
-                window.speechSynthesis.speak(utterance);
-            }
+            speak(moveTextSpeech);
         }
 
         createChessboard();
