@@ -579,8 +579,8 @@ function startTimer() {
 
             // Speak the move
             if (gameState.speechEnabled && 'speechSynthesis' in window) {
-                let speechtext = movetext;
-                const utterance = new SpeechSynthesisUtterance(moveText);
+                let speechText = moveText;
+                const utterance = new SpeechSynthesisUtterance(speechText);
                 utterance.rate = 1.2; // Slightly faster than normal speed
                 window.speechSynthesis.speak(utterance);
             }
