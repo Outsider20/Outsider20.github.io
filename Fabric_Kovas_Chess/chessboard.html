@@ -551,7 +551,7 @@ function startTimer() {
             };
             
             moveTextHtml += `<span class="move-number">${moveCount}.</span> `;
-            moveTextSpeech += `Move ${moveCount}. `;
+            moveTextSpeech += `${moveCount}. `;
             
             const pieceName = pieceNames[piece.pieceType.toLowerCase()];
             const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
@@ -588,6 +588,25 @@ function startTimer() {
 
             // Speak the move
             speak(moveTextSpeech);
+        }
+
+        function speak2(text) {
+            if (gameState.speechEnabled && 'speechSynthesis' in window) {
+                // Remove any remaining HTML tags from the text
+                const plainText = text.replace(/<[^>]*>/g, '');
+                const utterance = new SpeechSynthesisUtterance(plainText);
+                utterance.rate = 1.2; // Slightly faster than normal speed
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+            
+            history.push(moveTextHtml);
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.join('<br>');
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+
+            // Speak the move
+            speak2(moveTextSpeech);
         }
 
         createChessboard();
