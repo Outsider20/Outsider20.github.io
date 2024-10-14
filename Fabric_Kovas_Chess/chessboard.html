@@ -101,6 +101,7 @@
         let gameStarted = false;
         const startButton = document.getElementById('startButton');
         const restartButton = document.getElementById('restartButton');
+        const toogleSpeech = document.getElemtentById('speechToggle');
         
         const canvas = new fabric.Canvas('canvas');
         const squareSize = 50;
@@ -117,6 +118,12 @@
         // Add event listeners for buttons
 startButton.addEventListener('click', startGame);
 restartButton.addEventListener('click', restartGame);
+toggleSpeech.addEventListener('change', function(e) {
+                gameState.speechEnabled = e.target.checked;
+                if (gameState.speechEnabled && 'speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance("Speech enabled");
+                    window.speechSynthesis.speak(utterance);
+                };
 
 // Add these functions for game control
 function startGame() {
