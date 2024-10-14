@@ -65,6 +65,14 @@
             width: 30px;
             font-weight: bold;
         }
+        .speech-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .speech-toggle input[type="checkbox"] {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -73,6 +81,10 @@
             <div class="game-controls">
                 <button id="startButton">Start Game</button>
                 <button id="restartButton" disabled>Restart Game</button>
+            </div>
+            <div class="speech-toggle">
+                <input type="checkbox" id="speechToggle">
+                <label for="speechToggle">Enable Speech</label>
             </div>
             <div id="hud">
                 <div id="white-timer">White: 05:00</div>
@@ -513,6 +525,14 @@ function startTimer() {
             return piece.pieceColor === 'white' ? symbol : symbol.toLowerCase();
         }
 
+        function speak(text) {
+            if (gameState.speechEnabled && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.2; // Slightly faster than normal speed
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
         function updateHistory(piece, from, to, capturedPiece) {
             let moveText = '';
             const pieceNames = {
@@ -547,6 +567,13 @@ function startTimer() {
             const historyDiv = document.getElementById('history');
             historyDiv.innerHTML = history.join('<br>');
             historyDiv.scrollTop = historyDiv.scrollHeight;
+
+            // Speak the move
+            if (gameState.speechEnabled && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(moveText);
+                utterance.rate = 1.2; // Slightly faster than normal speed
+                window.speechSynthesis.speak(utterance);
+            }
         }
 
         createChessboard();
