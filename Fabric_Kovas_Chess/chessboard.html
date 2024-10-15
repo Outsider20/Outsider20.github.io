@@ -500,7 +500,7 @@ function startTimer() {
                                       updateHistory(this, from, to, destPiece);
                               
                                       turn = turn === 'white' ? 'black' : 'white';
-                                      if (turn === 'white') moveCount++;
+                                      moveCount++;
                                       updateSelectableState();
                                       startTimer();
                                   } else {
