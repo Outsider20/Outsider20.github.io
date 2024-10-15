@@ -580,25 +580,16 @@ function startTimer() {
                     return;
                 }
             }
-            
-            history.push(moveTextHtml);
-            const historyDiv = document.getElementById('history');
-            historyDiv.innerHTML = history.join('<br>');
-            historyDiv.scrollTop = historyDiv.scrollHeight;
 
-            // Speak the move
-            speak(moveTextSpeech);
-        }
-
-        function speak2(text) {
-            if (gameState.speechEnabled && 'speechSynthesis' in window) {
-                // Remove any remaining HTML tags from the text
-                const plainText = text.replace(/<[^>]*>/g, '');
-                const utterance = new SpeechSynthesisUtterance(plainText);
-                utterance.rate = 1.2; // Slightly faster than normal speed
-                window.speechSynthesis.speak(utterance);
+            function speak2(text) {
+                if (gameState.speechEnabled && 'speechSynthesis' in window) {
+                    // Remove any remaining HTML tags from the text
+                    const plainText = text.replace(/<[^>]*>/g, '');
+                    const utterance = new SpeechSynthesisUtterance(plainText);
+                    utterance.rate = 1.2; // Slightly faster than normal speed
+                    window.speechSynthesis.speak(utterance);
+                }
             }
-        }
             
             history.push(moveTextHtml);
             const historyDiv = document.getElementById('history');
