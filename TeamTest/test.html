@@ -1,258 +1,226 @@
-import { useState, useEffect, useRef } from 'react';
-import { Gem, Target, RefreshCw, Link, Play, Info, Settings, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-const BOARD_SIZE = 6;
-const COLORS = ['red', 'blue', 'green', 'purple', 'orange'];
-const MIN_MATCH = 3;
-const TILE_SIZE = 48;
-const TILE_GAP = 4;
+// Make canvas fullscreen
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
-
-const StartMenu = ({ onStartGame, onShowInstructions, onShowSettings }) => (
-  <Card className="w-[300px]">
-    <CardHeader>
-      <CardTitle className="text-center flex items-center justify-center gap-2">
-        <Gem className="text-purple-500" size={32} />
-        Color Chain
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="flex flex-col gap-4">
-      <Button 
-        onClick={onStartGame}
-        className="w-full flex items-center justify-center gap-2"
-      >
-        <Play size={20} />
-        Play Game
-      </Button>
-      <Button 
-        variant="outline"
-        onClick={onShowInstructions}
-        className="w-full flex items-center justify-center gap-2"
-      >
-        <Info size={20} />
-        How to Play
-      </Button>
-      <Button 
-        variant="outline"
-        onClick={onShowSettings}
-        className="w-full flex items-center justify-center gap-2"
-      >
-        <Settings size={20} />
-        Settings
-      </Button>
-    </CardContent>
-  </Card>
-);
-
-const Instructions = ({ onBack }) => (
-  <Card className="w-[300px]">
-    <CardHeader>
-      <CardTitle className="text-center">How to Play</CardTitle>
-    </CardHeader>
-    <CardContent className="flex flex-col gap-4">
-      <div className="space-y-4 text-sm">
-        <p>1. Click and drag to connect matching colors</p>
-        <p>2. Connect at least 3 tiles to make a match</p>
-        <p>3. You can move diagonally!</p>
-        <p>4. Longer chains = more points</p>
-        <p>5. Clear tiles before running out of moves</p>
-      </div>
-      <Button 
-        onClick={onBack}
-        className="w-full flex items-center justify-center gap-2"
-      >
-        <Home size={20} />
-        Back to Menu
-      </Button>
-    </CardContent>
-  </Card>
-);
-
-const Settings = ({ settings, onUpdateSettings, onBack }) => (
-  <Card className="w-[300px]">
-    <CardHeader>
-      <CardTitle className="text-center">Settings</CardTitle>
-    </CardHeader>
-    <CardContent className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <label htmlFor="sfx">Sound Effects</label>
-        <Switch 
-          id="sfx"
-          checked={settings.sfx}
-          onCheckedChange={(checked) => onUpdateSettings({ ...settings, sfx: checked })}
-        />
-      </div>
-      <div className="flex items-center justify-between">
-        <label htmlFor="music">Background Music</label>
-        <Switch 
-          id="music"
-          checked={settings.music}
-          onCheckedChange={(checked) => onUpdateSettings({ ...settings, music: checked })}
-        />
-      </div>
-      <Button 
-        onClick={onBack}
-        className="w-full flex items-center justify-center gap-2"
-      >
-        <Home size={20} />
-        Back to Menu
-      </Button>
-    </CardContent>
-  </Card>
-);
-
-const Game = ({ onBack, settings }) => {
-  // ... (Previous game state and helper functions remain the same)
-  const [board, setBoard] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedTiles, setSelectedTiles] = useState(new Set());
-  const [score, setScore] = useState(0);
-  const [moves, setMoves] = useState(15);
-  const [gameOver, setGameOver] = useState(false);
-  const lastTile = useRef(null);
-  const boardRef = useRef(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
-  // ... (All the previous game logic functions remain the same)
-  const initializeBoard = () => {
-    const newBoard = Array(BOARD_SIZE).fill().map(() => 
-      Array(BOARD_SIZE).fill().map(() => getRandomColor())
-    );
-    setBoard(newBoard);
-    setScore(0);
-    setMoves(15);
-    setGameOver(false);
-  };
-
-  useEffect(() => {
-    initializeBoard();
-  }, []);
-
-  // ... (Copy all the previous game logic here - handleTileMouseDown, handleTileMouseEnter, etc.)
-  // For brevity, I'm not repeating all the game logic, but it should remain exactly the same
-
-  return (
-    <div className="flex flex-col items-center gap-4 p-4">
-      <div className="flex gap-4 mb-4">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onBack}
-          className="flex items-center gap-2"
-        >
-          <Home size={16} />
-          Menu
-        </Button>
-        <div className="flex items-center gap-2">
-          <Gem className="text-purple-500" />
-          <span className="font-bold">Score: {score}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Target className="text-red-500" />
-          <span className="font-bold">Moves: {moves}</span>
-        </div>
-      </div>
-
-      <div 
-        ref={boardRef}
-        className="grid gap-1 p-2 bg-gray-100 rounded-lg relative"
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onMouseMove={handleMouseMove}
-      >
-        {/* ... Rest of the game board rendering ... */}
-        {renderConnectionLines()}
-        {board.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex gap-1">
-            {row.map((color, colIndex) => (
-              <button
-                key={`${rowIndex}-${colIndex}`}
-                className={`w-12 h-12 rounded-lg transition-all duration-200 ${
-                  selectedTiles.has(`${rowIndex}-${colIndex}`)
-                    ? 'ring-4 ring-yellow-400 scale-110'
-                    : ''
-                } hover:brightness-110`}
-                style={{ backgroundColor: color }}
-                onMouseDown={(e) => handleTileMouseDown(rowIndex, colIndex, e)}
-                onMouseEnter={() => handleTileMouseEnter(rowIndex, colIndex)}
-                disabled={gameOver}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-
-      {gameOver && (
-        <Alert className="w-full max-w-md">
-          <AlertDescription>
-            Game Over! Final Score: {score}
-            <Button 
-              onClick={initializeBoard}
-              className="w-full mt-4 flex items-center justify-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Play Again
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
-  );
+// Game states
+const GAME_STATE = {
+    MENU: 'menu',
+    PLAYING: 'playing'
 };
+let currentState = GAME_STATE.MENU;
 
-const Match3Game = () => {
-  const [currentScreen, setCurrentScreen] = useState('menu');
-  const [settings, setSettings] = useState({
-    sfx: true,
-    music: true
-  });
+// Game configuration
+const GRID_SIZE = 8;
+const COLORS = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'];
+let cellSize;
+let gridOffsetX;
+let gridOffsetY;
+const ANIMATION_SPEED = 0.2;
 
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case 'menu':
-        return (
-          <StartMenu 
-            onStartGame={() => setCurrentScreen('game')}
-            onShowInstructions={() => setCurrentScreen('instructions')}
-            onShowSettings={() => setCurrentScreen('settings')}
-          />
-        );
-      case 'instructions':
-        return (
-          <Instructions 
-            onBack={() => setCurrentScreen('menu')}
-          />
-        );
-      case 'settings':
-        return (
-          <Settings 
-            settings={settings}
-            onUpdateSettings={setSettings}
-            onBack={() => setCurrentScreen('menu')}
-          />
-        );
-      case 'game':
-        return (
-          <Game 
-            settings={settings}
-            onBack={() => setCurrentScreen('menu')}
-          />
-        );
-      default:
-        return null;
+// Game variables
+let grid = [];
+let selectedPieces = [];
+let connectionLine = [];
+
+// Initialize grid
+function initializeGrid() {
+    grid = [];
+    for (let i = 0; i < GRID_SIZE; i++) {
+        grid[i] = [];
+        for (let j = 0; j < GRID_SIZE; j++) {
+            grid[i][j] = {
+                color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                x: i,
+                y: j
+            };
+        }
     }
-  };
+}
 
-  return (
-    <div className="flex items-center justify-center min-h-[600px]">
-      {renderScreen()}
-    </div>
-  );
-};
+// Calculate grid dimensions
+function calculateGridDimensions() {
+    const minDimension = Math.min(canvas.width, canvas.height);
+    cellSize = minDimension / (GRID_SIZE + 2);
+    gridOffsetX = (canvas.width - cellSize * GRID_SIZE) / 2;
+    gridOffsetY = (canvas.height - cellSize * GRID_SIZE) / 2;
+}
 
-export default Match3Game;
+// Draw menu
+function drawMenu() {
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Match Game', canvas.width / 2, canvas.height / 3);
+    
+    ctx.font = '24px Arial';
+    ctx.fillText('Click to Start', canvas.width / 2, canvas.height / 2);
+}
+
+// Draw game board
+function drawGame() {
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw grid
+    for (let i = 0; i < GRID_SIZE; i++) {
+        for (let j = 0; j < GRID_SIZE; j++) {
+            const x = gridOffsetX + i * cellSize;
+            const y = gridOffsetY + j * cellSize;
+            
+            ctx.fillStyle = grid[i][j].color;
+            ctx.beginPath();
+            ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Highlight selected pieces
+            if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        }
+    }
+    
+    // Draw connection line
+    if (connectionLine.length > 1) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        
+        const startX = gridOffsetX + connectionLine[0].x * cellSize + cellSize/2;
+        const startY = gridOffsetY + connectionLine[0].y * cellSize + cellSize/2;
+        ctx.moveTo(startX, startY);
+        
+        for (let i = 1; i < connectionLine.length; i++) {
+            const x = gridOffsetX + connectionLine[i].x * cellSize + cellSize/2;
+            const y = gridOffsetY + connectionLine[i].y * cellSize + cellSize/2;
+            ctx.lineTo(x, y);
+        }
+        
+        ctx.stroke();
+    }
+}
+
+// Handle mouse/touch input
+function getGridPosition(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((clientX - rect.left - gridOffsetX) / cellSize);
+    const y = Math.floor((clientY - rect.top - gridOffsetY) / cellSize);
+    
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+        return { x, y };
+    }
+    return null;
+}
+
+function isAdjacent(piece1, piece2) {
+    const dx = Math.abs(piece1.x - piece2.x);
+    const dy = Math.abs(piece1.y - piece2.y);
+    return (dx <= 1 && dy <= 1) && !(dx === 1 && dy === 1);
+}
+
+function handleClick(clientX, clientY) {
+    if (currentState === GAME_STATE.MENU) {
+        currentState = GAME_STATE.PLAYING;
+        initializeGrid();
+        return;
+    }
+    
+    const gridPos = getGridPosition(clientX, clientY);
+    if (!gridPos) return;
+    
+    const clickedPiece = grid[gridPos.x][gridPos.y];
+    
+    if (selectedPieces.length === 0) {
+        selectedPieces.push(gridPos);
+        connectionLine.push(gridPos);
+    } else {
+        const lastPiece = selectedPieces[selectedPieces.length - 1];
+        if (isAdjacent(lastPiece, gridPos) && 
+            grid[lastPiece.x][lastPiece.y].color === clickedPiece.color) {
+            selectedPieces.push(gridPos);
+            connectionLine.push(gridPos);
+        }
+    }
+}
+
+function handleRelease() {
+    if (selectedPieces.length >= 3) {
+        // Remove matched pieces and drop new ones
+        for (const piece of selectedPieces) {
+            grid[piece.x][piece.y].color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        }
+    }
+    selectedPieces = [];
+    connectionLine = [];
+}
+
+// Event listeners
+canvas.addEventListener('mousedown', (e) => handleClick(e.clientX, e.clientY));
+canvas.addEventListener('mousemove', (e) => {
+    if (selectedPieces.length > 0) {
+        handleClick(e.clientX, e.clientY);
+    }
+});
+canvas.addEventListener('mouseup', handleRelease);
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleClick(touch.clientX, touch.clientY);
+});
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (selectedPieces.length > 0) {
+        const touch = e.touches[0];
+        handleClick(touch.clientX, touch.clientY);
+    }
+});
+canvas.addEventListener('touchend', handleRelease);
+
+// Game loop
+function gameLoop() {
+    calculateGridDimensions();
+    
+    if (currentState === GAME_STATE.MENU) {
+        drawMenu();
+    } else {
+        drawGame();
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+// Start the game
+gameLoop();
+</script>
+</body>
+</html>
