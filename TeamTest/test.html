@@ -83,6 +83,7 @@ function drawMenu() {
     
     ctx.font = '24px Arial';
     ctx.fillText('Click to Start', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Connect pieces in any direction, including diagonals!', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 // Draw game board
@@ -90,31 +91,11 @@ function drawGame() {
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw grid
-    for (let i = 0; i < GRID_SIZE; i++) {
-        for (let j = 0; j < GRID_SIZE; j++) {
-            const x = gridOffsetX + i * cellSize;
-            const y = gridOffsetY + j * cellSize;
-            
-            ctx.fillStyle = grid[i][j].color;
-            ctx.beginPath();
-            ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Highlight selected pieces
-            if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            }
-        }
-    }
-    
-    // Draw connection line
+    // Draw connection line first (behind the pieces)
     if (connectionLine.length > 1) {
         ctx.beginPath();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = cellSize / 4;
         
         const startX = gridOffsetX + connectionLine[0].x * cellSize + cellSize/2;
         const startY = gridOffsetY + connectionLine[0].y * cellSize + cellSize/2;
@@ -127,6 +108,39 @@ function drawGame() {
         }
         
         ctx.stroke();
+    }
+    
+    // Draw grid
+    for (let i = 0; i < GRID_SIZE; i++) {
+        for (let j = 0; j < GRID_SIZE; j++) {
+            const x = gridOffsetX + i * cellSize;
+            const y = gridOffsetY + j * cellSize;
+            
+            // Draw piece background (slight shadow effect)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw piece
+            ctx.fillStyle = grid[i][j].color;
+            ctx.beginPath();
+            ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Highlight selected pieces
+            if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Add a glow effect
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#FFFFFF';
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        }
     }
 }
 
@@ -145,7 +159,8 @@ function getGridPosition(clientX, clientY) {
 function isAdjacent(piece1, piece2) {
     const dx = Math.abs(piece1.x - piece2.x);
     const dy = Math.abs(piece1.y - piece2.y);
-    return (dx <= 1 && dy <= 1) && !(dx === 1 && dy === 1);
+    // Now allowing diagonal moves (dx and dy can both be 1)
+    return dx <= 1 && dy <= 1;
 }
 
 function handleClick(clientX, clientY) {
@@ -160,10 +175,15 @@ function handleClick(clientX, clientY) {
     
     const clickedPiece = grid[gridPos.x][gridPos.y];
     
+    // Check if the clicked position is already in the selection
+    const alreadySelected = selectedPieces.some(piece => 
+        piece.x === gridPos.x && piece.y === gridPos.y
+    );
+    
     if (selectedPieces.length === 0) {
         selectedPieces.push(gridPos);
         connectionLine.push(gridPos);
-    } else {
+    } else if (!alreadySelected) {
         const lastPiece = selectedPieces[selectedPieces.length - 1];
         if (isAdjacent(lastPiece, gridPos) && 
             grid[lastPiece.x][lastPiece.y].color === clickedPiece.color) {
