@@ -54,6 +54,8 @@ const COLOR_NAMES = {
 let cellSize;
 let gridOffsetX;
 let gridOffsetY;
+
+// Game variables
 let grid = [];
 let selectedPieces = [];
 let connectionLine = [];
@@ -105,18 +107,48 @@ function drawMenu() {
     ctx.fillText('Connect pieces in any direction, including diagonals!', canvas.width / 2, canvas.height / 2 + 40);
 }
 
+function drawGameOver() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 3);
+    ctx.font = '24px Arial';
+    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Click to Try Again', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+function drawLevelComplete() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Level Complete!', canvas.width / 2, canvas.height / 3);
+    ctx.font = '24px Arial';
+    ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Click to Continue', canvas.width / 2, canvas.height / 2 + 40);
+}
+
 function drawUI() {
+    // Draw moves left
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '24px Arial';
     ctx.textAlign = 'left';
     ctx.fillText(`Moves: ${movesLeft}`, 20, 40);
     
+    // Draw score
     ctx.textAlign = 'right';
     ctx.fillText(`Score: ${score}`, canvas.width - 20, 40);
     
+    // Draw level
     ctx.textAlign = 'center';
     ctx.fillText(`Level ${currentLevel}`, canvas.width / 2, 40);
     
+    // Draw objectives
     ctx.textAlign = 'left';
     ctx.font = '20px Arial';
     let yOffset = 80;
@@ -133,11 +165,11 @@ function drawGame() {
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Draw connection line
     if (connectionLine.length > 1) {
         ctx.beginPath();
-        const connectionColor = grid[connectionLine[0].x][connectionLine[0].y].color;
-        ctx.strokeStyle = connectionColor;
-        ctx.lineWidth = cellSize / 3;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = cellSize / 4;
         
         const startX = gridOffsetX + connectionLine[0].x * cellSize + cellSize/2;
         const startY = gridOffsetY + connectionLine[0].y * cellSize + cellSize/2;
@@ -149,23 +181,10 @@ function drawGame() {
             ctx.lineTo(x, y);
         }
         
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = 'white';
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-        
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = cellSize / 6;
-        ctx.moveTo(startX, startY);
-        for (let i = 1; i < connectionLine.length; i++) {
-            const x = gridOffsetX + connectionLine[i].x * cellSize + cellSize/2;
-            const y = gridOffsetY + connectionLine[i].y * cellSize + cellSize/2;
-            ctx.lineTo(x, y);
-        }
         ctx.stroke();
     }
     
+    // Draw grid
     for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
             const x = gridOffsetX + i * cellSize;
@@ -201,7 +220,6 @@ function getGridPosition(clientX, clientY) {
     const x = Math.floor((clientX - rect.left - gridOffsetX) / cellSize);
     const y = Math.floor((clientY - rect.top - gridOffsetY) / cellSize);
     
-    // Check if position is within grid bounds
     if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
         return { x, y };
     }
@@ -211,7 +229,7 @@ function getGridPosition(clientX, clientY) {
 function isAdjacent(piece1, piece2) {
     const dx = Math.abs(piece1.x - piece2.x);
     const dy = Math.abs(piece1.y - piece2.y);
-    return dx <= 1.5 && dy <= 1.5;
+    return dx <= 1 && dy <= 1;
 }
 
 function checkObjectives() {
@@ -254,33 +272,47 @@ function handleClick(clientX, clientY) {
         return;
     }
     
-    function getGridPosition(clientX, clientY) {
-        const rect = canvas.getBoundingClientRect();
-        const x = Math.floor((clientX - rect.left - gridOffsetX) / cellSize);
-        const y = Math.floor((clientY - rect.top - gridOffsetY) / cellSize);
-        
-        if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-            return { x, y };
-        }
-        return null;
-    }
+    const gridPos = getGridPosition(clientX, clientY);
+    if (!gridPos) return;
     
+    const clickedPiece = grid[gridPos.x][gridPos.y];
+    const alreadySelected = selectedPieces.some(piece => 
+        piece.x === gridPos.x && piece.y === gridPos.y
+    );
+    
+    if (selectedPieces.length === 0) {
+        selectedPieces.push(gridPos);
+        connectionLine.push(gridPos);
+    } else if (!alreadySelected) {
+        const lastPiece = selectedPieces[selectedPieces.length - 1];
+        if (isAdjacent(lastPiece, gridPos) && 
+            grid[lastPiece.x][lastPiece.y].color === clickedPiece.color) {
+            selectedPieces.push(gridPos);
+            connectionLine.push(gridPos);
+        }
+    }
+}
+
 function handleRelease() {
     if (selectedPieces.length >= 3) {
         const matchColor = grid[selectedPieces[0].x][selectedPieces[0].y].color;
         
+        // Update objectives
         if (objectives[matchColor] > 0) {
             objectives[matchColor] = Math.max(0, objectives[matchColor] - selectedPieces.length);
         }
         
+        // Update score
         score += selectedPieces.length * 10 * currentLevel;
         
+        // Replace matched pieces
         for (const piece of selectedPieces) {
             grid[piece.x][piece.y].color = Object.values(COLORS)[Math.floor(Math.random() * Object.values(COLORS).length)];
         }
         
         movesLeft--;
         
+        // Check win/lose conditions
         if (checkObjectives()) {
             currentState = GAME_STATE.LEVEL_COMPLETE;
         } else if (movesLeft <= 0) {
@@ -292,32 +324,7 @@ function handleRelease() {
     connectionLine = [];
 }
 
-function drawGameOver() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 3);
-    ctx.font = '24px Arial';
-    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Click to Try Again', canvas.width / 2, canvas.height / 2 + 40);
-}
-
-function drawLevelComplete() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Level Complete!', canvas.width / 2, canvas.height / 3);
-    ctx.font = '24px Arial';
-    ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Click to Continue', canvas.width / 2, canvas.height / 2 + 40);
-}
-
+// Event listeners
 canvas.addEventListener('mousedown', (e) => handleClick(e.clientX, e.clientY));
 canvas.addEventListener('mousemove', (e) => {
     if (selectedPieces.length > 0) {
