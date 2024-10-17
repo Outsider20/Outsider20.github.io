@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Gem, Target, RefreshCw, Link, Play, Info, Settings, Home, Volume2, Volume2Off, Music, MusicOff } from 'lucide-react';
+import { Gem, Target, RefreshCw, Play, Info, Settings, Home, Volume2, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const BOARD_SIZE = 6;
 const COLORS = ['red', 'blue', 'green', 'purple', 'orange'];
@@ -10,6 +9,15 @@ const TILE_SIZE = 48;
 const TILE_GAP = 4;
 
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
+
+const SlashedIcon = ({ icon: Icon, ...props }) => (
+  <div className="relative">
+    <Icon {...props} />
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="w-[140%] h-0.5 bg-current rotate-45 transform origin-center" />
+    </div>
+  </div>
+);
 
 const MenuBox = ({ children }) => (
   <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center">
@@ -103,7 +111,7 @@ const Settings = ({ settings, onUpdateSettings, onBack }) => (
           onClick={() => onUpdateSettings({ ...settings, sfx: !settings.sfx })}
         >
           <span>Sound Effects</span>
-          {settings.sfx ? <Volume2 size={20} /> : <Volume2Off size={20} />}
+          {settings.sfx ? <Volume2 size={20} /> : <SlashedIcon icon={Volume2} size={20} />}
         </Button>
         <Button
           variant="outline"
@@ -111,7 +119,7 @@ const Settings = ({ settings, onUpdateSettings, onBack }) => (
           onClick={() => onUpdateSettings({ ...settings, music: !settings.music })}
         >
           <span>Background Music</span>
-          {settings.music ? <Music size={20} /> : <MusicOff size={20} />}
+          {settings.music ? <Music size={20} /> : <SlashedIcon icon={Music} size={20} />}
         </Button>
       </div>
       <Button 
@@ -170,7 +178,6 @@ const Game = ({ onBack, settings }) => {
   const boardRef = useRef(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // ... (Previous game logic functions remain the same)
   const initializeBoard = () => {
     const newBoard = Array(BOARD_SIZE).fill().map(() => 
       Array(BOARD_SIZE).fill().map(() => getRandomColor())
@@ -180,13 +187,113 @@ const Game = ({ onBack, settings }) => {
     setMoves(15);
     setGameOver(false);
     setIsPaused(false);
+    setSelectedTiles(new Set());
   };
 
   useEffect(() => {
     initializeBoard();
   }, []);
 
-  // ... (Copy all the previous game logic functions here)
+  const handleTileMouseDown = (row, col, e) => {
+    if (gameOver || isPaused) return;
+    
+    const tileColor = board[row][col];
+    setIsDragging(true);
+    setSelectedTiles(new Set([`${row}-${col}`]));
+    lastTile.current = { row, col, color: tileColor };
+    
+    const rect = boardRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleTileMouseEnter = (row, col) => {
+    if (!isDragging || gameOver || isPaused) return;
+    
+    const currentTile = { row, col, color: board[row][col] };
+    
+    const isAdjacent = Math.abs(currentTile.row - lastTile.current.row) <= 1 &&
+                       Math.abs(currentTile.col - lastTile.current.col) <= 1;
+    
+    if (isAdjacent && currentTile.color === lastTile.current.color) {
+      setSelectedTiles(prev => new Set([...prev, `${row}-${col}`]));
+      lastTile.current = currentTile;
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      const rect = boardRef.current.getBoundingClientRect();
+      setMousePos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    if (selectedTiles.size >= MIN_MATCH) {
+      const pointsPerTile = 10;
+      const chainBonus = Math.floor(selectedTiles.size / MIN_MATCH);
+      const points = selectedTiles.size * pointsPerTile * chainBonus;
+      
+      setScore(prev => prev + points);
+      setMoves(prev => prev - 1);
+      
+      const newBoard = [...board];
+      selectedTiles.forEach(pos => {
+        const [row, col] = pos.split('-').map(Number);
+        for (let i = row; i > 0; i--) {
+          newBoard[i][col] = newBoard[i-1][col];
+        }
+        newBoard[0][col] = getRandomColor();
+      });
+      
+      setBoard(newBoard);
+      
+      if (moves <= 1) {
+        setGameOver(true);
+      }
+    }
+    
+    setIsDragging(false);
+    setSelectedTiles(new Set());
+    lastTile.current = null;
+  };
+
+  const renderConnectionLines = () => {
+    if (!isDragging || selectedTiles.size < 2) return null;
+
+    const tiles = Array.from(selectedTiles).map(pos => {
+      const [row, col] = pos.split('-').map(Number);
+      return {
+        x: col * (TILE_SIZE + TILE_GAP) + TILE_SIZE / 2,
+        y: row * (TILE_SIZE + TILE_GAP) + TILE_SIZE / 2
+      };
+    });
+
+    const pathPoints = tiles.map((point, i) => 
+      i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`
+    ).join(' ');
+
+    return (
+      <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+        <path
+          d={pathPoints}
+          stroke="yellow"
+          strokeWidth="4"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.5"
+        />
+      </svg>
+    );
+  };
 
   return (
     <div className="relative">
@@ -284,55 +391,23 @@ const Match3Game = () => {
     music: true
   });
 
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case 'menu':
-        return (
-          <div className="relative w-[400px] h-[500px] bg-gray-100 rounded-lg">
-            <StartMenu 
-              onStartGame={() => setCurrentScreen('game')}
-              onShowInstructions={() => setCurrentScreen('instructions')}
-              onShowSettings={() => setCurrentScreen('settings')}
-            />
-          </div>
-        );
-      case 'instructions':
-        return (
-          <div className="relative w-[400px] h-[500px] bg-gray-100 rounded-lg">
-            <Instructions 
-              onBack={() => setCurrentScreen('menu')}
-            />
-          </div>
-        );
-      case 'settings':
-        return (
-          <div className="relative w-[400px] h-[500px] bg-gray-100 rounded-lg">
-            <Settings 
-              settings={settings}
-              onUpdateSettings={setSettings}
-              onBack={() => setCurrentScreen('menu')}
-            />
-          </div>
-        );
-      case 'game':
-        return (
-          <div className="relative w-[400px] h-[500px] bg-gray-100 rounded-lg">
-            <Game 
-              settings={settings}
-              onBack={() => setCurrentScreen('menu')}
-            />
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="flex items-center justify-center min-h-[600px]">
-      {renderScreen()}
-    </div>
-  );
-};
-
-export default Match3Game;
+      <div className="relative w-[400px] h-[500px] bg-gray-100 rounded-lg">
+        {currentScreen === 'menu' && (
+          <StartMenu 
+            onStartGame={() => setCurrentScreen('game')}
+            onShowInstructions={() => setCurrentScreen('instructions')}
+            onShowSettings={() => setCurrentScreen('settings')}
+          />
+        )}
+        {currentScreen === 'instructions' && (
+          <Instructions 
+            onBack={() => setCurrentScreen('menu')}
+          />
+        )}
+        {currentScreen === 'settings' && (
+          <Settings 
+            settings={settings}
+            onUpdateSettings={setSettings}
+            onBack={() => setCurrentScreen('
