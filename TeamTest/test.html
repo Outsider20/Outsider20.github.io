@@ -208,35 +208,6 @@ function getGridPosition(clientX, clientY) {
     return null;
 }
 
-function findClosestMatchingPiece(currentPiece, mousePos) {
-    if (!mousePos) return null;
-    
-    const targetColor = grid[currentPiece.x][currentPiece.y].color;
-    let closestPiece = null;
-    let closestDistance = Infinity;
-    
-    for (let i = Math.max(0, mousePos.x - 2); i <= Math.min(GRID_SIZE - 1, mousePos.x + 2); i++) {
-        for (let j = Math.max(0, mousePos.y - 2); j <= Math.min(GRID_SIZE - 1, mousePos.y + 2); j++) {
-            if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
-                continue;
-            }
-            
-            if (grid[i][j].color === targetColor) {
-                const dx = mousePos.x - i;
-                const dy = mousePos.y - j;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < closestDistance && isAdjacent(currentPiece, {x: i, y: j})) {
-                    closestDistance = distance;
-                    closestPiece = {x: i, y: j};
-                }
-            }
-        }
-    }
-    
-    return closestPiece;
-}
-
 function isAdjacent(piece1, piece2) {
     const dx = Math.abs(piece1.x - piece2.x);
     const dy = Math.abs(piece1.y - piece2.y);
@@ -283,23 +254,17 @@ function handleClick(clientX, clientY) {
         return;
     }
     
-    const mousePos = getGridPosition(clientX, clientY);
-    if (!mousePos) return;
-    
-    if (selectedPieces.length === 0) {
-        selectedPieces.push(mousePos);
-        connectionLine.push(mousePos);
-    } else {
-        const lastPiece = selectedPieces[selectedPieces.length - 1];
-        const closestPiece = findClosestMatchingPiece(lastPiece, mousePos);
+    function getGridPosition(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor((clientX - rect.left - gridOffsetX) / cellSize);
+        const y = Math.floor((clientY - rect.top - gridOffsetY) / cellSize);
         
-        if (closestPiece && !selectedPieces.some(p => p.x === closestPiece.x && p.y === closestPiece.y)) {
-            selectedPieces.push(closestPiece);
-            connectionLine.push(closestPiece);
+        if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+            return { x, y };
         }
+        return null;
     }
-}
-
+    
 function handleRelease() {
     if (selectedPieces.length >= 3) {
         const matchColor = grid[selectedPieces[0].x][selectedPieces[0].y].color;
