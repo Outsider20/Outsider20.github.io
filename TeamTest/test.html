@@ -54,8 +54,6 @@ const COLOR_NAMES = {
 let cellSize;
 let gridOffsetX;
 let gridOffsetY;
-
-// Game variables
 let grid = [];
 let selectedPieces = [];
 let connectionLine = [];
@@ -107,48 +105,18 @@ function drawMenu() {
     ctx.fillText('Connect pieces in any direction, including diagonals!', canvas.width / 2, canvas.height / 2 + 40);
 }
 
-function drawGameOver() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 3);
-    ctx.font = '24px Arial';
-    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Click to Try Again', canvas.width / 2, canvas.height / 2 + 40);
-}
-
-function drawLevelComplete() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Level Complete!', canvas.width / 2, canvas.height / 3);
-    ctx.font = '24px Arial';
-    ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2);
-    ctx.fillText('Click to Continue', canvas.width / 2, canvas.height / 2 + 40);
-}
-
 function drawUI() {
-    // Draw moves left
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '24px Arial';
     ctx.textAlign = 'left';
     ctx.fillText(`Moves: ${movesLeft}`, 20, 40);
     
-    // Draw score
     ctx.textAlign = 'right';
     ctx.fillText(`Score: ${score}`, canvas.width - 20, 40);
     
-    // Draw level
     ctx.textAlign = 'center';
     ctx.fillText(`Level ${currentLevel}`, canvas.width / 2, 40);
     
-    // Draw objectives
     ctx.textAlign = 'left';
     ctx.font = '20px Arial';
     let yOffset = 80;
@@ -165,15 +133,12 @@ function drawGame() {
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw connection line with piece color
     if (connectionLine.length > 1) {
         ctx.beginPath();
-        // Use the color of the connected pieces for the line
         const connectionColor = grid[connectionLine[0].x][connectionLine[0].y].color;
         ctx.strokeStyle = connectionColor;
         ctx.lineWidth = cellSize / 3;
         
-        // Draw the main line
         const startX = gridOffsetX + connectionLine[0].x * cellSize + cellSize/2;
         const startY = gridOffsetY + connectionLine[0].y * cellSize + cellSize/2;
         ctx.moveTo(startX, startY);
@@ -184,13 +149,11 @@ function drawGame() {
             ctx.lineTo(x, y);
         }
         
-        // Add white glow effect
         ctx.shadowBlur = 15;
         ctx.shadowColor = 'white';
         ctx.stroke();
         ctx.shadowBlur = 0;
         
-        // Draw a thinner white line over the colored line for extra pop
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = cellSize / 6;
@@ -203,25 +166,21 @@ function drawGame() {
         ctx.stroke();
     }
     
-    // Draw grid
     for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
             const x = gridOffsetX + i * cellSize;
             const y = gridOffsetY + j * cellSize;
             
-            // Draw piece shadow
             ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
             ctx.beginPath();
             ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2, 0, Math.PI * 2);
             ctx.fill();
             
-            // Draw piece
             ctx.fillStyle = grid[i][j].color;
             ctx.beginPath();
             ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
             ctx.fill();
             
-            // Highlight selected pieces
             if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
                 ctx.strokeStyle = '#FFFFFF';
                 ctx.lineWidth = 3;
@@ -237,34 +196,36 @@ function drawGame() {
     drawUI();
 }
 
-// Modified isAdjacent function to be more forgiving with diagonals
-function isAdjacent(piece1, piece2) {
-    const dx = Math.abs(piece1.x - piece2.x);
-    const dy = Math.abs(piece1.y - piece2.y);
-    return dx <= 1.5 && dy <= 1.5; // More forgiving distance check
+function getGridPosition(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((clientX - rect.left - gridOffsetX) / cellSize);
+    const y = Math.floor((clientY - rect.top - gridOffsetY) / cellSize);
+    
+    // Check if position is within grid bounds
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+        return { x, y };
+    }
+    return null;
 }
 
-// New function to find the closest matching piece
 function findClosestMatchingPiece(currentPiece, mousePos) {
+    if (!mousePos) return null;
+    
     const targetColor = grid[currentPiece.x][currentPiece.y].color;
     let closestPiece = null;
     let closestDistance = Infinity;
     
-    // Check nearby pieces within a 2-cell radius
     for (let i = Math.max(0, mousePos.x - 2); i <= Math.min(GRID_SIZE - 1, mousePos.x + 2); i++) {
         for (let j = Math.max(0, mousePos.y - 2); j <= Math.min(GRID_SIZE - 1, mousePos.y + 2); j++) {
-            // Skip if already selected
             if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
                 continue;
             }
             
-            // Check if color matches
             if (grid[i][j].color === targetColor) {
                 const dx = mousePos.x - i;
                 const dy = mousePos.y - j;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                // Update closest piece if this one is closer
                 if (distance < closestDistance && isAdjacent(currentPiece, {x: i, y: j})) {
                     closestDistance = distance;
                     closestPiece = {x: i, y: j};
@@ -274,6 +235,27 @@ function findClosestMatchingPiece(currentPiece, mousePos) {
     }
     
     return closestPiece;
+}
+
+function isAdjacent(piece1, piece2) {
+    const dx = Math.abs(piece1.x - piece2.x);
+    const dy = Math.abs(piece1.y - piece2.y);
+    return dx <= 1.5 && dy <= 1.5;
+}
+
+function checkObjectives() {
+    for (const [color, count] of Object.entries(objectives)) {
+        if (count > 0) return false;
+    }
+    return true;
+}
+
+function startNewLevel() {
+    currentLevel++;
+    movesLeft = 15 + currentLevel * 2;
+    initializeGrid();
+    initializeObjectives();
+    currentState = GAME_STATE.PLAYING;
 }
 
 function handleClick(clientX, clientY) {
@@ -309,9 +291,6 @@ function handleClick(clientX, clientY) {
         connectionLine.push(mousePos);
     } else {
         const lastPiece = selectedPieces[selectedPieces.length - 1];
-        const lastColor = grid[lastPiece.x][lastPiece.y].color;
-        
-        // Find the closest matching piece near the mouse position
         const closestPiece = findClosestMatchingPiece(lastPiece, mousePos);
         
         if (closestPiece && !selectedPieces.some(p => p.x === closestPiece.x && p.y === closestPiece.y)) {
@@ -320,62 +299,23 @@ function handleClick(clientX, clientY) {
         }
     }
 }
-    
-    if (currentState === GAME_STATE.GAME_OVER || currentState === GAME_STATE.LEVEL_COMPLETE) {
-        if (currentState === GAME_STATE.LEVEL_COMPLETE) {
-            startNewLevel();
-        } else {
-            currentLevel = 1;
-            movesLeft = 15;
-            score = 0;
-            initializeGrid();
-            initializeObjectives();
-            currentState = GAME_STATE.PLAYING;
-        }
-        return;
-    }
-    
-    const gridPos = getGridPosition(clientX, clientY);
-    if (!gridPos) return;
-    
-    const clickedPiece = grid[gridPos.x][gridPos.y];
-    const alreadySelected = selectedPieces.some(piece => 
-        piece.x === gridPos.x && piece.y === gridPos.y
-    );
-    
-    if (selectedPieces.length === 0) {
-        selectedPieces.push(gridPos);
-        connectionLine.push(gridPos);
-    } else if (!alreadySelected) {
-        const lastPiece = selectedPieces[selectedPieces.length - 1];
-        if (isAdjacent(lastPiece, gridPos) && 
-            grid[lastPiece.x][lastPiece.y].color === clickedPiece.color) {
-            selectedPieces.push(gridPos);
-            connectionLine.push(gridPos);
-        }
-    }
-}
 
 function handleRelease() {
     if (selectedPieces.length >= 3) {
         const matchColor = grid[selectedPieces[0].x][selectedPieces[0].y].color;
         
-        // Update objectives
         if (objectives[matchColor] > 0) {
             objectives[matchColor] = Math.max(0, objectives[matchColor] - selectedPieces.length);
         }
         
-        // Update score
         score += selectedPieces.length * 10 * currentLevel;
         
-        // Replace matched pieces
         for (const piece of selectedPieces) {
             grid[piece.x][piece.y].color = Object.values(COLORS)[Math.floor(Math.random() * Object.values(COLORS).length)];
         }
         
         movesLeft--;
         
-        // Check win/lose conditions
         if (checkObjectives()) {
             currentState = GAME_STATE.LEVEL_COMPLETE;
         } else if (movesLeft <= 0) {
@@ -387,7 +327,32 @@ function handleRelease() {
     connectionLine = [];
 }
 
-// Event listeners
+function drawGameOver() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 3);
+    ctx.font = '24px Arial';
+    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Click to Try Again', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+function drawLevelComplete() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Level Complete!', canvas.width / 2, canvas.height / 3);
+    ctx.font = '24px Arial';
+    ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Click to Continue', canvas.width / 2, canvas.height / 2 + 40);
+}
+
 canvas.addEventListener('mousedown', (e) => handleClick(e.clientX, e.clientY));
 canvas.addEventListener('mousemove', (e) => {
     if (selectedPieces.length > 0) {
