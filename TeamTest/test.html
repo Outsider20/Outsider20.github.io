@@ -165,12 +165,15 @@ function drawGame() {
     ctx.fillStyle = '#333333';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw connection line
+    // Draw connection line with piece color
     if (connectionLine.length > 1) {
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.lineWidth = cellSize / 4;
+        // Use the color of the connected pieces for the line
+        const connectionColor = grid[connectionLine[0].x][connectionLine[0].y].color;
+        ctx.strokeStyle = connectionColor;
+        ctx.lineWidth = cellSize / 3;
         
+        // Draw the main line
         const startX = gridOffsetX + connectionLine[0].x * cellSize + cellSize/2;
         const startY = gridOffsetY + connectionLine[0].y * cellSize + cellSize/2;
         ctx.moveTo(startX, startY);
@@ -181,6 +184,22 @@ function drawGame() {
             ctx.lineTo(x, y);
         }
         
+        // Add white glow effect
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'white';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        // Draw a thinner white line over the colored line for extra pop
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = cellSize / 6;
+        ctx.moveTo(startX, startY);
+        for (let i = 1; i < connectionLine.length; i++) {
+            const x = gridOffsetX + connectionLine[i].x * cellSize + cellSize/2;
+            const y = gridOffsetY + connectionLine[i].y * cellSize + cellSize/2;
+            ctx.lineTo(x, y);
+        }
         ctx.stroke();
     }
     
@@ -190,16 +209,19 @@ function drawGame() {
             const x = gridOffsetX + i * cellSize;
             const y = gridOffsetY + j * cellSize;
             
+            // Draw piece shadow
             ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
             ctx.beginPath();
             ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2, 0, Math.PI * 2);
             ctx.fill();
             
+            // Draw piece
             ctx.fillStyle = grid[i][j].color;
             ctx.beginPath();
             ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
             ctx.fill();
             
+            // Highlight selected pieces
             if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
                 ctx.strokeStyle = '#FFFFFF';
                 ctx.lineWidth = 3;
@@ -215,36 +237,43 @@ function drawGame() {
     drawUI();
 }
 
-function getGridPosition(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((clientX - rect.left - gridOffsetX) / cellSize);
-    const y = Math.floor((clientY - rect.top - gridOffsetY) / cellSize);
-    
-    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-        return { x, y };
-    }
-    return null;
-}
-
+// Modified isAdjacent function to be more forgiving with diagonals
 function isAdjacent(piece1, piece2) {
     const dx = Math.abs(piece1.x - piece2.x);
     const dy = Math.abs(piece1.y - piece2.y);
-    return dx <= 1 && dy <= 1;
+    return dx <= 1.5 && dy <= 1.5; // More forgiving distance check
 }
 
-function checkObjectives() {
-    for (const [color, count] of Object.entries(objectives)) {
-        if (count > 0) return false;
+// New function to find the closest matching piece
+function findClosestMatchingPiece(currentPiece, mousePos) {
+    const targetColor = grid[currentPiece.x][currentPiece.y].color;
+    let closestPiece = null;
+    let closestDistance = Infinity;
+    
+    // Check nearby pieces within a 2-cell radius
+    for (let i = Math.max(0, mousePos.x - 2); i <= Math.min(GRID_SIZE - 1, mousePos.x + 2); i++) {
+        for (let j = Math.max(0, mousePos.y - 2); j <= Math.min(GRID_SIZE - 1, mousePos.y + 2); j++) {
+            // Skip if already selected
+            if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
+                continue;
+            }
+            
+            // Check if color matches
+            if (grid[i][j].color === targetColor) {
+                const dx = mousePos.x - i;
+                const dy = mousePos.y - j;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Update closest piece if this one is closer
+                if (distance < closestDistance && isAdjacent(currentPiece, {x: i, y: j})) {
+                    closestDistance = distance;
+                    closestPiece = {x: i, y: j};
+                }
+            }
+        }
     }
-    return true;
-}
-
-function startNewLevel() {
-    currentLevel++;
-    movesLeft = 15 + currentLevel * 2;
-    initializeGrid();
-    initializeObjectives();
-    currentState = GAME_STATE.PLAYING;
+    
+    return closestPiece;
 }
 
 function handleClick(clientX, clientY) {
@@ -257,6 +286,40 @@ function handleClick(clientX, clientY) {
         currentState = GAME_STATE.PLAYING;
         return;
     }
+    
+    if (currentState === GAME_STATE.GAME_OVER || currentState === GAME_STATE.LEVEL_COMPLETE) {
+        if (currentState === GAME_STATE.LEVEL_COMPLETE) {
+            startNewLevel();
+        } else {
+            currentLevel = 1;
+            movesLeft = 15;
+            score = 0;
+            initializeGrid();
+            initializeObjectives();
+            currentState = GAME_STATE.PLAYING;
+        }
+        return;
+    }
+    
+    const mousePos = getGridPosition(clientX, clientY);
+    if (!mousePos) return;
+    
+    if (selectedPieces.length === 0) {
+        selectedPieces.push(mousePos);
+        connectionLine.push(mousePos);
+    } else {
+        const lastPiece = selectedPieces[selectedPieces.length - 1];
+        const lastColor = grid[lastPiece.x][lastPiece.y].color;
+        
+        // Find the closest matching piece near the mouse position
+        const closestPiece = findClosestMatchingPiece(lastPiece, mousePos);
+        
+        if (closestPiece && !selectedPieces.some(p => p.x === closestPiece.x && p.y === closestPiece.y)) {
+            selectedPieces.push(closestPiece);
+            connectionLine.push(closestPiece);
+        }
+    }
+}
     
     if (currentState === GAME_STATE.GAME_OVER || currentState === GAME_STATE.LEVEL_COMPLETE) {
         if (currentState === GAME_STATE.LEVEL_COMPLETE) {
