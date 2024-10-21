@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const GAME_STATE = {
+    MENU: 'menu',
+    PLAYING: 'playing',
+    FALLING: 'falling',
+    GAME_OVER: 'game_over',
+    LEVEL_COMPLETE: 'level_complete'
+};
+let currentState = GAME_STATE.MENU;
+
+const GRID_SIZE = 8;
+const COLORS = {
+    RED: '#FF0000',
+    GREEN: '#00FF00',
+    BLUE: '#0000FF',
+    YELLOW: '#FFFF00',
+    PURPLE: '#FF00FF'
+};
+const COLOR_NAMES = {
+    '#FF0000': 'Red',
+    '#00FF00': 'Green',
+    '#0000FF': 'Blue',
+    '#FFFF00': 'Yellow',
+    '#FF00FF': 'Purple'
+};
+
+const FALL_SPEED = 0.1; // Speed of falling pieces
+
+let cellSize;
+let gridOffsetX;
+let gridOffsetY;
+
+// Game variables
+let grid = [];
+let selectedPieces = [];
+let connectionLine = [];
+let currentLevel = 1;
+let movesLeft = 15;
+let score = 0;
+let objectives = {};
+let fallingPieces = [];
+
+function createPiece(x, y, color, offset = 0) {
+    return {
+        x: x,
+        y: y,
+        color: color,
+        currentY: y - offset, // Used for animation
+        targetY: y
+    };
+}
+
+function initializeObjectives() {
+    objectives = {
+        [COLORS.GREEN]: Math.floor(Math.random() * 11),
+        [COLORS.RED]: Math.floor(Math.random() * 11),
+        [COLORS.BLUE]: Math.floor(Math.random() * 11)
+    };
+}
+
+function getRandomColor() {
+    return Object.values(COLORS)[Math.floor(Math.random() * Object.values(COLORS).length)];
+}
+
+function initializeGrid() {
+    grid = [];
+    for (let i = 0; i < GRID_SIZE; i++) {
+        grid[i] = [];
+        for (let j = 0; j < GRID_SIZE; j++) {
+            grid[i][j] = createPiece(i, j, getRandomColor());
+        }
+    }
+}
+
+function handleFalling() {
+    let stillFalling = false;
+    
+    // Update positions
+    for (let x = 0; x < GRID_SIZE; x++) {
+        for (let y = GRID_SIZE - 1; y >= 0; y--) {
+            if (grid[x][y]) {
+                const piece = grid[x][y];
+                if (piece.currentY < piece.targetY) {
+                    piece.currentY = Math.min(piece.currentY + FALL_SPEED, piece.targetY);
+                    stillFalling = true;
+                }
+            }
+        }
+    }
+    
+    if (!stillFalling) {
+        currentState = GAME_STATE.PLAYING;
+    }
+    
+    return stillFalling;
+}
+
+function applyGravity() {
+    let needsFalling = false;
+    
+    // Process columns from bottom to top
+    for (let x = 0; x < GRID_SIZE; x++) {
+        let emptySpaces = 0;
+        
+        // Count empty spaces and move pieces down
+        for (let y = GRID_SIZE - 1; y >= 0; y--) {
+            if (!grid[x][y]) {
+                emptySpaces++;
+            } else if (emptySpaces > 0) {
+                // Move piece down
+                const piece = grid[x][y];
+                piece.targetY = y + emptySpaces;
+                piece.y = piece.targetY;
+                grid[x][piece.targetY] = piece;
+                grid[x][y] = null;
+                needsFalling = true;
+            }
+        }
+        
+        // Fill empty spaces at top with new pieces
+        for (let i = 0; i < emptySpaces; i++) {
+            const y = emptySpaces - i - 1;
+            const newPiece = createPiece(x, y, getRandomColor(), 1);
+            grid[x][y] = newPiece;
+            needsFalling = true;
+        }
+    }
+    
+    if (needsFalling) {
+        currentState = GAME_STATE.FALLING;
+    }
+}
+
+function calculateGridDimensions() {
+    const minDimension = Math.min(canvas.width, canvas.height);
+    cellSize = minDimension / (GRID_SIZE + 2);
+    gridOffsetX = (canvas.width - cellSize * GRID_SIZE) / 2;
+    gridOffsetY = (canvas.height - cellSize * GRID_SIZE) / 2;
+}
+
+function drawMenu() {
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Match Game', canvas.width / 2, canvas.height / 3);
+    
+    ctx.font = '24px Arial';
+    ctx.fillText('Click to Start', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Connect pieces in any direction, including diagonals!', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+function drawGameOver() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 3);
+    ctx.font = '24px Arial';
+    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Click to Try Again', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+function drawLevelComplete() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Level Complete!', canvas.width / 2, canvas.height / 3);
+    ctx.font = '24px Arial';
+    ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Click to Continue', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+function drawUI() {
+    // Draw moves left
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Moves: ${movesLeft}`, 20, 40);
+    
+    // Draw score
+    ctx.textAlign = 'right';
+    ctx.fillText(`Score: ${score}`, canvas.width - 20, 40);
+    
+    // Draw level
+    ctx.textAlign = 'center';
+    ctx.fillText(`Level ${currentLevel}`, canvas.width / 2, 40);
+    
+    // Draw objectives
+    ctx.textAlign = 'left';
+    ctx.font = '20px Arial';
+    let yOffset = 80;
+    for (const [color, target] of Object.entries(objectives)) {
+        if (target > 0) {
+            ctx.fillStyle = color;
+            ctx.fillText(`${COLOR_NAMES[color]}: ${target} needed`, 20, yOffset);
+            yOffset += 30;
+        }
+    }
+}
+
+function drawGame() {
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw connection line
+    if (connectionLine.length > 1) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = cellSize / 4;
+        
+        const startX = gridOffsetX + connectionLine[0].x * cellSize + cellSize/2;
+        const startY = gridOffsetY + connectionLine[0].y * cellSize + cellSize/2;
+        ctx.moveTo(startX, startY);
+        
+        for (let i = 1; i < connectionLine.length; i++) {
+            const x = gridOffsetX + connectionLine[i].x * cellSize + cellSize/2;
+            const y = gridOffsetY + connectionLine[i].y * cellSize + cellSize/2;
+            ctx.lineTo(x, y);
+        }
+        
+        ctx.stroke();
+    }
+    
+    // Draw grid
+    for (let i = 0; i < GRID_SIZE; i++) {
+        for (let j = 0; j < GRID_SIZE; j++) {
+            if (grid[i][j]) {
+                const piece = grid[i][j];
+                const x = gridOffsetX + i * cellSize;
+                const y = gridOffsetY + piece.currentY * cellSize;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.beginPath();
+                ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = piece.color;
+                ctx.beginPath();
+                ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                if (selectedPieces.some(selected => selected.x === i && selected.y === j)) {
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#FFFFFF';
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+    }
+    
+    drawUI();
+}
+
+function handleClick(clientX, clientY) {
+    if (currentState === GAME_STATE.FALLING) return;
+    
+    if (currentState === GAME_STATE.MENU) {
+        currentLevel = 1;
+        movesLeft = 15;
+        score = 0;
+        initializeGrid();
+        initializeObjectives();
+        currentState = GAME_STATE.PLAYING;
+        return;
+    }
+    
+    if (currentState === GAME_STATE.GAME_OVER || currentState === GAME_STATE.LEVEL_COMPLETE) {
+        if (currentState === GAME_STATE.LEVEL_COMPLETE) {
+            startNewLevel();
+        } else {
+            currentLevel = 1;
+            movesLeft = 15;
+            score = 0;
+            initializeGrid();
+            initializeObjectives();
+            currentState = GAME_STATE.PLAYING;
+        }
+        return;
+    }
+    
+    const gridPos = getGridPosition(clientX, clientY);
+    if (!gridPos) return;
+    
+    const clickedPiece = grid[gridPos.x][gridPos.y];
+    if (!clickedPiece) return;
+    
+    const alreadySelected = selectedPieces.some(piece => 
+        piece.x === gridPos.x && piece.y === gridPos.y
+    );
+    
+    if (selectedPieces.length === 0) {
+        selectedPieces.push(gridPos);
+        connectionLine.push(gridPos);
+    } else if (!alreadySelected) {
+        const lastPiece = selectedPieces[selectedPieces.length - 1];
+        if (isAdjacent(lastPiece, gridPos) && 
+            grid[lastPiece.x][lastPiece.y].color === clickedPiece.color) {
+            selectedPieces.push(gridPos);
+            connectionLine.push(gridPos);
+        }
+    }
+}
+
+function handleRelease() {
+    if (selectedPieces.length >= 3) {
+        const matchColor = grid[selectedPieces[0].x][selectedPieces[0].y].color;
+        
+        // Update objectives
+        if (objectives[matchColor] > 0) {
+            objectives[matchColor] = Math.max(0, objectives[matchColor] - selectedPieces.length);
+        }
+        
+        // Update score
+        score += selectedPieces.length * 10 * currentLevel;
+        
+        // Remove matched pieces
+        for (const piece of selectedPieces) {
+            grid[piece.x][piece.y] = null;
+        }
+        
+        // Apply gravity
+        applyGravity();
+        
+        movesLeft--;
+        
+        // Check win/lose conditions
+        if (checkObjectives()) {
+            currentState = GAME_STATE.LEVEL_COMPLETE;
+        } else if (movesLeft <= 0) {
+            currentState = GAME_STATE.GAME_OVER;
+        }
+    }
+    
+    selectedPieces = [];
+    connectionLine = [];
+}
+
+function getGridPosition(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((clientX - rect.left - gridOffsetX) / cellSize);
+    const y = Math.floor((clientY - rect.top - gridOffsetY) / cellSize);
+    
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+        return { x, y };
+    }
+    return null;
+}
+
+function isAdjacent(piece1, piece2) {
+    const dx = Math.abs(piece1.x - piece2.x);
+    const dy = Math.abs(piece1.y - piece2.y);
+    return dx <= 1 && dy <= 1;
+}
+
+function checkObjectives() {
+    for (const [color, count] of Object.entries(objectives)) {
+        if (count > 0) return false;
+    }
+    return true;
+}
+
+function startNewLevel() {
+    currentLevel++;
+    movesLeft = 15 + currentLevel * 3;
+    initializeGrid();
+    initializeObjectives();
+    currentState = GAME_STATE.PLAYING;
+}
+
+// Event listeners
+canvas.addEventListener('mousedown', (e) => handleClick(e.clientX, e.clientY));
+canvas.addEventListener('mousemove', (e) => {
+    if (selectedPieces.length > 0) {
+        handleClick(e.clientX, e.clientY);
+    }
+});
+canvas.addEventListener('mouseup', handleRelease);
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleClick(touch.clientX, touch.clientY);
+});
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (selectedPieces.length > 0) {
+        const touch = e.touches[0];
+        handleClick(touch.clientX, touch.clientY);
+    }
+});
+canvas.addEventListener('touchend', handleRelease);
+
+function gameLoop() {
+    calculateGridDimensions();
+    
+    switch(currentState) {
+        case GAME_STATE.MENU:
+            drawMenu();
+            break;
+        case GAME_STATE.PLAYING:
+            drawGame();
+            break;
+        case GAME_STATE.FALLING:
+            handleFalling();
+            drawGame();
+            break;
+        case GAME_STATE.GAME_OVER:
+            drawGame();
+            drawGameOver();
+            break;
+        case GAME_STATE.LEVEL_COMPLETE:
+            drawGame();
+            drawLevelComplete();
+            break;
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
