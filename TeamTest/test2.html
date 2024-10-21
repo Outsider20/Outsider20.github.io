@@ -59,8 +59,8 @@ const COLOR_NAMES = {
     '#FF00FF': 'Purple'
 };
 
-const FALL_SPEED = 0.1;
-const WALL_COLOR = '#666666';
+const FALL_SPEED = 0.2; // Increased for smoother animation (originally 0.1)
+const WALL_COLOR = 'rgba(102, 102, 102, 0.4)'; // Made walls semi-transparent
 
 let cellSize;
 let gridOffsetX;
@@ -99,7 +99,9 @@ function createPiece(x, y, color, offset = 0) {
         y: y,
         color: color,
         currentY: y - offset,
-        targetY: y
+        targetY: y,
+        scale: 1, // Added for animation
+        alpha: 1  // Added for fade effects
     };
 }
 
@@ -142,16 +144,38 @@ function initializeGrid() {
 function handleFalling() {
     let stillFalling = false;
     
-    // Update positions
+    // Sort pieces by Y position for proper layering
+    let fallingPieces = [];
     for (let x = 0; x < GRID_SIZE; x++) {
-        for (let y = GRID_SIZE - 1; y >= 0; y--) {
+        for (let y = 0; y < GRID_SIZE; y++) {
             const cell = grid[x][y];
             if (cell && cell.type === CELL_TYPE.PIECE) {
-                if (cell.currentY < cell.targetY) {
-                    cell.currentY = Math.min(cell.currentY + FALL_SPEED, cell.targetY);
-                    stillFalling = true;
-                }
+                fallingPieces.push(cell);
             }
+        }
+    }
+    
+    fallingPieces.sort((a, b) => b.currentY - a.currentY);
+    
+    // Update positions
+    for (const piece of fallingPieces) {
+        if (piece.currentY < piece.targetY) {
+            piece.currentY = Math.min(
+                piece.currentY + FALL_SPEED * (1 + (piece.targetY - piece.currentY) * 0.1),
+                piece.targetY
+            );
+            stillFalling = true;
+            
+            // Add bounce effect when landing
+            if (piece.currentY === piece.targetY) {
+                piece.scale = 1.2;
+            }
+        }
+        
+        // Update scale for bounce effect
+        if (piece.scale > 1) {
+            piece.scale = Math.max(1, piece.scale - 0.05);
+            stillFalling = true;
         }
     }
     
@@ -320,6 +344,40 @@ function drawGame() {
         }
     }
     
+    // Draw walls first
+    for (let i = 0; i < GRID_SIZE; i++) {
+        for (let j = 0; j < GRID_SIZE; j++) {
+            const cell = grid[i][j];
+            if (cell?.type === CELL_TYPE.WALL) {
+                const x = gridOffsetX + i * cellSize;
+                const y = gridOffsetY + j * cellSize;
+                
+                // Draw semi-transparent wall with gradient
+                const gradient = ctx.createLinearGradient(x, y, x + cellSize, y + cellSize);
+                gradient.addColorStop(0, 'rgba(120, 120, 120, 0.3)');
+                gradient.addColorStop(1, 'rgba(80, 80, 80, 0.3)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y, cellSize, cellSize);
+                
+                // Add subtle wall pattern
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                
+                // Draw brick pattern
+                ctx.beginPath();
+                ctx.moveTo(x, y + cellSize/2);
+                ctx.lineTo(x + cellSize, y + cellSize/2);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x + cellSize/2, y);
+                ctx.lineTo(x + cellSize/2, y + cellSize);
+                ctx.stroke();
+            }
+        }
+    }
+    
     // Draw connection line
     if (connectionLine.length > 1) {
         ctx.beginPath();
@@ -339,65 +397,53 @@ function drawGame() {
         ctx.stroke();
     }
     
-    // Draw grid contents
+    // Sort pieces by Y position for proper layering during animation
+    let pieces = [];
     for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
             const cell = grid[i][j];
-            if (!cell) continue;
-            
-            const x = gridOffsetX + i * cellSize;
-            
-            if (cell.type === CELL_TYPE.WALL) {
-                // Draw wall
-                ctx.fillStyle = WALL_COLOR;
-                ctx.fillRect(x, gridOffsetY + j * cellSize, cellSize, cellSize);
-                
-                // Add brick pattern
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.lineWidth = 2;
-                const y = gridOffsetY + j * cellSize;
-                
-                // Horizontal lines
-                ctx.beginPath();
-                ctx.moveTo(x, y + cellSize/2);
-                ctx.lineTo(x + cellSize, y + cellSize/2);
-                ctx.stroke();
-                
-                // Vertical lines
-                ctx.beginPath();
-                ctx.moveTo(x + cellSize/2, y);
-                ctx.lineTo(x + cellSize/2, y + cellSize);
-                ctx.stroke();
-            } else {
-                // Draw piece
-                const y = gridOffsetY + cell.currentY * cellSize;
-                
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-                ctx.beginPath();
-                ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.fillStyle = cell.color;
-                ctx.beginPath();
-                ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
-                ctx.fill();
-                
-                if (selectedPieces.some(piece => piece.x === i && piece.y === j)) {
-                    ctx.strokeStyle = '#FFFFFF';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = '#FFFFFF';
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
+            if (cell?.type === CELL_TYPE.PIECE) {
+                pieces.push({x: i, y: j, piece: cell});
             }
+        }
+    }
+    pieces.sort((a, b) => a.piece.currentY - b.piece.currentY);
+    
+    // Draw pieces
+    for (const {x, y, piece} of pieces) {
+        const pieceX = gridOffsetX + x * cellSize + cellSize/2;
+        const pieceY = gridOffsetY + piece.currentY * cellSize + cellSize/2;
+        
+        // Calculate scaled size
+        const scaledSize = cellSize * piece.scale;
+        
+        // Draw shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.arc(pieceX, pieceY, scaledSize/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw piece
+        ctx.fillStyle = piece.color;
+        ctx.beginPath();
+        ctx.arc(pieceX, pieceY, (scaledSize/2) - 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw selection highlight
+        if (selectedPieces.some(selected => selected.x === x && selected.y === y)) {
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#FFFFFF';
+            ctx.stroke();
+            ctx.shadowBlur = 0;
         }
     }
     
     drawUI();
 }
-
+    
 function isAdjacent(piece1, piece2) {
     // Check if there's a wall between the pieces
     const dx = piece2.x - piece1.x;
@@ -449,14 +495,33 @@ function handleClick(clientX, clientY) {
     const clickedCell = grid[gridPos.x][gridPos.y];
     if (!clickedCell || clickedCell.type === CELL_TYPE.WALL) return;
     
-    const alreadySelected = selectedPieces.some(piece => 
+    // Check if clicking on the last selected piece (for backtracking)
+    if (selectedPieces.length > 1 && 
+        gridPos.x === selectedPieces[selectedPieces.length - 1].x && 
+        gridPos.y === selectedPieces[selectedPieces.length - 1].y) {
+        // Remove the last piece from selection
+        selectedPieces.pop();
+        connectionLine.pop();
+        return;
+    }
+    
+    // Check if clicking on a previously selected piece (for backtracking to that point)
+    const existingIndex = selectedPieces.findIndex(piece => 
         piece.x === gridPos.x && piece.y === gridPos.y
     );
     
+    if (existingIndex !== -1) {
+        // Remove all pieces after this point
+        selectedPieces.splice(existingIndex + 1);
+        connectionLine.splice(existingIndex + 1);
+        return;
+    }
+    
+    // Normal piece selection logic
     if (selectedPieces.length === 0) {
         selectedPieces.push(gridPos);
         connectionLine.push(gridPos);
-    } else if (!alreadySelected) {
+    } else {
         const lastPiece = selectedPieces[selectedPieces.length - 1];
         if (isAdjacent(lastPiece, gridPos) && 
             grid[lastPiece.x][lastPiece.y].color === clickedCell.color) {
@@ -465,8 +530,7 @@ function handleClick(clientX, clientY) {
         }
     }
 }
-
-
+    
 function handleRelease() {
     if (selectedPieces.length >= 3) {
         const matchColor = grid[selectedPieces[0].x][selectedPieces[0].y].color;
