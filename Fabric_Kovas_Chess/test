@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game with Fabric.js</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            font-family: 'Roboto', sans-serif;
+        }
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #canvas {
+            border: 2px solid #333;
+        }
+        .move-history {
+            margin-top: 20px;
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body>
+    <h2 id="turn-display">White's Turn</h2>
+    <button id="reset-button">Reset Game</button>
+    <button id="toggle-speech-button">Enable Speech</button>
+    <canvas id="canvas" width="640" height="640"></canvas>
+    <div class="move-history">
+        <h3>Move History</h3>
+        <ul id="move-history"></ul>
+    </div>
+
+    <script>
+        const initialGameState = [
+            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+        ];
+
+        const pieceImages = {
+            'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+            'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+            'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+            'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+            'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+            'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+            'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+            'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+            'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+            'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+            'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+            'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
+        };
+
+        const canvas = new fabric.Canvas('canvas');
+        let gameState = initialGameState.map(row => row.slice());
+        let currentPlayer = 'white';
+        const moveHistory = [];
+        let speechEnabled = true;
+        let selectedSquare = null;
+        let validMoves = [];
+
+        const isMoveValid = (piece, fromRow, fromCol, toRow, toCol) => {
+            if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 7) return false;
+
+            // Check if the piece belongs to the current player
+            if ((currentPlayer === 'white' && piece !== piece.toUpperCase()) || 
+                (currentPlayer === 'black' && piece !== piece.toLowerCase())) {
+                return false;
+            }
+
+            const targetPiece = gameState[toRow][toCol];
+            const isOpponentPiece = targetPiece && 
+                ((currentPlayer === 'white' && targetPiece === targetPiece.toLowerCase()) || 
+                 (currentPlayer === 'black' && targetPiece === targetPiece.toUpperCase()));
+
+            // Same color piece in target square
+            if (targetPiece && !isOpponentPiece) return false;
+
+            const initialRow = currentPlayer === 'white' ? 6 : 1;
+
+            if (piece.toLowerCase() === 'p') {
+                const direction = currentPlayer === 'white' ? -1 : 1;
+                if (fromCol === toCol) {
+                    if (gameState[toRow][toCol] === '') {
+                        if (fromRow === initialRow && toRow === fromRow + (2 * direction) && 
+                            gameState[fromRow + direction][fromCol] === '') {
+                            return true;
+                        }
+                        return fromRow + direction === toRow;
+                    }
+                } else if (Math.abs(fromCol - toCol) === 1 && isOpponentPiece) {
+                    return fromRow + direction === toRow;
+                }
+            }
+
+            if (piece.toLowerCase() === 'k') {
+                return Math.abs(fromRow - toRow) <= 1 && 
+                       Math.abs(fromCol - toCol) <= 1 && 
+                       (!targetPiece || isOpponentPiece);
+            }
+
+            return true; // Simplified for now
+        };
+
+        const calculateValidMoves = (row, col) => {
+            const piece = gameState[row][col];
+            validMoves = [];
+            
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    if (isMoveValid(piece, row, col, i, j)) {
+                        validMoves.push([i, j]);
+                    }
+                }
+            }
+        };
+
+        const drawBoard = () => {
+            canvas.clear();
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    // Default square colors
+                    let squareColor = (row + col) % 2 === 0 ? '#d3d3d3' : '#32CD32';
+                    
+                    // Highlight selected square
+                    if (selectedSquare && selectedSquare[0] === row && selectedSquare[1] === col) {
+                        squareColor = '#fff7ae';
+                    }
+                    
+                    // Highlight valid moves
+                    if (validMoves.some(([r, c]) => r === row && c === col)) {
+                        const alpha = gameState[row][col] ? '80' : '50';
+                        squareColor = '#7fff7f' + alpha;
+                    }
+
+                    const square = new fabric.Rect({
+                        left: col * 80,
+                        top: row * 80,
+                        fill: squareColor,
+                        width: 80,
+                        height: 80,
+                        selectable: false
+                    });
+                    canvas.add(square);
+
+                    const piece = gameState[row][col];
+                    if (piece) {
+                        fabric.Image.fromURL(pieceImages[piece], img => {
+                            img.scaleToWidth(70);
+                            img.set({
+                                left: col * 80 + 5,
+                                top: row * 80 + 5,
+                                selectable: true,
+                                hasBorders: false,
+                                hasControls: false
+                            });
+                            img.on('selected', () => handlePieceSelect(row, col));
+                            canvas.add(img);
+                        });
+                    }
+                }
+            }
+            canvas.renderAll();
+        };
+
+        const animateMove = (fromRow, fromCol, toRow, toCol, callback) => {
+            const piece = canvas.getObjects().find(obj => 
+                obj instanceof fabric.Image && 
+                obj.left === fromCol * 80 + 5 && 
+                obj.top === fromRow * 80 + 5
+            );
+
+            if (piece) {
+                piece.animate({
+                    left: toCol * 80 + 5,
+                    top: toRow * 80 + 5
+                }, {
+                    duration: 200,
+                    onChange: canvas.renderAll.bind(canvas),
+                    onComplete: () => {
+                        if (callback) callback();
+                        drawBoard();
+                    }
+                });
+            }
+        };
+
+        const handlePieceSelect = (row, col) => {
+            if (selectedSquare) {
+                const [selectedRow, selectedCol] = selectedSquare;
+                
+                if (row === selectedRow && col === selectedCol) {
+                    selectedSquare = null;
+                    validMoves = [];
+                    drawBoard();
+                    return;
+                }
+
+                const selectedPiece = gameState[selectedRow][selectedCol];
+                
+                if (isMoveValid(selectedPiece, selectedRow, selectedCol, row, col)) {
+                    const capturedPiece = gameState[row][col];
+                    
+                    // Animate the move
+                    animateMove(selectedRow, selectedCol, row, col, () => {
+                        gameState[row][col] = selectedPiece;
+                        gameState[selectedRow][selectedCol] = '';
+                        
+                        currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                        updateTurnDisplay();
+                        
+                        const fromSquare = String.fromCharCode(97 + selectedCol) + (8 - selectedRow);
+                        const toSquare = String.fromCharCode(97 + col) + (8 - row);
+                        moveHistory.push(`${selectedPiece} from ${fromSquare} to ${toSquare}`);
+                        document.getElementById('move-history').innerHTML += 
+                            `<li>${moveHistory[moveHistory.length - 1]}</li>`;
+                    });
+                }
+                selectedSquare = null;
+                validMoves = [];
+            } else {
+                if (gameState[row][col]) {
+                    selectedSquare = [row, col];
+                    calculateValidMoves(row, col);
+                }
+            }
+            drawBoard();
+        };
+
+        const updateTurnDisplay = () => {
+            document.getElementById('turn-display').innerText = 
+                `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)}'s Turn`;
+        };
+
+        document.getElementById('reset-button').onclick = () => {
+            gameState = initialGameState.map(row => row.slice());
+            currentPlayer = 'white';
+            moveHistory.length = 0;
+            selectedSquare = null;
+            validMoves = [];
+            document.getElementById('move-history').innerHTML = '';
+            drawBoard();
+            updateTurnDisplay();
+        };
+
+        document.getElementById('toggle-speech-button').onclick = () => {
+            speechEnabled = !speechEnabled;
+            document.getElementById('toggle-speech-button').innerText = 
+                speechEnabled ? 'Disable Speech' : 'Enable Speech';
+        };
+
+        window.onload = () => {
+            drawBoard();
+            updateTurnDisplay();
+        };
+    </script>
+</body>
+</html>
