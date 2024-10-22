@@ -445,21 +445,9 @@ function drawGame() {
 }
     
 function isAdjacent(piece1, piece2) {
-    // Check if there's a wall between the pieces
-    const dx = piece2.x - piece1.x;
-    const dy = piece2.y - piece1.y;
-    
-    // If diagonal, check both possible paths for walls
-    if (dx !== 0 && dy !== 0) {
-        const path1 = grid[piece1.x + dx][piece1.y];
-        const path2 = grid[piece1.x][piece1.y + dy];
-        if ((path1?.type === CELL_TYPE.WALL) || (path2?.type === CELL_TYPE.WALL)) {
-            return false;
-        }
-    }
-    
-    // Check if pieces are actually adjacent
-    return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
+    const dx = Math.abs(piece1.x - piece2.x);
+    const dy = Math.abs(piece1.y - piece2.y);
+    return dx <= 1 && dy <= 1 && (dx !== 0 || dy !== 0);
 }
 
 function handleClick(clientX, clientY) {
@@ -510,48 +498,54 @@ function handleClick(clientX, clientY) {
     );
     
     if (existingIndex !== -1) {
-        // If clicking the last piece, remove it (backtrack one step)
+        // If clicking on the last piece, remove it
         if (existingIndex === selectedPieces.length - 1) {
             selectedPieces.pop();
             connectionLine.pop();
-        } else {
-            // If clicking an earlier piece, backtrack to that point
+        }
+        // If clicking on an earlier piece, backtrack to that point
+        else {
             selectedPieces = selectedPieces.slice(0, existingIndex + 1);
             connectionLine = connectionLine.slice(0, existingIndex + 1);
         }
         return;
     }
     
-    // Check if the new piece is adjacent to the last selected piece
+    // Add new piece if it's valid
     if (selectedPieces.length === 0) {
         selectedPieces.push(gridPos);
         connectionLine.push(gridPos);
     } else {
         const lastPiece = selectedPieces[selectedPieces.length - 1];
-        if (isAdjacent(lastPiece, gridPos) && 
-            grid[lastPiece.x][lastPiece.y].color === clickedCell.color) {
-            // Check if there's a wall blocking the path
-            if (!isBlockedByWall(lastPiece, gridPos)) {
-                selectedPieces.push(gridPos);
-                connectionLine.push(gridPos);
-            }
+        if (isValidConnection(lastPiece, gridPos)) {
+            selectedPieces.push(gridPos);
+            connectionLine.push(gridPos);
         }
     }
 }
 
-function isBlockedByWall(piece1, piece2) {
+function isValidConnection(piece1, piece2) {
+    // Check if pieces are adjacent
+    if (!isAdjacent(piece1, piece2)) return false;
+    
+    // Check if colors match
+    const color1 = grid[piece1.x][piece1.y].color;
+    const color2 = grid[piece2.x][piece2.y].color;
+    if (color1 !== color2) return false;
+    
+    // Check for walls
     const dx = piece2.x - piece1.x;
     const dy = piece2.y - piece1.y;
     
-    // If moving diagonally, check both possible paths for walls
-    if (dx !== 0 && dy !== 0) {
-        const path1 = grid[piece1.x + dx][piece1.y];
-        const path2 = grid[piece1.x][piece1.y + dy];
-        return (path1?.type === CELL_TYPE.WALL) || (path2?.type === CELL_TYPE.WALL);
+    // For diagonal movement, check both potential paths
+    if (Math.abs(dx) === 1 && Math.abs(dy) === 1) {
+        const path1HasWall = grid[piece1.x + dx][piece1.y]?.type === CELL_TYPE.WALL;
+        const path2HasWall = grid[piece1.x][piece1.y + dy]?.type === CELL_TYPE.WALL;
+        return !path1HasWall && !path2HasWall;
     }
     
-    // For orthogonal movement, check if there's a wall directly between pieces
-    return false;
+    // For orthogonal movement, just check if the target cell is a wall
+    return grid[piece2.x][piece2.y].type !== CELL_TYPE.WALL;
 }
 
 function handleRelease() {
@@ -566,21 +560,13 @@ function handleRelease() {
         // Update score
         score += selectedPieces.length * 10 * currentLevel;
         
-        // Remove matched pieces with fade animation
+        // Remove matched pieces
         for (const piece of selectedPieces) {
-            const cell = grid[piece.x][piece.y];
-            cell.alpha = 0; // Start fade animation
-            setTimeout(() => {
-                if (grid[piece.x][piece.y] === cell) {
-                    grid[piece.x][piece.y] = null;
-                }
-            }, 200);
+            grid[piece.x][piece.y] = null;
         }
         
-        // Apply gravity after a short delay
-        setTimeout(() => {
-            applyGravity();
-        }, 250);
+        // Apply gravity
+        applyGravity();
         
         movesLeft--;
         
@@ -605,12 +591,6 @@ function getGridPosition(clientX, clientY) {
         return { x, y };
     }
     return null;
-}
-
-function isAdjacent(piece1, piece2) {
-    const dx = Math.abs(piece1.x - piece2.x);
-    const dy = Math.abs(piece1.y - piece2.y);
-    return dx <= 1 && dy <= 1;
 }
 
 function checkObjectives() {
