@@ -92,61 +92,86 @@
         let selectedSquare = null;
         let validMoves = [];
 
-        const isMoveValid = (piece, fromRow, fromCol, toRow, toCol) => {
-            if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 7) return false;
+        function isValidMove(fromRow, fromCol, toRow, toCol, piece) {
+            if (fromRow === toRow && fromCol === toCol) return false;
+            
+            const pieceType = piece.pieceType.toLowerCase();
+            const color = piece.pieceColor;
 
-            // Check if the piece belongs to the current player
-            if ((currentPlayer === 'white' && piece !== piece.toUpperCase()) || 
-                (currentPlayer === 'black' && piece !== piece.toLowerCase())) {
+            const destPiece = getPieceAt(toRow, toCol);
+            if (destPiece && destPiece.pieceColor === color) {
                 return false;
             }
 
-            const targetPiece = gameState[toRow][toCol];
-            const isOpponentPiece = targetPiece && 
-                ((currentPlayer === 'white' && targetPiece === targetPiece.toLowerCase()) || 
-                 (currentPlayer === 'black' && targetPiece === targetPiece.toUpperCase()));
+            const rowDiff = toRow - fromRow;
+            const colDiff = toCol - fromCol;
+            const absRowDiff = Math.abs(rowDiff);
+            const absColDiff = Math.abs(colDiff);
 
-            // Same color piece in target square
-            if (targetPiece && !isOpponentPiece) return false;
-
-            const initialRow = currentPlayer === 'white' ? 6 : 1;
-
-            if (piece.toLowerCase() === 'p') {
-                const direction = currentPlayer === 'white' ? -1 : 1;
-                if (fromCol === toCol) {
-                    if (gameState[toRow][toCol] === '') {
-                        if (fromRow === initialRow && toRow === fromRow + (2 * direction) && 
-                            gameState[fromRow + direction][fromCol] === '') {
+            switch (pieceType) {
+                case 'p':
+                    const direction = color === 'white' ? -1 : 1;
+                    const startRow = color === 'white' ? 6 : 1;
+                    
+                    if (colDiff === 0 && !destPiece) {
+                        if (rowDiff === direction) return true;
+                        if (fromRow === startRow && 
+                            rowDiff === 2 * direction && 
+                            !getPieceAt(fromRow + direction, fromCol)) {
                             return true;
                         }
-                        return fromRow + direction === toRow;
                     }
-                } else if (Math.abs(fromCol - toCol) === 1 && isOpponentPiece) {
-                    return fromRow + direction === toRow;
-                }
+                    
+                    if (absColDiff === 1 && rowDiff === direction && destPiece) {
+                        return true;
+                    }
+                    return false;
+
+                case 'r':
+                    if (fromRow !== toRow && fromCol !== toCol) return false;
+                    return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+
+                case 'n':
+                    return (absRowDiff === 2 && absColDiff === 1) || 
+                           (absRowDiff === 1 && absColDiff === 2);
+
+                case 'b':
+                    if (absRowDiff !== absColDiff) return false;
+                    return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+
+                case 'q':
+                    if (fromRow === toRow || fromCol === toCol || absRowDiff === absColDiff) {
+                        return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+                    }
+                    return false;
+
+                case 'k':
+                    return absRowDiff <= 1 && absColDiff <= 1;
+
+                default:
+                    return false;
             }
+        }
 
-            if (piece.toLowerCase() === 'k') {
-                return Math.abs(fromRow - toRow) <= 1 && 
-                       Math.abs(fromCol - toCol) <= 1 && 
-                       (!targetPiece || isOpponentPiece);
-            }
-
-            return true; // Simplified for now
-        };
-
-        const calculateValidMoves = (row, col) => {
-            const piece = gameState[row][col];
-            validMoves = [];
+        function isPathBlocked(fromRow, fromCol, toRow, toCol) {
+            const rowDir = fromRow === toRow ? 0 : (toRow - fromRow) / Math.abs(toRow - fromRow);
+            const colDir = fromCol === toCol ? 0 : (toCol - fromCol) / Math.abs(toCol - fromCol);
             
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 8; j++) {
-                    if (isMoveValid(piece, row, col, i, j)) {
-                        validMoves.push([i, j]);
-                    }
-                }
+            let currentRow = fromRow + rowDir;
+            let currentCol = fromCol + colDir;
+            
+            while (currentRow !== toRow || currentCol !== toCol) {
+                if (getPieceAt(currentRow, currentCol)) return true;
+                currentRow += rowDir;
+                currentCol += colDir;
             }
-        };
+            
+            return false;
+        }
+
+        function getPieceAt(row, col) {
+            return boardState[row][col];
+        }
 
         const drawBoard = () => {
             canvas.clear();
