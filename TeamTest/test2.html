@@ -450,105 +450,67 @@ function isAdjacent(piece1, piece2) {
     return dx <= 1 && dy <= 1 && (dx !== 0 || dy !== 0);
 }
 
-function handleClick(clientX, clientY) {
-    if (currentState === GAME_STATE.FALLING) return;
+let isMouseDown = false;
+let lastGridPos = null;
+
+function handleStart(x, y) {
+    isMouseDown = true;
+    selectedPieces = [];
+    connectionLine = [];
     
-    if (currentState === GAME_STATE.MENU) {
-        currentLevel = 1;
-        movesLeft = 15;
-        score = 0;
-        initializeGrid();
-        initializeObjectives();
-        currentState = GAME_STATE.PLAYING;
-        return;
-    }
-    
-    if (currentState === GAME_STATE.GAME_OVER || currentState === GAME_STATE.LEVEL_COMPLETE) {
-        if (currentState === GAME_STATE.LEVEL_COMPLETE) {
-            startNewLevel();
-        } else {
-            currentLevel = 1;
-            movesLeft = 15;
-            score = 0;
-            initializeGrid();
-            initializeObjectives();
-            currentState = GAME_STATE.PLAYING;
-        }
-        return;
-    }
-    
-    const gridPos = getGridPosition(clientX, clientY);
+    const gridPos = getGridPosition(x, y);
     if (!gridPos) return;
     
     const clickedCell = grid[gridPos.x][gridPos.y];
     if (!clickedCell || clickedCell.type === CELL_TYPE.WALL) return;
     
-    // Start new selection if clicking on a different color
-    if (selectedPieces.length > 0) {
-        const firstPiece = grid[selectedPieces[0].x][selectedPieces[0].y];
-        if (firstPiece.color !== clickedCell.color) {
-            selectedPieces = [];
-            connectionLine = [];
-        }
-    }
+    selectedPieces = [gridPos];
+    connectionLine = [gridPos];
+    lastGridPos = gridPos;
+}
+
+function handleMove(x, y) {
+    if (!isMouseDown || !lastGridPos) return;
     
-    // Check if clicking on a previously selected piece
+    const gridPos = getGridPosition(x, y);
+    if (!gridPos) return;
+    
+    // If we're still on the same cell, do nothing
+    if (gridPos.x === lastGridPos.x && gridPos.y === lastGridPos.y) return;
+    
+    const targetCell = grid[gridPos.x][gridPos.y];
+    if (!targetCell || targetCell.type === CELL_TYPE.WALL) return;
+    
+    // Check if clicking on a previously selected piece (for backtracking)
     const existingIndex = selectedPieces.findIndex(piece => 
         piece.x === gridPos.x && piece.y === gridPos.y
     );
     
     if (existingIndex !== -1) {
-        // If clicking on the last piece, remove it
-        if (existingIndex === selectedPieces.length - 1) {
-            selectedPieces.pop();
-            connectionLine.pop();
-        }
-        // If clicking on an earlier piece, backtrack to that point
-        else {
-            selectedPieces = selectedPieces.slice(0, existingIndex + 1);
-            connectionLine = connectionLine.slice(0, existingIndex + 1);
-        }
+        // Backtrack to this position
+        selectedPieces = selectedPieces.slice(0, existingIndex + 1);
+        connectionLine = connectionLine.slice(0, existingIndex + 1);
+        lastGridPos = gridPos;
         return;
     }
     
-    // Add new piece if it's valid
-    if (selectedPieces.length === 0) {
+    // Check if the new piece is valid to connect
+    const firstPiece = grid[selectedPieces[0].x][selectedPieces[0].y];
+    if (targetCell.color !== firstPiece.color) return;
+    
+    if (isValidConnection(lastGridPos, gridPos)) {
         selectedPieces.push(gridPos);
         connectionLine.push(gridPos);
-    } else {
-        const lastPiece = selectedPieces[selectedPieces.length - 1];
-        if (isValidConnection(lastPiece, gridPos)) {
-            selectedPieces.push(gridPos);
-            connectionLine.push(gridPos);
-        }
+        lastGridPos = gridPos;
     }
 }
 
-function isValidConnection(piece1, piece2) {
-    // Check if pieces are adjacent
-    if (!isAdjacent(piece1, piece2)) return false;
+function handleEnd() {
+    if (!isMouseDown) return;
     
-    // Check if colors match
-    const color1 = grid[piece1.x][piece1.y].color;
-    const color2 = grid[piece2.x][piece2.y].color;
-    if (color1 !== color2) return false;
+    isMouseDown = false;
+    lastGridPos = null;
     
-    // Check for walls
-    const dx = piece2.x - piece1.x;
-    const dy = piece2.y - piece1.y;
-    
-    // For diagonal movement, check both potential paths
-    if (Math.abs(dx) === 1 && Math.abs(dy) === 1) {
-        const path1HasWall = grid[piece1.x + dx][piece1.y]?.type === CELL_TYPE.WALL;
-        const path2HasWall = grid[piece1.x][piece1.y + dy]?.type === CELL_TYPE.WALL;
-        return !path1HasWall && !path2HasWall;
-    }
-    
-    // For orthogonal movement, just check if the target cell is a wall
-    return grid[piece2.x][piece2.y].type !== CELL_TYPE.WALL;
-}
-
-function handleRelease() {
     if (selectedPieces.length >= 3) {
         const matchColor = grid[selectedPieces[0].x][selectedPieces[0].y].color;
         
@@ -565,21 +527,41 @@ function handleRelease() {
             grid[piece.x][piece.y] = null;
         }
         
-        // Apply gravity
-        applyGravity();
-        
         movesLeft--;
         
-        // Check win/lose conditions
-        if (checkObjectives()) {
-            currentState = GAME_STATE.LEVEL_COMPLETE;
-        } else if (movesLeft <= 0) {
-            currentState = GAME_STATE.GAME_OVER;
-        }
+        // Apply gravity after a short delay
+        setTimeout(() => {
+            applyGravity();
+            
+            // Check win/lose conditions after pieces have fallen
+            if (checkObjectives()) {
+                currentState = GAME_STATE.LEVEL_COMPLETE;
+            } else if (movesLeft <= 0) {
+                currentState = GAME_STATE.GAME_OVER;
+            }
+        }, 100);
     }
     
     selectedPieces = [];
     connectionLine = [];
+}
+
+function isValidConnection(from, to) {
+    // Must be adjacent
+    const dx = Math.abs(from.x - to.x);
+    const dy = Math.abs(from.y - to.y);
+    if (dx > 1 || dy > 1 || (dx === 0 && dy === 0)) return false;
+    
+    // Check for walls blocking the path
+    if (dx === 1 && dy === 1) {
+        // Diagonal movement - check both possible paths
+        if (grid[from.x][to.y]?.type === CELL_TYPE.WALL ||
+            grid[to.x][from.y]?.type === CELL_TYPE.WALL) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 function getGridPosition(clientX, clientY) {
@@ -593,43 +575,49 @@ function getGridPosition(clientX, clientY) {
     return null;
 }
 
-function checkObjectives() {
-    for (const [color, count] of Object.entries(objectives)) {
-        if (count > 0) return false;
-    }
-    return true;
-}
-
-function startNewLevel() {
-    currentLevel++;
-    movesLeft = 15 + currentLevel * 3;
-    initializeGrid();
-    initializeObjectives();
-    currentState = GAME_STATE.PLAYING;
-}
-
-// Event listeners
-canvas.addEventListener('mousedown', (e) => handleClick(e.clientX, e.clientY));
-canvas.addEventListener('mousemove', (e) => {
-    if (selectedPieces.length > 0) {
-        handleClick(e.clientX, e.clientY);
-    }
+// Event Listeners
+canvas.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    handleStart(e.clientX, e.clientY);
 });
-canvas.addEventListener('mouseup', handleRelease);
+
+canvas.addEventListener('mousemove', (e) => {
+    e.preventDefault();
+    handleMove(e.clientX, e.clientY);
+});
+
+canvas.addEventListener('mouseup', (e) => {
+    e.preventDefault();
+    handleEnd();
+});
+
+canvas.addEventListener('mouseleave', (e) => {
+    e.preventDefault();
+    handleEnd();
+});
+
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const touch = e.touches[0];
-    handleClick(touch.clientX, touch.clientY);
+    handleStart(touch.clientX, touch.clientY);
 });
+
 canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
-    if (selectedPieces.length > 0) {
-        const touch = e.touches[0];
-        handleClick(touch.clientX, touch.clientY);
-    }
+    const touch = e.touches[0];
+    handleMove(touch.clientX, touch.clientY);
 });
-canvas.addEventListener('touchend', handleRelease);
 
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    handleEnd();
+});
+
+canvas.addEventListener('touchcancel', (e) => {
+    e.preventDefault();
+    handleEnd();
+});
+    
 function gameLoop() {
     calculateGridDimensions();
     
