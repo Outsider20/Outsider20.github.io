@@ -495,29 +495,34 @@ function handleClick(clientX, clientY) {
     const clickedCell = grid[gridPos.x][gridPos.y];
     if (!clickedCell || clickedCell.type === CELL_TYPE.WALL) return;
     
-    // Check if clicking on the last selected piece (for backtracking)
-    if (selectedPieces.length > 1 && 
-        gridPos.x === selectedPieces[selectedPieces.length - 1].x && 
-        gridPos.y === selectedPieces[selectedPieces.length - 1].y) {
-        // Remove the last piece from selection
-        selectedPieces.pop();
-        connectionLine.pop();
-        return;
+    // Start new selection if clicking on a different color
+    if (selectedPieces.length > 0) {
+        const firstPiece = grid[selectedPieces[0].x][selectedPieces[0].y];
+        if (firstPiece.color !== clickedCell.color) {
+            selectedPieces = [];
+            connectionLine = [];
+        }
     }
     
-    // Check if clicking on a previously selected piece (for backtracking to that point)
+    // Check if clicking on a previously selected piece
     const existingIndex = selectedPieces.findIndex(piece => 
         piece.x === gridPos.x && piece.y === gridPos.y
     );
     
     if (existingIndex !== -1) {
-        // Remove all pieces after this point
-        selectedPieces.splice(existingIndex + 1);
-        connectionLine.splice(existingIndex + 1);
+        // If clicking the last piece, remove it (backtrack one step)
+        if (existingIndex === selectedPieces.length - 1) {
+            selectedPieces.pop();
+            connectionLine.pop();
+        } else {
+            // If clicking an earlier piece, backtrack to that point
+            selectedPieces = selectedPieces.slice(0, existingIndex + 1);
+            connectionLine = connectionLine.slice(0, existingIndex + 1);
+        }
         return;
     }
     
-    // Normal piece selection logic
+    // Check if the new piece is adjacent to the last selected piece
     if (selectedPieces.length === 0) {
         selectedPieces.push(gridPos);
         connectionLine.push(gridPos);
@@ -525,12 +530,30 @@ function handleClick(clientX, clientY) {
         const lastPiece = selectedPieces[selectedPieces.length - 1];
         if (isAdjacent(lastPiece, gridPos) && 
             grid[lastPiece.x][lastPiece.y].color === clickedCell.color) {
-            selectedPieces.push(gridPos);
-            connectionLine.push(gridPos);
+            // Check if there's a wall blocking the path
+            if (!isBlockedByWall(lastPiece, gridPos)) {
+                selectedPieces.push(gridPos);
+                connectionLine.push(gridPos);
+            }
         }
     }
 }
+
+function isBlockedByWall(piece1, piece2) {
+    const dx = piece2.x - piece1.x;
+    const dy = piece2.y - piece1.y;
     
+    // If moving diagonally, check both possible paths for walls
+    if (dx !== 0 && dy !== 0) {
+        const path1 = grid[piece1.x + dx][piece1.y];
+        const path2 = grid[piece1.x][piece1.y + dy];
+        return (path1?.type === CELL_TYPE.WALL) || (path2?.type === CELL_TYPE.WALL);
+    }
+    
+    // For orthogonal movement, check if there's a wall directly between pieces
+    return false;
+}
+
 function handleRelease() {
     if (selectedPieces.length >= 3) {
         const matchColor = grid[selectedPieces[0].x][selectedPieces[0].y].color;
@@ -543,13 +566,21 @@ function handleRelease() {
         // Update score
         score += selectedPieces.length * 10 * currentLevel;
         
-        // Remove matched pieces
+        // Remove matched pieces with fade animation
         for (const piece of selectedPieces) {
-            grid[piece.x][piece.y] = null;
+            const cell = grid[piece.x][piece.y];
+            cell.alpha = 0; // Start fade animation
+            setTimeout(() => {
+                if (grid[piece.x][piece.y] === cell) {
+                    grid[piece.x][piece.y] = null;
+                }
+            }, 200);
         }
         
-        // Apply gravity
-        applyGravity();
+        // Apply gravity after a short delay
+        setTimeout(() => {
+            applyGravity();
+        }, 250);
         
         movesLeft--;
         
