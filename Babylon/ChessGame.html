@@ -75,12 +75,24 @@
     </div>
 
     <script>
+        // Previous variables remain the same
         const canvas = document.getElementById("renderCanvas");
         canvas.width = 800;
         canvas.height = 800;
         const engine = new BABYLON.Engine(canvas, true);
 
-        // Game state variables
+        // Add scale configuration
+        let currentScale = 1.0;
+        const pieceScaleConfigs = {
+            pawn: { baseScale: 0.7, heightOffset: 0 },
+            knight: { baseScale: 0.8, heightOffset: 0 },
+            bishop: { baseScale: 0.9, heightOffset: 0 },
+            rook: { baseScale: 0.8, heightOffset: 0 },
+            queen: { baseScale: 1.0, heightOffset: 0 },
+            king: { baseScale: 1.1, heightOffset: 0 }
+        };
+
+        // Previous game state variables remain the same
         let gameStarted = false;
         let turn = 'white';
         let selectedPiece = null;
@@ -102,7 +114,7 @@
             queen: 'queen.glb'
         };
 
-        // Initial board setup
+        // Initial board setup remains the same
         const initialSetup = [
             ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'],
             ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn'],
@@ -114,30 +126,6 @@
             ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook']
         ];
 
-        const createScene = async () => {
-            const scene = new BABYLON.Scene(engine);
-            
-            // Camera setup
-            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, BABYLON.Vector3.Zero(), scene);
-            camera.attachControl(canvas, true);
-            camera.lowerRadiusLimit = 10;
-            camera.upperRadiusLimit = 20;
-
-            // Lighting
-            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-            
-            // Create chessboard
-            createChessboard(scene);
-            
-            // Load and place chess pieces
-            await setupChessPieces(scene);
-            
-            // Setup piece movement and interaction
-            setupInteraction(scene);
-
-            return scene;
-        };
-
         async function loadPieceModel(scene, type) {
             const result = await BABYLON.SceneLoader.ImportMeshAsync(
                 "",
@@ -145,16 +133,58 @@
                 pieceModels[type],
                 scene
             );
-            return result.meshes[0];
+            const mesh = result.meshes[0];
+            
+            // Apply base scaling for piece type
+            const config = pieceScaleConfigs[type];
+            mesh.scaling = new BABYLON.Vector3(
+                config.baseScale * currentScale,
+                config.baseScale * currentScale,
+                config.baseScale * currentScale
+            );
+
+            // Adjust position based on height offset
+            mesh.position.y = config.heightOffset;
+
+            return mesh;
         }
 
+        function updatePieceScales(scale) {
+            currentScale = scale;
+            // Update all pieces on the board
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = boardState[row][col];
+                    if (piece) {
+                        const config = pieceScaleConfigs[piece.pieceInfo.type];
+                        piece.scaling = new BABYLON.Vector3(
+                            config.baseScale * scale,
+                            config.baseScale * scale,
+                            config.baseScale * scale
+                        );
+                    }
+                }
+            }
+        }
+
+        // Set up scale slider
+        const scaleSlider = document.getElementById('pieceScale');
+        const scaleValue = document.getElementById('scaleValue');
+        
+        scaleSlider.addEventListener('input', (event) => {
+            const newScale = parseFloat(event.target.value);
+            scaleValue.textContent = newScale.toFixed(1);
+            updatePieceScales(newScale);
+        });
+
+        // Modified setupChessPieces to include proper scaling
         async function setupChessPieces(scene) {
             const loadedModels = {};
             
             // Load each piece type once
             for (const type in pieceModels) {
                 loadedModels[type] = await loadPieceModel(scene, type);
-                loadedModels[type].setEnabled(false); // Hide original models
+                loadedModels[type].setEnabled(false);
             }
 
             // Place pieces on the board
@@ -168,7 +198,7 @@
                         // Position piece
                         piece.position = new BABYLON.Vector3(
                             row - 4 + 0.5,
-                            0,
+                            pieceScaleConfigs[pieceType].heightOffset,
                             col - 4 + 0.5
                         );
 
@@ -185,6 +215,14 @@
                             color: color
                         };
 
+                        // Apply scaling
+                        const config = pieceScaleConfigs[pieceType];
+                        piece.scaling = new BABYLON.Vector3(
+                            config.baseScale * currentScale,
+                            config.baseScale * currentScale,
+                            config.baseScale * currentScale
+                        );
+
                         // Update board state
                         boardState[row][col] = piece;
                         
@@ -193,6 +231,7 @@
                 }
             }
         }
+
 
         function createChessboard(scene) {
             const boardSize = 8;
