@@ -1,22 +1,97 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <style>
-            body, html {
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-            }
-            canvas {
-                display: block;
-            }
-        </style>
-    </head>
-    <body>
-        <canvas id="gameCanvas"></canvas>
-        <script>
-        </script>
-    </body>
-</html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rithmomachia</title>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .feature-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .feature {
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .feature-description {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .scale-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+
+    .scale-controls input {
+      width: 200px;
+    }
+
+    .scale-controls label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Rithmomachia</div>
+    <div class="feature-container">
+      <div class="feature">
+        <div class="feature-title">Game Board</div>
+        <div class="feature-description">
+          The Rithmomachia game board is a grid-based battlefield where players strategically maneuver their pieces to capture their opponent's pieces.
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Piece Movement</div>
+        <div class="feature-description">
+          Each piece in Rithmomachia has a unique numerical value, and the movement and capturing of pieces are based on complex mathematical relationships between these values.
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Game Mechanics</div>
+        <div class="feature-description">
+          Rithmomachia is a deep and challenging game that requires players to think strategically about their moves, anticipate their opponent's actions, and leverage the mathematical properties of the pieces.
+        </div>
+      </div>
+    </div>
+    <div class="scale-controls">
+      <label for="scale">Adjust Size:</label>
+      <input type="range" id="scale" min="50" max="150" value="100" step="10">
+    </div>
+  </div>
