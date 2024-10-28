@@ -21,6 +21,21 @@
             gap: 10px;
             margin-bottom: 10px;
         }
+        .scale-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .scale-controls input {
+            width: 200px;
+        }
+        .scale-controls label {
+            font-weight: bold;
+        }
         button {
             padding: 10px 20px;
             font-size: 16px;
@@ -57,15 +72,27 @@
 <body>
     <div class="container">
         <div class="board-container">
+            <!-- Game Controls -->
             <div class="game-controls">
                 <button id="startButton">Start Game</button>
                 <button id="restartButton" disabled>Restart Game</button>
                 <button id="exportButton">Export GLB</button>
             </div>
+            
+            <!-- Scale Controls - Positioned between game controls and HUD -->
+            <div class="scale-controls">
+                <label for="pieceScale">Piece Scale:</label>
+                <input type="range" id="pieceScale" min="0.5" max="2.0" step="0.1" value="1.0">
+                <span id="scaleValue">1.0</span>
+            </div>
+            
+            <!-- Game HUD -->
             <div id="hud">
                 <div id="white-timer">White: 05:00</div>
                 <div id="black-timer">Black: 05:00</div>
             </div>
+            
+            <!-- Game Canvas -->
             <canvas id="renderCanvas"></canvas>
         </div>
         <div class="history-container">
@@ -75,195 +102,117 @@
     </div>
 
     <script>
-        // Previous variables remain the same
-        const canvas = document.getElementById("renderCanvas");
-        canvas.width = 800;
-        canvas.height = 800;
-        const engine = new BABYLON.Engine(canvas, true);
+        // [Previous variable declarations remain the same]
 
-        // Add scale configuration
-        let currentScale = 1.0;
-        const pieceScaleConfigs = {
-            pawn: { baseScale: 0.7, heightOffset: 0 },
-            knight: { baseScale: 0.8, heightOffset: 0 },
-            bishop: { baseScale: 0.9, heightOffset: 0 },
-            rook: { baseScale: 0.8, heightOffset: 0 },
-            queen: { baseScale: 1.0, heightOffset: 0 },
-            king: { baseScale: 1.1, heightOffset: 0 }
-        };
-
-        // Previous game state variables remain the same
-        let gameStarted = false;
-        let turn = 'white';
-        let selectedPiece = null;
-        let boardState = Array(8).fill().map(() => Array(8).fill(null));
-        let moveCount = 1;
-        let whiteTime = 300;
-        let blackTime = 300;
-        let timerInterval;
-        let gameIsOver = false;
-        const history = [];
-
-        // Chess piece models configuration
-        const pieceModels = {
-            pawn: 'pawn.glb',
-            knight: 'knight.glb',
-            rook: 'rook.glb',
-            bishop: 'bishop.glb',
-            king: 'king.glb',
-            queen: 'queen.glb'
-        };
-
-        // Initial board setup remains the same
-        const initialSetup = [
-            ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'],
-            ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn'],
-            [null, null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null, null],
-            ['pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn'],
-            ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook']
-        ];
-
-        async function loadPieceModel(scene, type) {
-            const result = await BABYLON.SceneLoader.ImportMeshAsync(
-                "",
-                "",
-                pieceModels[type],
-                scene
-            );
-            const mesh = result.meshes[0];
+        // Chess movement validation
+        function isValidMove(fromRow, fromCol, toRow, toCol, pieceInfo) {
+            const { type, color } = pieceInfo;
             
-            // Apply base scaling for piece type
-            const config = pieceScaleConfigs[type];
-            mesh.scaling = new BABYLON.Vector3(
-                config.baseScale * currentScale,
-                config.baseScale * currentScale,
-                config.baseScale * currentScale
-            );
-
-            // Adjust position based on height offset
-            mesh.position.y = config.heightOffset;
-
-            return mesh;
-        }
-
-        function updatePieceScales(scale) {
-            currentScale = scale;
-            // Update all pieces on the board
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const piece = boardState[row][col];
-                    if (piece) {
-                        const config = pieceScaleConfigs[piece.pieceInfo.type];
-                        piece.scaling = new BABYLON.Vector3(
-                            config.baseScale * scale,
-                            config.baseScale * scale,
-                            config.baseScale * scale
-                        );
-                    }
-                }
-            }
-        }
-
-        // Set up scale slider
-        const scaleSlider = document.getElementById('pieceScale');
-        const scaleValue = document.getElementById('scaleValue');
-        
-        scaleSlider.addEventListener('input', (event) => {
-            const newScale = parseFloat(event.target.value);
-            scaleValue.textContent = newScale.toFixed(1);
-            updatePieceScales(newScale);
-        });
-
-        // Modified setupChessPieces to include proper scaling
-        async function setupChessPieces(scene) {
-            const loadedModels = {};
+            // Basic validation
+            if (fromRow === toRow && fromCol === toCol) return false;
             
-            // Load each piece type once
-            for (const type in pieceModels) {
-                loadedModels[type] = await loadPieceModel(scene, type);
-                loadedModels[type].setEnabled(false);
-            }
+            // Can't capture own piece
+            const targetPiece = boardState[toRow][toCol];
+            if (targetPiece && targetPiece.pieceInfo.color === color) return false;
 
-            // Place pieces on the board
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const pieceType = initialSetup[row][col];
-                    if (pieceType) {
-                        const color = row < 2 ? 'black' : 'white';
-                        const piece = loadedModels[pieceType].clone(`piece_${row}_${col}`);
+            const rowDiff = toRow - fromRow;
+            const colDiff = toCol - fromCol;
+            const absRowDiff = Math.abs(rowDiff);
+            const absColDiff = Math.abs(colDiff);
+
+            switch (type.toLowerCase()) {
+                case 'pawn':
+                    const direction = color === 'white' ? -1 : 1;
+                    
+                    // Forward move
+                    if (colDiff === 0 && !targetPiece) {
+                        // Single square move
+                        if (rowDiff === direction) return true;
                         
-                        // Position piece
-                        piece.position = new BABYLON.Vector3(
-                            row - 4 + 0.5,
-                            pieceScaleConfigs[pieceType].heightOffset,
-                            col - 4 + 0.5
-                        );
-
-                        // Set color material
-                        const material = new BABYLON.StandardMaterial(`pieceMat_${row}_${col}`, scene);
-                        material.diffuseColor = color === 'white' 
-                            ? new BABYLON.Color3(0.9, 0.9, 0.9)
-                            : new BABYLON.Color3(0.2, 0.2, 0.2);
-                        piece.material = material;
-
-                        // Store piece info
-                        piece.pieceInfo = {
-                            type: pieceType,
-                            color: color
-                        };
-
-                        // Apply scaling
-                        const config = pieceScaleConfigs[pieceType];
-                        piece.scaling = new BABYLON.Vector3(
-                            config.baseScale * currentScale,
-                            config.baseScale * currentScale,
-                            config.baseScale * currentScale
-                        );
-
-                        // Update board state
-                        boardState[row][col] = piece;
-                        
-                        piece.setEnabled(true);
+                        // Initial two-square move
+                        const startRow = color === 'white' ? 6 : 1;
+                        if (fromRow === startRow && rowDiff === 2 * direction) {
+                            const middleRow = fromRow + direction;
+                            return !boardState[middleRow][fromCol];
+                        }
                     }
-                }
+                    
+                    // Capture move
+                    if (absColDiff === 1 && rowDiff === direction && targetPiece) {
+                        return true;
+                    }
+                    return false;
+
+                case 'knight':
+                    return (absRowDiff === 2 && absColDiff === 1) || 
+                           (absRowDiff === 1 && absColDiff === 2);
+
+                case 'bishop':
+                    if (absRowDiff === absColDiff) {
+                        return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+                    }
+                    return false;
+
+                case 'rook':
+                    if (fromRow === toRow || fromCol === toCol) {
+                        return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+                    }
+                    return false;
+
+                case 'queen':
+                    if (absRowDiff === absColDiff || fromRow === toRow || fromCol === toCol) {
+                        return !isPathBlocked(fromRow, fromCol, toRow, toCol);
+                    }
+                    return false;
+
+                case 'king':
+                    return absRowDiff <= 1 && absColDiff <= 1;
+
+                default:
+                    return false;
             }
         }
 
-
-        function createChessboard(scene) {
-            const boardSize = 8;
-            const tileSize = 1;
-
-            for (let row = 0; row < boardSize; row++) {
-                for (let col = 0; col < boardSize; col++) {
-                    const tile = BABYLON.MeshBuilder.CreateBox(
-                        `tile${row}_${col}`,
-                        {height: 0.2, width: tileSize, depth: tileSize},
-                        scene
-                    );
-                    
-                    tile.position = new BABYLON.Vector3(
-                        row - boardSize/2 + 0.5,
-                        -0.1,
-                        col - boardSize/2 + 0.5
-                    );
-
-                    const material = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
-                    material.diffuseColor = (row + col) % 2 === 0 
-                        ? new BABYLON.Color3(0.9, 0.9, 0.9)  // Light squares
-                        : new BABYLON.Color3(0.4, 0.2, 0.1); // Dark squares
-                    
-                    tile.material = material;
-                    tile.boardPosition = {row, col};
+        function isPathBlocked(fromRow, fromCol, toRow, toCol) {
+            const rowDir = fromRow === toRow ? 0 : (toRow - fromRow) / Math.abs(toRow - fromRow);
+            const colDir = fromCol === toCol ? 0 : (toCol - fromCol) / Math.abs(toCol - fromCol);
+            
+            let currentRow = fromRow + rowDir;
+            let currentCol = fromCol + colDir;
+            
+            while (currentRow !== toRow || currentCol !== toCol) {
+                if (boardState[currentRow][currentCol]) {
+                    return true;
                 }
+                currentRow += rowDir;
+                currentCol += colDir;
             }
+            
+            return false;
         }
 
         function setupInteraction(scene) {
-            let startPosition = null;
+            let highlightMesh = null;
+            const highlightMaterial = new BABYLON.StandardMaterial("highlightMaterial", scene);
+            highlightMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0);
+            highlightMaterial.alpha = 0.3;
+
+            function createHighlight(position) {
+                if (highlightMesh) {
+                    highlightMesh.dispose();
+                }
+                highlightMesh = BABYLON.MeshBuilder.CreateBox(
+                    "highlight",
+                    { height: 0.1, width: 1, depth: 1 },
+                    scene
+                );
+                highlightMesh.position = new BABYLON.Vector3(
+                    position.row - 4 + 0.5,
+                    0,
+                    position.col - 4 + 0.5
+                );
+                highlightMesh.material = highlightMaterial;
+            }
 
             scene.onPointerDown = (evt, pickResult) => {
                 if (!gameStarted || gameIsOver) return;
@@ -271,32 +220,60 @@
                 const mesh = pickResult.pickedMesh;
                 if (!mesh) return;
 
-                if (mesh.pieceInfo) {
-                    if (mesh.pieceInfo.color !== turn) return;
-                    
+                if (mesh.pieceInfo && mesh.pieceInfo.color === turn) {
                     selectedPiece = mesh;
-                    startPosition = {
-                        row: Math.floor(mesh.position.x + 4),
-                        col: Math.floor(mesh.position.z + 4)
-                    };
+                    const row = Math.floor(mesh.position.x + 4);
+                    const col = Math.floor(mesh.position.z + 4);
+                    createHighlight({row, col});
                 } else if (selectedPiece && mesh.boardPosition) {
+                    const fromRow = Math.floor(selectedPiece.position.x + 4);
+                    const fromCol = Math.floor(selectedPiece.position.z + 4);
                     const toRow = mesh.boardPosition.row;
                     const toCol = mesh.boardPosition.col;
-                    
-                    if (isValidMove(startPosition.row, startPosition.col, toRow, toCol, selectedPiece.pieceInfo)) {
+
+                    if (isValidMove(fromRow, fromCol, toRow, toCol, selectedPiece.pieceInfo)) {
                         const capturedPiece = boardState[toRow][toCol];
                         if (capturedPiece) {
                             capturedPiece.dispose();
                         }
                         
-                        movePiece(selectedPiece, startPosition, {row: toRow, col: toCol}, scene, capturedPiece);
+                        movePiece(selectedPiece, 
+                            {row: fromRow, col: fromCol}, 
+                            {row: toRow, col: toCol}, 
+                            scene, 
+                            capturedPiece
+                        );
+
+                        if (highlightMesh) {
+                            highlightMesh.dispose();
+                            highlightMesh = null;
+                        }
                         selectedPiece = null;
-                        startPosition = null;
+                    }
+                }
+            };
+
+            // Add hover highlight for valid moves
+            scene.onPointerMove = (evt, pickResult) => {
+                if (!gameStarted || !selectedPiece) return;
+
+                const mesh = pickResult.pickedMesh;
+                if (mesh && mesh.boardPosition) {
+                    const fromRow = Math.floor(selectedPiece.position.x + 4);
+                    const fromCol = Math.floor(selectedPiece.position.z + 4);
+                    const toRow = mesh.boardPosition.row;
+                    const toCol = mesh.boardPosition.col;
+
+                    if (isValidMove(fromRow, fromCol, toRow, toCol, selectedPiece.pieceInfo)) {
+                        createHighlight({row: toRow, col: toCol});
+                    } else if (highlightMesh) {
+                        highlightMesh.dispose();
+                        highlightMesh = null;
                     }
                 }
             };
         }
-
+        
         function movePiece(piece, from, to, scene, capturedPiece = null) {
             // Update piece position
             piece.position = new BABYLON.Vector3(
@@ -391,10 +368,16 @@
             });
         });
 
-        // Handle window resize
-        window.addEventListener("resize", () => {
-            engine.resize();
-        });
+        const scaleSlider = document.getElementById('pieceScale');
+        const scaleValue = document.getElementById('scaleValue');
+        
+        if (scaleSlider && scaleValue) {
+            scaleSlider.addEventListener('input', (event) => {
+                const newScale = parseFloat(event.target.value);
+                scaleValue.textContent = newScale.toFixed(1);
+                updatePieceScales(newScale);
+            });
+        }
     </script>
 </body>
 </html>
