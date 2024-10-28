@@ -1,68 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rithmomachia</title>
-  <style>
-        .container {
-            display: flex;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
-        .board-container {
-            flex-shrink: 0;
+        canvas {
+            display: block;
         }
-        .scale-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 4px;
-        }
-        .scale-controls input {
-            width: 200px;
-        }
-        .scale-controls label {
-            font-weight: bold;
-        }
-        #renderCanvas {
-            border: 1px solid #000;
-            width: 600px;
-            height: 600px;
-            touch-action: none;
-        }
-        .history-container {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        #history {
-            flex-grow: 1;
-            width: 300px;
-            height: 400px;
-            overflow-y: auto;
-            border: 1px solid #000;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="board-container">
-            <canvas id="canvas" width="400" height="400"></canvas>
-        </div>
-        <div class="history-container">
-            <h2>Move History</h2>
-            <div id="history"></div>
-        </div>
-    </div>
-  <script>
-  </script>
-</body>
-</html>
-
+<canvas id="gameCanvas"></canvas>
+<script>
