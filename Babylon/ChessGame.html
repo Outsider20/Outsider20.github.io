@@ -119,6 +119,12 @@
         let blackTimer = 300;
         let timerInterval;
         let scene;
+        let highlightedSquares = [];
+        let selectedPieceMesh = null;
+        let validMoveIndicators = [];
+        const HIGHLIGHT_COLOR = new BABYLON.Color3(0.4, 0.7, 0.4);
+        let isDragging = false;
+        let dragStartPosition = null;
 
         // Create the 3D scene
         async function createScene() {
@@ -571,6 +577,271 @@
                 } else if (isStalemate(turn)) {
                     endGame('draw');
                 }
+            }
+
+            // Create materials for highlighting
+            function createHighlightMaterials(scene) {
+                // Material for selected piece
+                const selectedMaterial = new BABYLON.StandardMaterial("selectedMat", scene);
+                selectedMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.2);
+                selectedMaterial.alpha = 0.3;
+            
+                // Material for valid moves
+                const validMoveMaterial = new BABYLON.StandardMaterial("validMoveMat", scene);
+                validMoveMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.2);
+                validMoveMaterial.alpha = 0.3;
+            
+                return { selectedMaterial, validMoveMaterial };
+            }
+            
+            // Create a highlight mesh for squares
+            function createHighlightMesh(scene, position) {
+                const highlight = BABYLON.MeshBuilder.CreateBox(
+                    "highlight",
+                    { height: 0.1, width: 1, depth: 1 },
+                    scene
+                );
+                highlight.position = new BABYLON.Vector3(
+                    position.row - 4 + 0.5,
+                    0,
+                    position.col - 4 + 0.5
+                );
+                highlight.material = scene.getMaterialByName("validMoveMat");
+                return highlight;
+            }
+            
+            // Clear all current highlights
+            function clearHighlights() {
+                highlightedSquares.forEach(mesh => mesh.dispose());
+                highlightedSquares = [];
+                validMoveIndicators.forEach(mesh => mesh.dispose());
+                validMoveIndicators = [];
+            }
+            
+            // Show valid moves for selected piece
+            function showValidMoves(piece, scene) {
+                clearHighlights();
+                
+                const currentPos = getBoardPosition(piece.position);
+                
+                // Check all possible positions
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const targetPos = { row, col };
+                        if (isValidMove(piece, targetPos)) {
+                            const highlight = createHighlightMesh(scene, targetPos);
+                            validMoveIndicators.push(highlight);
+                        }
+                    }
+                }
+            }
+            
+            // Update setupInteraction function
+            function setupInteraction(scene) {
+                const { selectedMaterial, validMoveMaterial } = createHighlightMaterials(scene);
+                
+                // Pointer down event
+                scene.onPointerDown = (evt, pickResult) => {
+                    if (!gameStarted || gameIsOver) return;
+            
+                    if (pickResult.hit) {
+                        const mesh = pickResult.pickedMesh;
+                        let pieceFound = false;
+            
+                        // Find the actual piece mesh (might be a child mesh)
+                        let currentMesh = mesh;
+                        while (currentMesh) {
+                            if (currentMesh.pieceInfo) {
+                                pieceFound = true;
+                                mesh = currentMesh;
+                                break;
+                            }
+                            currentMesh = currentMesh.parent;
+                        }
+            
+                        if (pieceFound && mesh.pieceInfo.color === turn) {
+                            // Start dragging
+                            isDragging = true;
+                            dragStartPosition = mesh.position.clone();
+                            selectedPieceMesh = mesh;
+                            showValidMoves(mesh, scene);
+                        }
+                    }
+                };
+            
+                // Pointer move event
+                scene.onPointerMove = (evt, pickResult) => {
+                    if (isDragging && selectedPieceMesh) {
+                        const ray = scene.createPickingRay(
+                            scene.pointerX,
+                            scene.pointerY,
+                            BABYLON.Matrix.Identity(),
+                            scene.activeCamera
+                        );
+            
+                        const plane = new BABYLON.Plane(0, 1, 0, 0);
+                        let distance = 0;
+                        
+                        if (ray.intersectsPlane(plane, distance)) {
+                            const worldPosition = ray.origin.add(ray.direction.scale(Math.abs(distance)));
+                            
+                            // Keep the piece within the board boundaries
+                            const x = Math.max(-3.5, Math.min(3.5, worldPosition.x));
+                            const z = Math.max(-3.5, Math.min(3.5, worldPosition.z));
+                            
+                            selectedPieceMesh.position = new BABYLON.Vector3(
+                                x,
+                                selectedPieceMesh.position.y,
+                                z
+                            );
+                        }
+                    }
+                };
+            
+                // Pointer up event
+                scene.onPointerUp = (evt, pickResult) => {
+                    if (isDragging && selectedPieceMesh) {
+                        const finalPosition = getBoardPosition(selectedPieceMesh.position);
+                        
+                        // Snap to nearest valid square
+                        if (isValidMove(selectedPieceMesh, finalPosition)) {
+                            movePiece(selectedPieceMesh, finalPosition);
+                        } else {
+                            // Return to original position
+                            selectedPieceMesh.position = dragStartPosition;
+                        }
+            
+                        // Reset state
+                        isDragging = false;
+                        selectedPieceMesh = null;
+                        dragStartPosition = null;
+                        clearHighlights();
+                    }
+                };
+            
+                // Add hover effect
+                scene.onPointerMove = (evt, pickResult) => {
+                    if (!isDragging) {
+                        if (pickResult.hit) {
+                            const mesh = pickResult.pickedMesh;
+                            let pieceFound = false;
+                            let currentMesh = mesh;
+            
+                            while (currentMesh) {
+                                if (currentMesh.pieceInfo) {
+                                    pieceFound = true;
+                                    mesh = currentMesh;
+                                    break;
+                                }
+                                currentMesh = currentMesh.parent;
+                            }
+            
+                            if (pieceFound && mesh.pieceInfo.color === turn) {
+                                canvas.style.cursor = 'pointer';
+                            } else {
+                                canvas.style.cursor = 'default';
+                            }
+                        } else {
+                            canvas.style.cursor = 'default';
+                        }
+                    }
+                };
+            }
+            
+            // Update movePiece function to include animation
+            function movePiece(piece, targetPos) {
+                const currentPos = getBoardPosition(piece.position);
+                const capturedPiece = boardState[targetPos.row][targetPos.col];
+                
+                // Create animation
+                const frameRate = 30;
+                const targetPosition = new BABYLON.Vector3(
+                    targetPos.row - 4 + 0.5,
+                    piece.position.y,
+                    targetPos.col - 4 + 0.5
+                );
+                
+                const animation = new BABYLON.Animation(
+                    "moveAnimation",
+                    "position",
+                    frameRate,
+                    BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+                    BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+                );
+                
+                const keyFrames = [
+                    {
+                        frame: 0,
+                        value: piece.position.clone()
+                    },
+                    {
+                        frame: frameRate / 2,
+                        value: new BABYLON.Vector3(
+                            targetPosition.x,
+                            piece.position.y + 0.5, // Lift piece during movement
+                            targetPosition.z
+                        )
+                    },
+                    {
+                        frame: frameRate,
+                        value: targetPosition
+                    }
+                ];
+                
+                animation.setKeys(keyFrames);
+                
+                // Update board state
+                boardState[currentPos.row][currentPos.col] = null;
+                boardState[targetPos.row][targetPos.col] = piece;
+                
+                // Handle capture
+                if (capturedPiece) {
+                    // Fade out animation for captured piece
+                    const fadeAnimation = new BABYLON.Animation(
+                        "fadeAnimation",
+                        "scaling",
+                        frameRate,
+                        BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+                        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+                    );
+                    
+                    fadeAnimation.setKeys([
+                        {
+                            frame: 0,
+                            value: capturedPiece.scaling.clone()
+                        },
+                        {
+                            frame: frameRate,
+                            value: new BABYLON.Vector3(0, 0, 0)
+                        }
+                    ]);
+                    
+                    capturedPiece.animations = [fadeAnimation];
+                    scene.beginAnimation(capturedPiece, 0, frameRate, false, 1, () => {
+                        capturedPiece.dispose();
+                    });
+                }
+                
+                // Begin movement animation
+                piece.animations = [animation];
+                scene.beginAnimation(piece, 0, frameRate, false, 1, () => {
+                    // Update game state after animation
+                    moveCount++;
+                    const moveText = generateMoveText(piece, currentPos, targetPos, capturedPiece);
+                    history.push(moveText);
+                    document.getElementById('history').innerHTML = history.join('<br>');
+                    
+                    // Switch turns
+                    turn = turn === 'white' ? 'black' : 'white';
+                    
+                    // Check for checkmate or stalemate
+                    if (isCheckmate(turn)) {
+                        const winner = turn === 'white' ? 'black' : 'white';
+                        endGame(winner);
+                    } else if (isStalemate(turn)) {
+                        endGame('draw');
+                    }
+                });
             }
             
             function generateMoveText(piece, from, to, capturedPiece) {
