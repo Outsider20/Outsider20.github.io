@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <script>
+        <script>
         // Global variables
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
@@ -118,7 +118,8 @@
         let whiteTimer = 300; // 5 minutes in seconds
         let blackTimer = 300;
         let timerInterval;
-        
+        let scene;
+
         // Create the 3D scene
         async function createScene() {
             const scene = new BABYLON.Scene(engine);
@@ -154,7 +155,7 @@
             
             return scene;
         }
-        
+
         function createChessboard(scene) {
             const boardMaterial = new BABYLON.StandardMaterial("boardMat", scene);
             boardMaterial.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
@@ -188,7 +189,6 @@
             }
         }
 
-        // Piece models - using basic shapes for now
         async function loadPieceModel(scene, type) {
             const modelMap = {
                 'pawn': 'pawn.glb',
@@ -207,28 +207,22 @@
             try {
                 const result = await BABYLON.SceneLoader.ImportMeshAsync(
                     "",
-                    "./",  // Assuming models are in the same directory
+                    "./",
                     fileName,
                     scene
                 );
 
-                // Get the root mesh of the imported model
                 const rootMesh = result.meshes[0];
-                
-                // Create a container mesh to hold the model
                 const container = new BABYLON.Mesh("container", scene);
                 
-                // Parent all imported meshes to the container
                 result.meshes.forEach(mesh => {
                     if (mesh !== rootMesh) {
                         mesh.parent = container;
                     }
                 });
 
-                // Adjust scale if needed (modify these values based on your models)
                 container.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
 
-                // Center the model
                 const boundingBox = container.getHierarchyBoundingVectors(true);
                 const dimensions = boundingBox.max.subtract(boundingBox.min);
                 const centerOffset = dimensions.scale(0.5);
@@ -244,14 +238,12 @@
         async function createPiece(scene, type, row, col, color) {
             const piece = await loadPieceModel(scene, type);
             
-            // Position the piece on the board
             piece.position = new BABYLON.Vector3(
                 row - 4 + 0.5,
-                0,  // The model should be centered on its base
+                0,
                 col - 4 + 0.5
             );
             
-            // Apply color material to all meshes in the hierarchy
             const material = new BABYLON.StandardMaterial(`${color}${type}Mat`, scene);
             material.diffuseColor = color === 'white'
                 ? new BABYLON.Color3(0.9, 0.9, 0.9)
@@ -267,13 +259,101 @@
             return piece;
         }
 
+        async function setupPieces(scene) {
+            const pieces = [
+                { type: 'rook', positions: [[0, 0], [0, 7], [7, 0], [7, 7]] },
+                { type: 'knight', positions: [[0, 1], [0, 6], [7, 1], [7, 6]] },
+                { type: 'bishop', positions: [[0, 2], [0, 5], [7, 2], [7, 5]] },
+                { type: 'queen', positions: [[0, 3], [7, 3]] },
+                { type: 'king', positions: [[0, 4], [7, 4]] }
+            ];
+            
+            // Create pawns
+            for (let col = 0; col < 8; col++) {
+                await createPiece(scene, 'pawn', 1, col, 'black');
+                await createPiece(scene, 'pawn', 6, col, 'white');
+            }
+            
+            // Create other pieces
+            for (const piece of pieces) {
+                for (const [row, col] of piece.positions) {
+                    const color = row === 0 ? 'black' : 'white';
+                    await createPiece(scene, piece.type, row, col, color);
+                }
+            }
+        }
+
+        function setupInteraction(scene) {
+            scene.onPointerDown = function(evt, pickResult) {
+                if (!gameStarted || gameIsOver) return;
+
+                if (pickResult.hit) {
+                    const mesh = pickResult.pickedMesh;
+                    const boardPos = getBoardPosition(mesh.position);
+                    
+                    if (selectedPiece) {
+                        // Try to move the selected piece
+                        if (isValidMove(selectedPiece, boardPos)) {
+                            movePiece(selectedPiece, boardPos);
+                            selectedPiece = null;
+                        } else {
+                            // Deselect if invalid move
+                            selectedPiece = null;
+                        }
+                    } else {
+                        // Select a piece
+                        const piece = boardState[boardPos.row][boardPos.col];
+                        if (piece && piece.pieceInfo.color === turn) {
+                            selectedPiece = piece;
+                        }
+                    }
+                }
+            };
+        }
+
+        function getBoardPosition(position) {
+            const row = Math.floor(position.x + 4);
+            const col = Math.floor(position.z + 4);
+            return { row, col };
+        }
+
+        function isValidMove(piece, targetPos) {
+            const currentPos = getBoardPosition(piece.position);
+            // Implement chess rules here
+            // This is a simplified version that allows any move
+            return true;
+        }
+
+        function movePiece(piece, targetPos) {
+            const currentPos = getBoardPosition(piece.position);
+            
+            // Update board state
+            boardState[currentPos.row][currentPos.col] = null;
+            boardState[targetPos.row][targetPos.col] = piece;
+            
+            // Move the piece
+            piece.position = new BABYLON.Vector3(
+                targetPos.row - 4 + 0.5,
+                piece.position.y,
+                targetPos.col - 4 + 0.5
+            );
+            
+            // Update game state
+            moveCount++;
+            const moveText = `${moveCount}. ${piece.pieceInfo.color} ${piece.pieceInfo.type} to ${String.fromCharCode(97 + targetPos.col)}${8 - targetPos.row}`;
+            history.push(moveText);
+            document.getElementById('history').innerHTML = history.join('<br>');
+            
+            // Switch turns
+            turn = turn === 'white' ? 'black' : 'white';
+        }
+
         function updatePieceScales(scale) {
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
                     const piece = boardState[row][col];
                     if (piece) {
-                        // Apply scale while maintaining the original model scale
-                        const baseScale = 0.5; // matches the initial scale set in loadPieceModel
+                        const baseScale = 0.5;
                         piece.scaling = new BABYLON.Vector3(
                             baseScale * scale,
                             baseScale * scale,
@@ -282,6 +362,35 @@
                     }
                 }
             }
+        }
+
+        function startGame() {
+            if (!gameStarted) {
+                gameStarted = true;
+                document.getElementById('startButton').disabled = true;
+                document.getElementById('restartButton').disabled = false;
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            timerInterval = setInterval(() => {
+                if (turn === 'white') {
+                    whiteTimer--;
+                } else {
+                    blackTimer--;
+                }
+                
+                updateTimerDisplay();
+                
+                if (whiteTimer <= 0 || blackTimer <= 0) {
+                    endGame(whiteTimer <= 0 ? 'black' : 'white');
+                }
+            }, 1000);
         }
 
         function updateTimerDisplay() {
@@ -304,7 +413,6 @@
         }
 
         // Initialize the scene and game
-        let scene;
         createScene().then(newScene => {
             scene = newScene;
             engine.runRenderLoop(() => {
@@ -312,14 +420,15 @@
             });
         });
 
-        // Handle window resize
+        // Event listeners
         window.addEventListener('resize', () => {
             engine.resize();
         });
 
-        // Event listeners
         document.getElementById('startButton').addEventListener('click', startGame);
-        document.getElementById('restartButton').addEventListener('click', restartGame);
+        document.getElementById('restartButton').addEventListener('click', () => {
+            location.reload();
+        });
         document.getElementById('exportButton').addEventListener('click', () => {
             BABYLON.GLTF2Export.GLBAsync(scene, "chess_game").then((glb) => {
                 glb.downloadFiles();
