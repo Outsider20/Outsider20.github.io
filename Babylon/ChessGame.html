@@ -190,113 +190,76 @@
 
         // Piece models - using basic shapes for now
         async function loadPieceModel(scene, type) {
-            const height = type === 'pawn' ? 0.8 : 1.2;
-            let mesh;
-            
-            switch (type.toLowerCase()) {
-                case 'pawn':
-                    mesh = BABYLON.MeshBuilder.CreateCylinder(
-                        "pawn",
-                        { height: height, diameter: 0.3 },
-                        scene
-                    );
-                    break;
-                case 'rook':
-                    mesh = BABYLON.MeshBuilder.CreateBox(
-                        "rook",
-                        { height: height, width: 0.4, depth: 0.4 },
-                        scene
-                    );
-                    break;
-                case 'knight':
-                    mesh = BABYLON.MeshBuilder.CreateCylinder(
-                        "knight",
-                        { height: height, diameter: 0.4, diameterTop: 0.2 },
-                        scene
-                    );
-                    break;
-                case 'bishop':
-                    mesh = BABYLON.MeshBuilder.CreateCone(
-                        "bishop",
-                        { height: height, diameter: 0.4 },
-                        scene
-                    );
-                    break;
-                case 'queen':
-                    mesh = BABYLON.MeshBuilder.CreateSphere(
-                        "queen",
-                        { diameter: 0.5, segments: 16 },
-                        scene
-                    );
-                    mesh.scaling.y = 2;
-                    break;
-                case 'king':
-                    const base = BABYLON.MeshBuilder.CreateCylinder(
-                        "kingBase",
-                        { height: height, diameter: 0.4 },
-                        scene
-                    );
-                    const cross = BABYLON.MeshBuilder.CreateBox(
-                        "kingCross",
-                        { height: 0.3, width: 0.1, depth: 0.1 },
-                        scene
-                    );
-                    cross.position.y = height / 2 + 0.1;
-                    const crossHorizontal = BABYLON.MeshBuilder.CreateBox(
-                        "kingCrossHorizontal",
-                        { height: 0.1, width: 0.3, depth: 0.1 },
-                        scene
-                    );
-                    crossHorizontal.position.y = height / 2 + 0.1;
-                    
-                    mesh = BABYLON.Mesh.MergeMeshes(
-                        [base, cross, crossHorizontal],
-                        true
-                    );
-                    break;
-            }
-            
-            mesh.position.y = height / 2;
-            return mesh;
-        }
+            const modelMap = {
+                'pawn': 'pawn.glb',
+                'rook': 'rook.glb',
+                'knight': 'knight.glb',
+                'bishop': 'bishop.glb',
+                'queen': 'queen.glb',
+                'king': 'chess_king.glb'
+            };
 
-        async function setupPieces(scene) {
-            const pieces = [
-                { type: 'rook', positions: [[0, 0], [0, 7], [7, 0], [7, 7]] },
-                { type: 'knight', positions: [[0, 1], [0, 6], [7, 1], [7, 6]] },
-                { type: 'bishop', positions: [[0, 2], [0, 5], [7, 2], [7, 5]] },
-                { type: 'queen', positions: [[0, 3], [7, 3]] },
-                { type: 'king', positions: [[0, 4], [7, 4]] }
-            ];
-            
-            // Create pawns
-            for (let col = 0; col < 8; col++) {
-                await createPiece(scene, 'pawn', 1, col, 'black');
-                await createPiece(scene, 'pawn', 6, col, 'white');
+            const fileName = modelMap[type.toLowerCase()];
+            if (!fileName) {
+                throw new Error(`Unknown piece type: ${type}`);
             }
-            
-            // Create other pieces
-            for (const piece of pieces) {
-                for (const [row, col] of piece.positions) {
-                    const color = row === 0 ? 'black' : 'white';
-                    await createPiece(scene, piece.type, row, col, color);
-                }
+
+            try {
+                const result = await BABYLON.SceneLoader.ImportMeshAsync(
+                    "",
+                    "./",  // Assuming models are in the same directory
+                    fileName,
+                    scene
+                );
+
+                // Get the root mesh of the imported model
+                const rootMesh = result.meshes[0];
+                
+                // Create a container mesh to hold the model
+                const container = new BABYLON.Mesh("container", scene);
+                
+                // Parent all imported meshes to the container
+                result.meshes.forEach(mesh => {
+                    if (mesh !== rootMesh) {
+                        mesh.parent = container;
+                    }
+                });
+
+                // Adjust scale if needed (modify these values based on your models)
+                container.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+
+                // Center the model
+                const boundingBox = container.getHierarchyBoundingVectors(true);
+                const dimensions = boundingBox.max.subtract(boundingBox.min);
+                const centerOffset = dimensions.scale(0.5);
+                container.position.y = -boundingBox.min.y;
+
+                return container;
+            } catch (error) {
+                console.error(`Error loading model ${fileName}:`, error);
+                throw error;
             }
         }
 
         async function createPiece(scene, type, row, col, color) {
             const piece = await loadPieceModel(scene, type);
+            
+            // Position the piece on the board
             piece.position = new BABYLON.Vector3(
                 row - 4 + 0.5,
-                piece.position.y,
+                0,  // The model should be centered on its base
                 col - 4 + 0.5
             );
             
+            // Apply color material to all meshes in the hierarchy
             const material = new BABYLON.StandardMaterial(`${color}${type}Mat`, scene);
             material.diffuseColor = color === 'white'
                 ? new BABYLON.Color3(0.9, 0.9, 0.9)
                 : new BABYLON.Color3(0.2, 0.2, 0.2);
-            piece.material = material;
+            
+            piece.getChildMeshes().forEach(mesh => {
+                mesh.material = material;
+            });
             
             piece.pieceInfo = { type, color };
             boardState[row][col] = piece;
@@ -309,43 +272,16 @@
                 for (let col = 0; col < 8; col++) {
                     const piece = boardState[row][col];
                     if (piece) {
-                        piece.scaling = new BABYLON.Vector3(scale, scale, scale);
+                        // Apply scale while maintaining the original model scale
+                        const baseScale = 0.5; // matches the initial scale set in loadPieceModel
+                        piece.scaling = new BABYLON.Vector3(
+                            baseScale * scale,
+                            baseScale * scale,
+                            baseScale * scale
+                        );
                     }
                 }
             }
-        }
-
-        function startGame() {
-            if (!gameStarted) {
-                gameStarted = true;
-                document.getElementById('startButton').disabled = true;
-                document.getElementById('restartButton').disabled = false;
-                startTimer();
-            }
-        }
-
-        function restartGame() {
-            location.reload();
-        }
-
-        function startTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-            
-            timerInterval = setInterval(() => {
-                if (turn === 'white') {
-                    whiteTimer--;
-                } else {
-                    blackTimer--;
-                }
-                
-                updateTimerDisplay();
-                
-                if (whiteTimer <= 0 || blackTimer <= 0) {
-                    endGame(whiteTimer <= 0 ? 'black' : 'white');
-                }
-            }, 1000);
         }
 
         function updateTimerDisplay() {
