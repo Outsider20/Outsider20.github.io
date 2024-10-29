@@ -288,35 +288,7 @@
                 }
             }
         }
-
-        function setupInteraction(scene) {
-            scene.onPointerDown = function(evt, pickResult) {
-                if (!gameStarted || gameIsOver) return;
-
-                if (pickResult.hit) {
-                    const mesh = pickResult.pickedMesh;
-                    const boardPos = getBoardPosition(mesh.position);
-                    
-                    if (selectedPiece) {
-                        // Try to move the selected piece
-                        if (isValidMove(selectedPiece, boardPos)) {
-                            movePiece(selectedPiece, boardPos);
-                            selectedPiece = null;
-                        } else {
-                            // Deselect if invalid move
-                            selectedPiece = null;
-                        }
-                    } else {
-                        // Select a piece
-                        const piece = boardState[boardPos.row][boardPos.col];
-                        if (piece && piece.pieceInfo.color === turn) {
-                            selectedPiece = piece;
-                        }
-                    }
-                }
-            };
-        }
-
+            
         function getBoardPosition(position) {
             const row = Math.floor(position.x + 4);
             const col = Math.floor(position.z + 4);
@@ -636,7 +608,6 @@
                 }
             }
             
-            // Update setupInteraction function
             function setupInteraction(scene) {
                 const { selectedMaterial, validMoveMaterial } = createHighlightMaterials(scene);
                 
@@ -645,26 +616,26 @@
                     if (!gameStarted || gameIsOver) return;
             
                     if (pickResult.hit) {
-                        const mesh = pickResult.pickedMesh;
+                        let targetMesh = pickResult.pickedMesh;
                         let pieceFound = false;
             
                         // Find the actual piece mesh (might be a child mesh)
-                        let currentMesh = mesh;
+                        let currentMesh = targetMesh;
                         while (currentMesh) {
                             if (currentMesh.pieceInfo) {
                                 pieceFound = true;
-                                mesh = currentMesh;
+                                targetMesh = currentMesh;
                                 break;
                             }
                             currentMesh = currentMesh.parent;
                         }
             
-                        if (pieceFound && mesh.pieceInfo.color === turn) {
+                        if (pieceFound && targetMesh.pieceInfo.color === turn) {
                             // Start dragging
                             isDragging = true;
-                            dragStartPosition = mesh.position.clone();
-                            selectedPieceMesh = mesh;
-                            showValidMoves(mesh, scene);
+                            dragStartPosition = targetMesh.position.clone();
+                            selectedPieceMesh = targetMesh;
+                            showValidMoves(targetMesh, scene);
                         }
                     }
                 };
@@ -695,6 +666,23 @@
                                 z
                             );
                         }
+                    } else if (!isDragging) {
+                        if (pickResult.hit) {
+                            let hoveredMesh = pickResult.pickedMesh;
+                            let pieceFound = false;
+            
+                            while (hoveredMesh) {
+                                if (hoveredMesh.pieceInfo) {
+                                    pieceFound = true;
+                                    break;
+                                }
+                                hoveredMesh = hoveredMesh.parent;
+                            }
+            
+                            canvas.style.cursor = pieceFound && hoveredMesh.pieceInfo.color === turn ? 'pointer' : 'default';
+                        } else {
+                            canvas.style.cursor = 'default';
+                        }
                     }
                 };
             
@@ -716,34 +704,6 @@
                         selectedPieceMesh = null;
                         dragStartPosition = null;
                         clearHighlights();
-                    }
-                };
-            
-                // Add hover effect
-                scene.onPointerMove = (evt, pickResult) => {
-                    if (!isDragging) {
-                        if (pickResult.hit) {
-                            const mesh = pickResult.pickedMesh;
-                            let pieceFound = false;
-                            let currentMesh = mesh;
-            
-                            while (currentMesh) {
-                                if (currentMesh.pieceInfo) {
-                                    pieceFound = true;
-                                    mesh = currentMesh;
-                                    break;
-                                }
-                                currentMesh = currentMesh.parent;
-                            }
-            
-                            if (pieceFound && mesh.pieceInfo.color === turn) {
-                                canvas.style.cursor = 'pointer';
-                            } else {
-                                canvas.style.cursor = 'default';
-                            }
-                        } else {
-                            canvas.style.cursor = 'default';
-                        }
                     }
                 };
             }
