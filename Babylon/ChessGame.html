@@ -404,6 +404,229 @@
             document.getElementById('black-timer').textContent = `Black: ${formatTime(blackTimer)}`;
         }
 
+            function isValidMove(piece, targetPos) {
+                const currentPos = getBoardPosition(piece.position);
+                const type = piece.pieceInfo.type.toLowerCase();
+                const color = piece.pieceInfo.color;
+                
+                // Check if moving to same position
+                if (currentPos.row === targetPos.row && currentPos.col === targetPos.col) {
+                    return false;
+                }
+                
+                // Check if target square has a piece of same color
+                const targetPiece = boardState[targetPos.row][targetPos.col];
+                if (targetPiece && targetPiece.pieceInfo.color === color) {
+                    return false;
+                }
+                
+                // Validate based on piece type
+                switch (type) {
+                    case 'pawn':
+                        return isValidPawnMove(currentPos, targetPos, color, !!targetPiece);
+                    case 'rook':
+                        return isValidRookMove(currentPos, targetPos);
+                    case 'knight':
+                        return isValidKnightMove(currentPos, targetPos);
+                    case 'bishop':
+                        return isValidBishopMove(currentPos, targetPos);
+                    case 'queen':
+                        return isValidQueenMove(currentPos, targetPos);
+                    case 'king':
+                        return isValidKingMove(currentPos, targetPos);
+                    default:
+                        return false;
+                }
+            }
+            
+            function isValidPawnMove(current, target, color, isCapture) {
+                const direction = color === 'white' ? -1 : 1;
+                const startRow = color === 'white' ? 6 : 1;
+                
+                // Regular move forward
+                if (current.col === target.col && !isCapture) {
+                    if (target.row === current.row + direction) {
+                        return true;
+                    }
+                    // First move can be two squares
+                    if (current.row === startRow && 
+                        target.row === current.row + (2 * direction) &&
+                        !boardState[current.row + direction][current.col]) {
+                        return true;
+                    }
+                }
+                
+                // Capture move
+                if (isCapture &&
+                    target.row === current.row + direction &&
+                    Math.abs(target.col - current.col) === 1) {
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            function isValidRookMove(current, target) {
+                // Rook moves horizontally or vertically
+                if (current.row !== target.row && current.col !== target.col) {
+                    return false;
+                }
+                
+                return !isPieceBetween(current, target);
+            }
+            
+            function isValidKnightMove(current, target) {
+                const rowDiff = Math.abs(target.row - current.row);
+                const colDiff = Math.abs(target.col - current.col);
+                
+                // Knight moves in L-shape: 2 squares in one direction and 1 in the other
+                return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+            }
+            
+            function isValidBishopMove(current, target) {
+                const rowDiff = Math.abs(target.row - current.row);
+                const colDiff = Math.abs(target.col - current.col);
+                
+                // Bishop moves diagonally
+                if (rowDiff !== colDiff) {
+                    return false;
+                }
+                
+                return !isPieceBetween(current, target);
+            }
+            
+            function isValidQueenMove(current, target) {
+                // Queen combines rook and bishop movements
+                const rowDiff = Math.abs(target.row - current.row);
+                const colDiff = Math.abs(target.col - current.col);
+                
+                if (current.row === target.row || current.col === target.col || rowDiff === colDiff) {
+                    return !isPieceBetween(current, target);
+                }
+                
+                return false;
+            }
+            
+            function isValidKingMove(current, target) {
+                const rowDiff = Math.abs(target.row - current.row);
+                const colDiff = Math.abs(target.col - current.col);
+                
+                // King moves one square in any direction
+                return rowDiff <= 1 && colDiff <= 1;
+            }
+            
+            function isPieceBetween(current, target) {
+                const rowDir = Math.sign(target.row - current.row);
+                const colDir = Math.sign(target.col - current.col);
+                let row = current.row + rowDir;
+                let col = current.col + colDir;
+                
+                while (row !== target.row || col !== target.col) {
+                    if (boardState[row][col]) {
+                        return true;
+                    }
+                    row += rowDir;
+                    col += colDir;
+                }
+                
+                return false;
+            }
+            
+            // Update the movePiece function to check for checkmate
+            function movePiece(piece, targetPos) {
+                const currentPos = getBoardPosition(piece.position);
+                const capturedPiece = boardState[targetPos.row][targetPos.col];
+                
+                // Store move in history
+                const moveText = generateMoveText(piece, currentPos, targetPos, capturedPiece);
+                
+                // Update board state
+                boardState[currentPos.row][currentPos.col] = null;
+                boardState[targetPos.row][targetPos.col] = piece;
+                
+                // Move the piece
+                piece.position = new BABYLON.Vector3(
+                    targetPos.row - 4 + 0.5,
+                    piece.position.y,
+                    targetPos.col - 4 + 0.5
+                );
+                
+                // If a piece was captured, remove it from the scene
+                if (capturedPiece) {
+                    capturedPiece.dispose();
+                }
+                
+                // Update game state
+                moveCount++;
+                history.push(moveText);
+                document.getElementById('history').innerHTML = history.join('<br>');
+                
+                // Switch turns
+                turn = turn === 'white' ? 'black' : 'white';
+                
+                // Check for checkmate or stalemate
+                if (isCheckmate(turn)) {
+                    const winner = turn === 'white' ? 'black' : 'white';
+                    endGame(winner);
+                } else if (isStalemate(turn)) {
+                    endGame('draw');
+                }
+            }
+            
+            function generateMoveText(piece, from, to, capturedPiece) {
+                const pieceSymbol = piece.pieceInfo.type.charAt(0).toUpperCase();
+                const fromSquare = `${String.fromCharCode(97 + from.col)}${8 - from.row}`;
+                const toSquare = `${String.fromCharCode(97 + to.col)}${8 - to.row}`;
+                const captureText = capturedPiece ? 'x' : '';
+                
+                return `${moveCount + 1}. ${piece.pieceInfo.color} ${pieceSymbol}${fromSquare}${captureText}${toSquare}`;
+            }
+            
+            function isCheckmate(color) {
+                // For simplicity, we'll just check if the king has any legal moves
+                // A full implementation would need to check if any piece can prevent checkmate
+                const king = findKing(color);
+                if (!king) return true;
+                
+                const kingPos = getBoardPosition(king.position);
+                
+                // Check all possible king moves
+                for (let row = -1; row <= 1; row++) {
+                    for (let col = -1; col <= 1; col++) {
+                        const targetRow = kingPos.row + row;
+                        const targetCol = kingPos.col + col;
+                        
+                        if (targetRow >= 0 && targetRow < 8 && targetCol >= 0 && targetCol < 8) {
+                            if (isValidMove(king, { row: targetRow, col: targetCol })) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                
+                return true;
+            }
+            
+            function isStalemate(color) {
+                // Similar to checkmate check, but simpler for this implementation
+                return isCheckmate(color);
+            }
+            
+            function findKing(color) {
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const piece = boardState[row][col];
+                        if (piece && 
+                            piece.pieceInfo.type.toLowerCase() === 'king' && 
+                            piece.pieceInfo.color === color) {
+                            return piece;
+                        }
+                    }
+                }
+                return null;
+            }
+
+
         function endGame(winner) {
             gameIsOver = true;
             clearInterval(timerInterval);
