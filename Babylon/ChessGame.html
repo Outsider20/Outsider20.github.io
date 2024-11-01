@@ -304,26 +304,88 @@
 
         function movePiece(piece, targetPos) {
             const currentPos = getBoardPosition(piece.position);
-            
-            // Update board state
-            boardState[currentPos.row][currentPos.col] = null;
-            boardState[targetPos.row][targetPos.col] = piece;
-            
-            // Move the piece
-            piece.position = new BABYLON.Vector3(
+            const capturedPiece = boardState[targetPos.row][targetPos.col];
+        
+            // Create animation
+            const frameRate = 30;
+            const targetPosition = new BABYLON.Vector3(
                 targetPos.row - 4 + 0.5,
                 piece.position.y,
                 targetPos.col - 4 + 0.5
             );
-            
-            // Update game state
-            moveCount++;
-            const moveText = `${moveCount}. ${piece.pieceInfo.color} ${piece.pieceInfo.type} to ${String.fromCharCode(97 + targetPos.col)}${8 - targetPos.row}`;
-            history.push(moveText);
-            document.getElementById('history').innerHTML = history.join('<br>');
-            
-            // Switch turns
-            turn = turn === 'white' ? 'black' : 'white';
+        
+            const animation = new BABYLON.Animation(
+                "moveAnimation",
+                "position",
+                frameRate,
+                BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+                BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+            );
+        
+            const keyFrames = [
+                {
+                    frame: 0,
+                    value: piece.position.clone()
+                },
+                {
+                    frame: frameRate / 2,
+                    value: new BABYLON.Vector3(
+                        targetPosition.x,
+                        piece.position.y + 0.5,
+                        targetPosition.z
+                    )
+                },
+                {
+                    frame: frameRate,
+                    value: targetPosition
+                }
+            ];
+        
+            animation.setKeys(keyFrames);
+        
+            // Update board state
+            boardState[currentPos.row][currentPos.col] = null;
+            boardState[targetPos.row][targetPos.col] = piece;
+        
+            // Handle capture
+            if (capturedPiece) {
+                const fadeAnimation = new BABYLON.Animation(
+                    "fadeAnimation",
+                    "scaling",
+                    frameRate,
+                    BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+                    BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+                );
+        
+                fadeAnimation.setKeys([
+                    {
+                        frame: 0,
+                        value: capturedPiece.scaling.clone()
+                    },
+                    {
+                        frame: frameRate,
+                        value: new BABYLON.Vector3(0, 0, 0)
+                    }
+                ]);
+        
+                capturedPiece.animations = [fadeAnimation];
+                scene.beginAnimation(capturedPiece, 0, frameRate, false, 1, () => {
+                    capturedPiece.dispose();
+                });
+            }
+        
+            // Begin movement animation
+            piece.animations = [animation];
+            scene.beginAnimation(piece, 0, frameRate, false, 1, () => {
+                // Update game state after animation
+                moveCount++;
+                const moveText = generateMoveText(piece, currentPos, targetPos, capturedPiece);
+                history.push(moveText);
+                document.getElementById('history').innerHTML = history.join('<br>');
+        
+                // Switch turns
+                turn = turn === 'white' ? 'black' : 'white';
+            });
         }
 
         function updatePieceScales(scale) {
@@ -622,86 +684,111 @@
 
             
             function setupInteraction(scene) {
-                let isDragging = false;
+                let selectedSquare = null;
                 let selectedPiece = null;
-                let startingPosition = null;
+                let highlightMeshes = [];
             
-                // Create the highlighting materials
-                const highlightMaterial = new BABYLON.StandardMaterial("highlightMat", scene);
-                highlightMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.2);
-                highlightMaterial.alpha = 0.3;
+                // Create highlighting materials
+                const selectedMaterial = new BABYLON.StandardMaterial("selectedMat", scene);
+                selectedMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.7, 0.2);
+                selectedMaterial.alpha = 0.3;
+            
+                const validMoveMaterial = new BABYLON.StandardMaterial("validMoveMat", scene);
+                validMoveMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.9);
+                validMoveMaterial.alpha = 0.3;
+            
+                function clearHighlights() {
+                    highlightMeshes.forEach(mesh => mesh.dispose());
+                    highlightMeshes = [];
+                }
+            
+                function highlightSquare(row, col, material) {
+                    const highlight = BABYLON.MeshBuilder.CreateBox(
+                        "highlight",
+                        { height: 0.1, width: 1, depth: 1 },
+                        scene
+                    );
+                    highlight.position = new BABYLON.Vector3(
+                        row - 4 + 0.5,
+                        0.01,
+                        col - 4 + 0.5
+                    );
+                    highlight.material = material;
+                    highlightMeshes.push(highlight);
+                    return highlight;
+                }
+            
+                function showValidMoves(piece, currentRow, currentCol) {
+                    clearHighlights();
+                    
+                    // Highlight selected square
+                    highlightSquare(currentRow, currentCol, selectedMaterial);
+            
+                    // Check and highlight valid moves
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            if (isValidMove(piece, { row: currentRow, col: currentCol }, { row, col })) {
+                                highlightSquare(row, col, validMoveMaterial);
+                            }
+                        }
+                    }
+                }
             
                 scene.onPointerDown = (evt, pickResult) => {
                     if (!gameStarted || gameIsOver) return;
-                    
+            
                     if (pickResult.hit) {
-                        // Find the piece by traversing up the mesh hierarchy
-                        let currentMesh = pickResult.pickedMesh;
-                        while (currentMesh) {
-                            if (currentMesh.pieceInfo) {
-                                // Found a piece
-                                if (currentMesh.pieceInfo.color === turn) {
-                                    selectedPiece = currentMesh;
-                                    isDragging = true;
-                                    startingPosition = selectedPiece.position.clone();
+                        const targetPos = getBoardPosition(pickResult.pickedPoint);
+                        
+                        // If we already have a selected piece
+                        if (selectedPiece) {
+                            const currentPos = getBoardPosition(selectedPiece.position);
+                            
+                            // Check if it's the correct player's turn
+                            if (selectedPiece.pieceInfo.color === turn) {
+                                // Try to make the move
+                                if (isValidMove(selectedPiece, currentPos, targetPos)) {
+                                    // Perform the move with animation
+                                    const capturedPiece = boardState[targetPos.row][targetPos.col];
+                                    movePiece(selectedPiece, targetPos);
                                     
-                                    // Show valid moves
-                                    showValidMoves(selectedPiece);
+                                    // Clear selection and highlights
+                                    selectedPiece = null;
+                                    selectedSquare = null;
+                                    clearHighlights();
+                                    
+                                    // Check for game end conditions
+                                    if (isCheckmate(turn)) {
+                                        const winner = turn === 'white' ? 'black' : 'white';
+                                        endGame(winner);
+                                    }
                                 }
-                                break;
                             }
-                            currentMesh = currentMesh.parent;
-                        }
-                    }
-                };
-            
-                scene.onPointerMove = (evt, pickResult) => {
-                    if (isDragging && selectedPiece) {
-                        const ray = scene.createPickingRay(
-                            scene.pointerX, 
-                            scene.pointerY, 
-                            BABYLON.Matrix.Identity(), 
-                            scene.activeCamera
-                        );
-            
-                        // Create a plane at the board level
-                        const plane = new BABYLON.Plane(0, 1, 0, 0);
-                        let distance = 0;
-            
-                        if (ray.intersectsPlane(plane, distance)) {
-                            const worldPosition = ray.origin.add(ray.direction.scale(Math.abs(distance)));
-                            
-                            // Clamp position to board boundaries
-                            const x = Math.max(-3.5, Math.min(3.5, worldPosition.x));
-                            const z = Math.max(-3.5, Math.min(3.5, worldPosition.z));
-                            
-                            selectedPiece.position = new BABYLON.Vector3(
-                                x,
-                                selectedPiece.position.y,
-                                z
-                            );
-                        }
-                    }
-                };
-            
-                scene.onPointerUp = (evt, pickResult) => {
-                    if (isDragging && selectedPiece) {
-                        const finalPosition = getBoardPosition(selectedPiece.position);
-                        
-                        if (isValidMove(selectedPiece, finalPosition)) {
-                            movePiece(selectedPiece, finalPosition);
+                            selectedPiece = null;
+                            selectedSquare = null;
+                            clearHighlights();
                         } else {
-                            // Invalid move - return to starting position
-                            selectedPiece.position = startingPosition;
+                            // Try to select a piece
+                            let currentMesh = pickResult.pickedMesh;
+                            while (currentMesh) {
+                                if (currentMesh.pieceInfo) {
+                                    // Found a piece - check if it's the correct player's turn
+                                    if (currentMesh.pieceInfo.color === turn) {
+                                        selectedPiece = currentMesh;
+                                        selectedSquare = getBoardPosition(currentMesh.position);
+                                        showValidMoves(selectedPiece, selectedSquare.row, selectedSquare.col);
+                                    }
+                                    break;
+                                }
+                                currentMesh = currentMesh.parent;
+                            }
                         }
-                        
-                        // Clear state
-                        isDragging = false;
-                        selectedPiece = null;
-                        startingPosition = null;
-                        clearHighlights();
                     }
                 };
+            
+                // Remove the old pointer move and up handlers since we're not dragging anymore
+                scene.onPointerMove = null;
+                scene.onPointerUp = null;
             }
             
             // Update movePiece function to include animation
