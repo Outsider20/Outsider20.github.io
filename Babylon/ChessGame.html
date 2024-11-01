@@ -295,11 +295,74 @@
             return { row, col };
         }
 
-        function isValidMove(piece, targetPos) {
+       function isValidMove(piece, targetPos) {
+            if (!piece || !piece.pieceInfo) return false;
+            
             const currentPos = getBoardPosition(piece.position);
-            // Implement chess rules here
-            // This is a simplified version that allows any move
-            return true;
+            const type = piece.pieceInfo.type.toLowerCase();
+            const color = piece.pieceInfo.color;
+            
+            // Check if moving to same position
+            if (currentPos.row === targetPos.row && currentPos.col === targetPos.col) {
+                return false;
+            }
+            
+            // Check if target square has a piece of same color
+            const targetPiece = boardState[targetPos.row][targetPos.col];
+            if (targetPiece && targetPiece.pieceInfo.color === color) {
+                return false;
+            }
+            
+            // Basic validation for each piece type
+            switch (type) {
+                case 'pawn':
+                    const direction = color === 'white' ? -1 : 1;
+                    const startRow = color === 'white' ? 6 : 1;
+                    
+                    // Regular move forward
+                    if (currentPos.col === targetPos.col && !targetPiece) {
+                        if (targetPos.row === currentPos.row + direction) {
+                            return true;
+                        }
+                        // First move can be two squares
+                        if (currentPos.row === startRow && 
+                            targetPos.row === currentPos.row + (2 * direction) &&
+                            !boardState[currentPos.row + direction][currentPos.col]) {
+                            return true;
+                        }
+                    }
+                    
+                    // Capture move
+                    if (targetPos.row === currentPos.row + direction &&
+                        Math.abs(targetPos.col - currentPos.col) === 1 &&
+                        targetPiece) {
+                        return true;
+                    }
+                    return false;
+                    
+                case 'rook':
+                    return (currentPos.row === targetPos.row || currentPos.col === targetPos.col);
+                    
+                case 'knight':
+                    const rowDiff = Math.abs(targetPos.row - currentPos.row);
+                    const colDiff = Math.abs(targetPos.col - currentPos.col);
+                    return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+                    
+                case 'bishop':
+                    return Math.abs(targetPos.row - currentPos.row) === Math.abs(targetPos.col - currentPos.col);
+                    
+                case 'queen':
+                    return currentPos.row === targetPos.row || 
+                           currentPos.col === targetPos.col || 
+                           Math.abs(targetPos.row - currentPos.row) === Math.abs(targetPos.col - currentPos.col);
+                    
+                case 'king':
+                    return Math.abs(targetPos.row - currentPos.row) <= 1 && 
+                           Math.abs(targetPos.col - currentPos.col) <= 1;
+                    
+                default:
+                    return false;
+            }
         }
 
         function movePiece(piece, targetPos) {
@@ -684,51 +747,52 @@
 
             
             function setupInteraction(scene) {
-                let selectedSquare = null;
                 let selectedPiece = null;
-                let highlightMeshes = [];
-            
-                // Create highlighting materials
-                const selectedMaterial = new BABYLON.StandardMaterial("selectedMat", scene);
-                selectedMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.7, 0.2);
-                selectedMaterial.alpha = 0.3;
-            
-                const validMoveMaterial = new BABYLON.StandardMaterial("validMoveMat", scene);
-                validMoveMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.9);
-                validMoveMaterial.alpha = 0.3;
+                const highlightMaterial = new BABYLON.StandardMaterial("highlightMat", scene);
+                highlightMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.2);
+                highlightMaterial.alpha = 0.3;
             
                 function clearHighlights() {
-                    highlightMeshes.forEach(mesh => mesh.dispose());
-                    highlightMeshes = [];
+                    scene.meshes.forEach(mesh => {
+                        if (mesh.name.startsWith("highlight")) {
+                            mesh.dispose();
+                        }
+                    });
                 }
             
-                function highlightSquare(row, col, material) {
-                    const highlight = BABYLON.MeshBuilder.CreateBox(
-                        "highlight",
+                function showValidMoves(piece) {
+                    clearHighlights();
+                    
+                    const currentPos = getBoardPosition(piece.position);
+                    
+                    // Highlight selected piece position
+                    const selectedHighlight = BABYLON.MeshBuilder.CreateBox(
+                        "highlight_selected",
                         { height: 0.1, width: 1, depth: 1 },
                         scene
                     );
-                    highlight.position = new BABYLON.Vector3(
-                        row - 4 + 0.5,
+                    selectedHighlight.position = new BABYLON.Vector3(
+                        currentPos.row - 4 + 0.5,
                         0.01,
-                        col - 4 + 0.5
+                        currentPos.col - 4 + 0.5
                     );
-                    highlight.material = material;
-                    highlightMeshes.push(highlight);
-                    return highlight;
-                }
-            
-                function showValidMoves(piece, currentRow, currentCol) {
-                    clearHighlights();
+                    selectedHighlight.material = highlightMaterial;
                     
-                    // Highlight selected square
-                    highlightSquare(currentRow, currentCol, selectedMaterial);
-            
-                    // Check and highlight valid moves
+                    // Show possible moves
                     for (let row = 0; row < 8; row++) {
                         for (let col = 0; col < 8; col++) {
-                            if (isValidMove(piece, { row: currentRow, col: currentCol }, { row, col })) {
-                                highlightSquare(row, col, validMoveMaterial);
+                            if (isValidMove(piece, { row, col })) {
+                                const highlight = BABYLON.MeshBuilder.CreateBox(
+                                    `highlight_${row}_${col}`,
+                                    { height: 0.1, width: 1, depth: 1 },
+                                    scene
+                                );
+                                highlight.position = new BABYLON.Vector3(
+                                    row - 4 + 0.5,
+                                    0.01,
+                                    col - 4 + 0.5
+                                );
+                                highlight.material = highlightMaterial.clone();
                             }
                         }
                     }
@@ -740,44 +804,39 @@
                     if (pickResult.hit) {
                         const targetPos = getBoardPosition(pickResult.pickedPoint);
                         
-                        // If we already have a selected piece
                         if (selectedPiece) {
-                            const currentPos = getBoardPosition(selectedPiece.position);
-                            
-                            // Check if it's the correct player's turn
-                            if (selectedPiece.pieceInfo.color === turn) {
-                                // Try to make the move
-                                if (isValidMove(selectedPiece, currentPos, targetPos)) {
-                                    // Perform the move with animation
-                                    const capturedPiece = boardState[targetPos.row][targetPos.col];
-                                    movePiece(selectedPiece, targetPos);
-                                    
-                                    // Clear selection and highlights
-                                    selectedPiece = null;
-                                    selectedSquare = null;
-                                    clearHighlights();
-                                    
-                                    // Check for game end conditions
-                                    if (isCheckmate(turn)) {
-                                        const winner = turn === 'white' ? 'black' : 'white';
-                                        endGame(winner);
+                            // Attempt to move the selected piece
+                            if (isValidMove(selectedPiece, targetPos)) {
+                                movePiece(selectedPiece, targetPos);
+                                selectedPiece = null;
+                                clearHighlights();
+                            } else {
+                                // If invalid move, check if clicking on another own piece
+                                let clickedPiece = null;
+                                let currentMesh = pickResult.pickedMesh;
+                                while (currentMesh) {
+                                    if (currentMesh.pieceInfo) {
+                                        clickedPiece = currentMesh;
+                                        break;
                                     }
+                                    currentMesh = currentMesh.parent;
+                                }
+                                
+                                if (clickedPiece && clickedPiece.pieceInfo.color === turn) {
+                                    selectedPiece = clickedPiece;
+                                    showValidMoves(selectedPiece);
+                                } else {
+                                    selectedPiece = null;
+                                    clearHighlights();
                                 }
                             }
-                            selectedPiece = null;
-                            selectedSquare = null;
-                            clearHighlights();
                         } else {
                             // Try to select a piece
                             let currentMesh = pickResult.pickedMesh;
                             while (currentMesh) {
-                                if (currentMesh.pieceInfo) {
-                                    // Found a piece - check if it's the correct player's turn
-                                    if (currentMesh.pieceInfo.color === turn) {
-                                        selectedPiece = currentMesh;
-                                        selectedSquare = getBoardPosition(currentMesh.position);
-                                        showValidMoves(selectedPiece, selectedSquare.row, selectedSquare.col);
-                                    }
+                                if (currentMesh.pieceInfo && currentMesh.pieceInfo.color === turn) {
+                                    selectedPiece = currentMesh;
+                                    showValidMoves(selectedPiece);
                                     break;
                                 }
                                 currentMesh = currentMesh.parent;
@@ -785,10 +844,6 @@
                         }
                     }
                 };
-            
-                // Remove the old pointer move and up handlers since we're not dragging anymore
-                scene.onPointerMove = null;
-                scene.onPointerUp = null;
             }
             
             // Update movePiece function to include animation
