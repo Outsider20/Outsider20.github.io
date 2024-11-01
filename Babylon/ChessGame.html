@@ -584,36 +584,37 @@
             }
 
             
-            // Clear all current highlights
+            // Add these helper functions if they don't exist
             function clearHighlights() {
-                highlightedSquares.forEach(mesh => mesh.dispose());
-                highlightedSquares = [];
-                validMoveIndicators.forEach(mesh => mesh.dispose());
-                validMoveIndicators = [];
-                selectedPieceMesh = null;
+                // Remove any existing highlight meshes
+                scene.meshes.forEach(mesh => {
+                    if (mesh.name.startsWith("highlight")) {
+                        mesh.dispose();
+                    }
+                });
             }
             
-            // Show valid moves for selected piece
-            function showValidMoves(piece, scene) {
+            function showValidMoves(piece) {
                 clearHighlights();
                 
-                const currentPos = getBoardPosition(piece.position);
-                const { selectedMaterial, validMoveMaterial } = createHighlightMaterials(scene);
-                
-                // Highlight selected piece's square
-                const selectedHighlight = createHighlightMesh(scene, currentPos, selectedMaterial);
-                highlightedSquares.push(selectedHighlight);
-                
-                // Check and highlight all valid moves
+                // Check all possible positions
                 for (let row = 0; row < 8; row++) {
                     for (let col = 0; col < 8; col++) {
-                        const targetPos = { row, col };
-                        if (isValidMove(piece, targetPos)) {
-                            const highlight = createHighlightMesh(scene, targetPos, validMoveMaterial);
-                            validMoveIndicators.push(highlight);
-                            
-                            // Store the target position in the highlight mesh for move validation
-                            highlight.targetPosition = targetPos;
+                        if (isValidMove(piece, { row, col })) {
+                            // Create highlight mesh
+                            const highlight = BABYLON.MeshBuilder.CreateBox(
+                                "highlight_" + row + "_" + col,
+                                { height: 0.1, width: 1, depth: 1 },
+                                scene
+                            );
+                            highlight.position = new BABYLON.Vector3(
+                                row - 4 + 0.5,
+                                0.01, // Slightly above board
+                                col - 4 + 0.5
+                            );
+                            highlight.material = new BABYLON.StandardMaterial("highlightMat", scene);
+                            highlight.material.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.2);
+                            highlight.material.alpha = 0.3;
                         }
                     }
                 }
@@ -621,96 +622,84 @@
 
             
             function setupInteraction(scene) {
-                // Create highlight materials
-                const { selectedMaterial, validMoveMaterial } = createHighlightMaterials(scene);
-                
+                let isDragging = false;
+                let selectedPiece = null;
+                let startingPosition = null;
+            
+                // Create the highlighting materials
+                const highlightMaterial = new BABYLON.StandardMaterial("highlightMat", scene);
+                highlightMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.2);
+                highlightMaterial.alpha = 0.3;
+            
                 scene.onPointerDown = (evt, pickResult) => {
                     if (!gameStarted || gameIsOver) return;
-            
+                    
                     if (pickResult.hit) {
-                        const hitMesh = pickResult.pickedMesh;
-                        
-                        // Case 1: Clicked on a valid move indicator
-                        if (selectedPieceMesh && validMoveIndicators.includes(hitMesh)) {
-                            const targetPos = hitMesh.targetPosition;
-                            movePiece(selectedPieceMesh, targetPos);
-                            clearHighlights();
-                            return;
-                        }
-                        
-                        // Find if we clicked on a piece
-                        let currentMesh = hitMesh;
+                        // Find the piece by traversing up the mesh hierarchy
+                        let currentMesh = pickResult.pickedMesh;
                         while (currentMesh) {
                             if (currentMesh.pieceInfo) {
-                                // Case 2: Clicked on the already selected piece
-                                if (selectedPieceMesh === currentMesh) {
-                                    clearHighlights();
-                                    return;
-                                }
-                                
-                                // Case 3: Clicked on a new piece of the current turn
+                                // Found a piece
                                 if (currentMesh.pieceInfo.color === turn) {
-                                    selectedPieceMesh = currentMesh;
-                                    showValidMoves(currentMesh, scene);
-                                    return;
-                                }
-                                
-                                // Case 4: Clicked on opponent's piece while having a piece selected
-                                if (selectedPieceMesh) {
-                                    const targetPos = getBoardPosition(currentMesh.position);
-                                    if (isValidMove(selectedPieceMesh, targetPos)) {
-                                        movePiece(selectedPieceMesh, targetPos);
-                                        clearHighlights();
-                                        return;
-                                    }
+                                    selectedPiece = currentMesh;
+                                    isDragging = true;
+                                    startingPosition = selectedPiece.position.clone();
+                                    
+                                    // Show valid moves
+                                    showValidMoves(selectedPiece);
                                 }
                                 break;
                             }
                             currentMesh = currentMesh.parent;
                         }
-                        
-                        // Case 5: Clicked on an empty square without having selected a piece
-                        if (!selectedPieceMesh) {
-                            clearHighlights();
-                            return;
-                        }
-                        
-                        // Case 6: Clicked on an empty square with a piece selected
-                        const targetPos = getBoardPosition(new BABYLON.Vector3(
-                            hitMesh.position.x,
-                            0,
-                            hitMesh.position.z
-                        ));
-                        
-                        if (isValidMove(selectedPieceMesh, targetPos)) {
-                            movePiece(selectedPieceMesh, targetPos);
-                            clearHighlights();
+                    }
+                };
+            
+                scene.onPointerMove = (evt, pickResult) => {
+                    if (isDragging && selectedPiece) {
+                        const ray = scene.createPickingRay(
+                            scene.pointerX, 
+                            scene.pointerY, 
+                            BABYLON.Matrix.Identity(), 
+                            scene.activeCamera
+                        );
+            
+                        // Create a plane at the board level
+                        const plane = new BABYLON.Plane(0, 1, 0, 0);
+                        let distance = 0;
+            
+                        if (ray.intersectsPlane(plane, distance)) {
+                            const worldPosition = ray.origin.add(ray.direction.scale(Math.abs(distance)));
+                            
+                            // Clamp position to board boundaries
+                            const x = Math.max(-3.5, Math.min(3.5, worldPosition.x));
+                            const z = Math.max(-3.5, Math.min(3.5, worldPosition.z));
+                            
+                            selectedPiece.position = new BABYLON.Vector3(
+                                x,
+                                selectedPiece.position.y,
+                                z
+                            );
                         }
                     }
                 };
             
-                // Hover effect
-                scene.onPointerMove = (evt, pickResult) => {
-                    if (pickResult.hit) {
-                        const hitMesh = pickResult.pickedMesh;
+                scene.onPointerUp = (evt, pickResult) => {
+                    if (isDragging && selectedPiece) {
+                        const finalPosition = getBoardPosition(selectedPiece.position);
                         
-                        // Check if hovering over a valid move indicator or a piece
-                        if (validMoveIndicators.includes(hitMesh)) {
-                            canvas.style.cursor = 'pointer';
-                            return;
+                        if (isValidMove(selectedPiece, finalPosition)) {
+                            movePiece(selectedPiece, finalPosition);
+                        } else {
+                            // Invalid move - return to starting position
+                            selectedPiece.position = startingPosition;
                         }
                         
-                        let currentMesh = hitMesh;
-                        while (currentMesh) {
-                            if (currentMesh.pieceInfo) {
-                                canvas.style.cursor = currentMesh.pieceInfo.color === turn ? 'pointer' : 'default';
-                                return;
-                            }
-                            currentMesh = currentMesh.parent;
-                        }
-                        canvas.style.cursor = 'default';
-                    } else {
-                        canvas.style.cursor = 'default';
+                        // Clear state
+                        isDragging = false;
+                        selectedPiece = null;
+                        startingPosition = null;
+                        clearHighlights();
                     }
                 };
             }
