@@ -99,16 +99,7 @@
         const squareSize = 50;
         let turn = null;
     
-        const initialGameState = [
-      ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's'],
-      ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's'],
-      ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
-      ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
-      ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
-      ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
-      ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', 'c', 't', 's', 's'],
-      ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's']
-    ];
+
 
       function addPieces() {
             
@@ -120,6 +111,39 @@
                 'T': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
                 'C': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
             };
+
+                const initialGameState = [
+                ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's'],
+                ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's'],
+                ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
+                ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
+                ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
+                ['', 'T', 'C', 'C', '', '', '', '', '', '', '', '', 'c', 'c', 't', ''],
+                ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', 'c', 't', 's', 's'],
+                ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's']
+              ];
+
+             for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 16; col++) {
+                        const piece = initialBoardState[row][col];
+                        if (piece !== '.') {
+                            fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
+                                const svgPiece = fabric.util.groupSVGElements(objects, options);
+                                const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
+                                svgPiece.set({
+                                    left: col * squareSize + squareSize / 2,
+                                    top: row * squareSize + squareSize / 2,
+                                    originX: 'center',
+                                    originY: 'center',
+                                    hasControls: false,
+                                    hasBorders: false,
+                                    selectable: false,
+                                    pieceColor: pieceColor,
+                                    pieceType: piece.toLowerCase()
+                                });
+                                
+                                boardState[row][col] = svgPiece;
+                                canvas.add(svgPiece);
       }
 
 
