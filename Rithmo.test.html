@@ -113,7 +113,7 @@
 
         function createChessboard() {
             for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
+                for (let col = 0; col < 16; col++) {
                     const isLightSquare = (row + col) % 2 === 0;
                     const square = new fabric.Rect({
                         left: col * squareSize,
