@@ -126,7 +126,7 @@
              for (let row = 0; row < 8; row++) {
                     for (let col = 0; col < 16; col++) {
                         const piece = initialBoardState[row][col];
-                        if (piece !== '.') {
+                        if (piece !== '') {
                             fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
                                 const svgPiece = fabric.util.groupSVGElements(objects, options);
                                 const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
