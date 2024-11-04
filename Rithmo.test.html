@@ -94,6 +94,10 @@
   </div>
 
   <script>
+        const canvas = new fabric.Canvas('gameCanvas');
+        const squareSize = 50;
+        let turn = null;
+    
         const initialGameState = [
       ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's'],
       ['S', 'S', 'T', '', '', '', '', '', '', '', '', '', '', 't', 's', 's'],
