@@ -21,6 +21,9 @@
             
             const scene = new BABYLON.Scene(engine);
 
+            // Enable physics engine
+            scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0), new BABYLON.CannonJSPlugin());
+
             const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 1.5, Math.PI / 2.2, 15, new BABYLON.Vector3(0, 0, 0));
             camera.attachControl(canvas, true);
 
