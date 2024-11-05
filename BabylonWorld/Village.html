@@ -71,27 +71,29 @@
             });
 
             // 4. Enhance the Dude Animation
-            const dude = await BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene);
-            dude.meshes[0].scaling = new BABYLON.Vector3(0.012, 0.012, 0.012);
-            dude.meshes[0].position = new BABYLON.Vector3(-6, 0, 0);
-            dude.meshes[0].rotate(BABYLON.Axis.Y, BABYLON.Tools.ToRadians(-95), BABYLON.Space.LOCAL);
-            const startRotation = dude.meshes[0].rotationQuaternion.clone();
-            scene.beginAnimation(dude.skeletons[0], 0, 100, true, 1.0);
+            BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene).then((result) => {
+                const dude = result.meshes[0];
+                dude.scaling = new BABYLON.Vector3(0.012, 0.012, 0.012);
+                dude.position = new BABYLON.Vector3(-6, 0, 0);
+                dude.rotate(BABYLON.Axis.Y, BABYLON.Tools.ToRadians(-95), BABYLON.Space.LOCAL);
+                const startRotation = dude.rotationQuaternion.clone();
+                scene.beginAnimation(result.skeletons[0], 0, 100, true, 1.0);
 
-            const dudeTrack = [
-                new walk(86, 7),
-                new walk(-85, 14.8),
-                new walk(-93, 16.5),
-                new walk(48, 25.5),
-                new walk(-112, 30.5),
-                new walk(-72, 33.2),
-                new walk(42, 37.5),
-                new walk(-98, 45.2),
-                new walk(0, 47),
-                new walk(30, 52),
-                new walk(-60, 60),
-                new walk(45, 65)
-            ];
+                const dudeTrack = [
+                    new walk(86, 7),
+                    new walk(-85, 14.8),
+                    new walk(-93, 16.5),
+                    new walk(48, 25.5),
+                    new walk(-112, 30.5),
+                    new walk(-72, 33.2),
+                    new walk(42, 37.5),
+                    new walk(-98, 45.2),
+                    new walk(0, 47),
+                    new walk(30, 52),
+                    new walk(-60, 60),
+                    new walk(45, 65)
+                ];
+            });
 
             // 5. Add Environmental Effects
             let time = 0;
