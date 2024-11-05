@@ -3,231 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Babylon.js Village</title>
+    <title>Babylon.js Village</title>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.js"></script>
     <script src="https://cdn.babylonjs.com/serializers/babylon.glTFSerializer.js"></script>
-    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
 </head>
 <body>
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
-    <button id="downloadButton" style="position: absolute; top: 20px; left: 20px; z-index: 10;">Download Scene GLB</button>
+    <button id="downloadButton" style="position: absolute; top: 20px; left: 20px; z-index: 10;">Download Stickman GLB</button>
     
     <script>
         var canvas = document.getElementById("renderCanvas");
         var engine = new BABYLON.Engine(canvas, true);
 
-        const createScene = function () {
-            const scene = new BABYLON.Scene(engine);
 
-            // Skybox and base scene setup
-            const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, scene);
-            const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
-            skyboxMaterial.backFaceCulling = false;
-            skyboxMaterial.emissiveColor = new BABYLON.Color3(0.15, 0.15, 0.15);
-            skybox.material = skyboxMaterial;
+        const createScene = function () {
+            
+            const scene = new BABYLON.Scene(engine);
 
             const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 1.5, Math.PI / 2.2, 15, new BABYLON.Vector3(0, 0, 0));
             camera.attachControl(canvas, true);
-            
-            // Lighting system
-            const sunLight = new BABYLON.DirectionalLight("sunLight", new BABYLON.Vector3(0, -1, 0), scene);
-            sunLight.intensity = 1;
-            const hemisphericLight = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
 
-            // GUI Setup
-            const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-            const panel = new BABYLON.GUI.StackPanel();
-            panel.width = "200px";
-            panel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-            panel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-            advancedTexture.addControl(panel);
+            // 1. Add Lighting Effects
+            const ambientLight = new BABYLON.HemisphericLight("ambientLight", new BABYLON.Vector3(0, 1, 0), scene);
+            ambientLight.intensity = 0.5;
 
-            // Weather System
-            const rainSystem = new BABYLON.ParticleSystem("rain", 5000, scene);
-            rainSystem.particleTexture = new BABYLON.Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACdJREFUeNpiYGBg+A/EQGxmogwG/Q+XYGKAASYGHICRUQUDAwAAAgwAK1ECzVrCqQUAAAAASUVORK5CYII=");
-            rainSystem.emitter = new BABYLON.Vector3(0, 20, 0);
-            rainSystem.minEmitBox = new BABYLON.Vector3(-20, 0, -20);
-            rainSystem.maxEmitBox = new BABYLON.Vector3(20, 0, 20);
-            rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.1);
-            rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.1);
-            rainSystem.colorDead = new BABYLON.Color4(0.9, 0.9, 1.0, 0.0);
-            rainSystem.minSize = 0.1;
-            rainSystem.maxSize = 0.3;
-            rainSystem.minLifeTime = 0.5;
-            rainSystem.maxLifeTime = 1.0;
-            rainSystem.emitRate = 2000;
-            rainSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
-            rainSystem.direction1 = new BABYLON.Vector3(0, -1, 0);
-            rainSystem.direction2 = new BABYLON.Vector3(0, -1, 0);
-            rainSystem.minAngularSpeed = 0;
-            rainSystem.maxAngularSpeed = Math.PI;
-            rainSystem.minEmitPower = 1;
-            rainSystem.maxEmitPower = 3;
-            rainSystem.updateSpeed = 0.01;
+            const spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(10, 10, 10), new BABYLON.Vector3(0, 0, 0), Math.PI / 3, 2, scene);
+            spotLight.intensity = 0.8;
 
-            // Weather toggle button
-            const weatherButton = BABYLON.GUI.Button.CreateSimpleButton("weatherBtn", "Toggle Rain");
-            weatherButton.width = "150px";
-            weatherButton.height = "40px";
-            weatherButton.color = "white";
-            weatherButton.background = "green";
-            weatherButton.onPointerUpObservable.add(() => {
-                if (rainSystem.isStarted()) {
-                    rainSystem.stop();
-                } else {
-                    rainSystem.start();
+            const directionalLight = new BABYLON.DirectionalLight("directionalLight", new BABYLON.Vector3(-1, -1, 0), scene);
+            directionalLight.position = new BABYLON.Vector3(0, 10, 10);
+            directionalLight.intensity = 0.6;
+
+            // 2. Implement Camera Transitions
+            const cameraPositions = [
+                { position: new BABYLON.Vector3(0, 10, -20), target: new BABYLON.Vector3(0, 0, 0) },
+                { position: new BABYLON.Vector3(-6, 2, 0), target: new BABYLON.Vector3(-6, 0, 0) },
+                { position: new BABYLON.Vector3(0, 5, 10), target: new BABYLON.Vector3(0, 0, 6) }
+            ];
+
+            let currentCameraIndex = 0;
+            function switchCameraView() {
+                camera.position = cameraPositions[currentCameraIndex].position;
+                camera.target = cameraPositions[currentCameraIndex].target;
+                currentCameraIndex = (currentCameraIndex + 1) % cameraPositions.length;
+            }
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "c") {
+                    switchCameraView();
                 }
             });
-            panel.addControl(weatherButton);
 
-            // Time of day system
-            let timeOfDay = 0;
-            scene.onBeforeRenderObservable.add(() => {
-                timeOfDay += 0.001;
-                if (timeOfDay > Math.PI * 2) timeOfDay = 0;
-                
-                sunLight.direction = new BABYLON.Vector3(
-                    Math.sin(timeOfDay),
-                    -Math.cos(timeOfDay),
-                    0
-                );
-                
-                const intensity = Math.max(0.2, Math.sin(timeOfDay) + 0.5);
-                sunLight.intensity = intensity;
-                skyboxMaterial.emissiveColor.set(intensity * 0.15, intensity * 0.15, intensity * 0.2);
-            });
-
-            // Load village model
-            BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb");
-
-            // Character movement track
-            const walk = function (turn, dist) {
-                this.turn = turn;
-                this.dist = dist;
-            }
-            
-            const track = [];
-            track.push(new walk(86, 7));
-            track.push(new walk(-85, 14.8));
-            track.push(new walk(-93, 16.5));
-            track.push(new walk(48, 25.5));
-            track.push(new walk(-112, 30.5));
-            track.push(new walk(-72, 33.2));
-            track.push(new walk(42, 37.5));
-            track.push(new walk(-98, 45.2));
-            track.push(new walk(0, 47));
-
-            // Load and animate character
-            BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene).then((result) => {
-                var dude = result.meshes[0];
-                dude.scaling = new BABYLON.Vector3(0.012, 0.012, 0.012);
-                dude.position = new BABYLON.Vector3(-6, 0, 0);
-                dude.rotate(BABYLON.Axis.Y, BABYLON.Tools.ToRadians(-95), BABYLON.Space.LOCAL);
-                const startRotation = dude.rotationQuaternion.clone();    
-
-                // Shadow setup for character
-                const shadowGenerator = new BABYLON.ShadowGenerator(1024, sunLight);
-                shadowGenerator.addShadowCaster(dude);
-                shadowGenerator.useExponentialShadowMap = true;
-
-                scene.beginAnimation(result.skeletons[0], 0, 100, true, 1.0);
-
-                let distance = 0;
-                let step = 0.015;
-                let p = 0;
-
-                scene.onBeforeRenderObservable.add(() => {
-                    dude.movePOV(0, 0, step);
-                    distance += step;
-                    
-                    if (distance > track[p].dist) {
-                        dude.rotate(BABYLON.Axis.Y, BABYLON.Tools.ToRadians(track[p].turn), BABYLON.Space.LOCAL);
-                        p += 1;
-                        p %= track.length;
-                        if (p === 0) {
-                            distance = 0;
-                            dude.position = new BABYLON.Vector3(-6, 0, 0);
-                            dude.rotationQuaternion = startRotation.clone();
-                        }
+            // 3. Introduce Interactive Elements
+            const interactiveObjects = [];
+            BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb").then((result) => {
+                result.meshes.forEach((mesh) => {
+                    if (mesh.name.startsWith("Billboard")) {
+                        mesh.actionManager = new BABYLON.ActionManager(scene);
+                        mesh.actionManager.registerAction(
+                            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                                alert("You clicked the billboard!");
+                            })
+                        );
+                        interactiveObjects.push(mesh);
                     }
                 });
             });
 
-            // Physics setup
-            scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0));
-            
-            // Create physics ground
-            const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 20, height: 20}, scene);
-            ground.physicsImpostor = new BABYLON.PhysicsImpostor(
-                ground, 
-                BABYLON.PhysicsImpostor.BoxImpostor, 
-                {mass: 0, restitution: 0.9}, 
-                scene
-            );
-            ground.visibility = 0;
+            // 4. Enhance the Dude Animation
+            const dude = await BABYLON.SceneLoader.ImportMeshAsync("him", "./", "Dude3.babylon", scene);
+            dude.meshes[0].scaling = new BABYLON.Vector3(0.012, 0.012, 0.012);
+            dude.meshes[0].position = new BABYLON.Vector3(-6, 0, 0);
+            dude.meshes[0].rotate(BABYLON.Axis.Y, BABYLON.Tools.ToRadians(-95), BABYLON.Space.LOCAL);
+            const startRotation = dude.meshes[0].rotationQuaternion.clone();
+            scene.beginAnimation(dude.skeletons[0], 0, 100, true, 1.0);
 
-            // Create Stanford Bunny
-            BABYLON.SceneLoader.ImportMesh(
-                "",
-                "./",
-                "StanfordBunny.obj",
-                scene,
-                function (meshes) {
-                    meshes.forEach(mesh => {
-                        mesh.position = new BABYLON.Vector3(0, 0, 0);
-                        mesh.scaling = new BABYLON.Vector3(2, 2, 2);
-                    });
-                }
-            );
-
-            // Interactive spheres with physics
-            const spherePositions = [
-                new BABYLON.Vector3(0, 5, 0),
-                new BABYLON.Vector3(2, 5, 0),
-                new BABYLON.Vector3(-2, 5, 0)
+            const dudeTrack = [
+                new walk(86, 7),
+                new walk(-85, 14.8),
+                new walk(-93, 16.5),
+                new walk(48, 25.5),
+                new walk(-112, 30.5),
+                new walk(-72, 33.2),
+                new walk(42, 37.5),
+                new walk(-98, 45.2),
+                new walk(0, 47),
+                new walk(30, 52),
+                new walk(-60, 60),
+                new walk(45, 65)
             ];
 
-            spherePositions.forEach((position, index) => {
-                const sphere = BABYLON.MeshBuilder.CreateSphere("sphere" + index, {
-                    diameter: 1,
-                    segments: 32
-                }, scene);
-                
-                sphere.position = position;
-                
-                const material = new BABYLON.StandardMaterial("sphereMaterial" + index, scene);
-                material.diffuseColor = new BABYLON.Color3(
-                    Math.random(),
-                    Math.random(),
-                    Math.random()
+            // 5. Add Environmental Effects
+            let time = 0;
+            const dayNightCycle = 120; // 120 seconds for a full day/night cycle
+            scene.onBeforeRenderObservable.add(() => {
+                time += engine.getDeltaTime() / 1000;
+                time %= dayNightCycle;
+
+                // Update lighting based on time of day
+                const sunAngle = (time / dayNightCycle) * Math.PI * 2;
+                directionalLight.position.x = Math.sin(sunAngle) * 10;
+                directionalLight.position.z = Math.cos(sunAngle) * 10;
+                directionalLight.position.y = 10 + Math.sin(sunAngle * 2) * 5;
+                const skyColor = new BABYLON.Color3(
+                    0.5 + 0.5 * Math.sin(sunAngle),
+                    0.5 + 0.5 * Math.sin(sunAngle + Math.PI * 2 / 3),
+                    0.5 + 0.5 * Math.sin(sunAngle + (Math.PI * 4) / 3)
                 );
-                sphere.material = material;
-                
-                sphere.physicsImpostor = new BABYLON.PhysicsImpostor(
-                    sphere, 
-                    BABYLON.PhysicsImpostor.SphereImpostor, 
-                    {mass: 1, restitution: 0.9}, 
-                    scene
-                );
-                
-                sphere.actionManager = new BABYLON.ActionManager(scene);
-                sphere.actionManager.registerAction(
-                    new BABYLON.ExecuteCodeAction(
-                        BABYLON.ActionManager.OnPickTrigger,
-                        function(evt) {
-                            const randomImpulse = new BABYLON.Vector3(
-                                (Math.random() - 0.5) * 10,
-                                5,
-                                (Math.random() - 0.5) * 10
-                            );
-                            evt.source.physicsImpostor.applyImpulse(
-                                randomImpulse,
-                                evt.source.getAbsolutePosition()
-                            );
-                        }
-                    )
-                );
+                scene.clearColor = skyColor;
+
+                // Add falling leaves
+                for (let i = 0; i < 10; i++) {
+                    const leaf = BABYLON.MeshBuilder.CreatePlane(`leaf-${i}`, { size: 0.5 }, scene);
+                    leaf.position.x = Math.random() * 20 - 10;
+                    leaf.position.z = Math.random() * 20 - 10;
+                    leaf.position.y = 10;
+                    leaf.rotation.x = Math.random() * Math.PI;
+                    leaf.rotation.z = Math.random() * Math.PI;
+                    leaf.physicsImpostor = new BABYLON.PhysicsImpostor(
+                        leaf,
+                        BABYLON.PhysicsImpostor.PlaneImpostor,
+                        { mass: 0.1, restitution: 0.9 },
+                        scene
+                    );
+                    leaf.physicsImpostor.setLinearVelocity(
+                        new BABYLON.Vector3(
+                            (Math.random() - 0.5) * 0.5,
+                            -Math.random() * 0.5,
+                            (Math.random() - 0.5) * 0.5
+                        )
+                    );
+                }
             });
 
             return scene;
@@ -243,12 +149,14 @@
             engine.resize();
         });
 
+        // Function to export as GLB
         function exportToGLB() {
-            BABYLON.GLTF2Export.GLBAsync(scene, "enhanced_scene.glb").then((glb) => {
+            BABYLON.GLTF2Export.GLBAsync(scene, "stickman.glb").then((glb) => {
                 glb.downloadFiles();
             });
         }
 
+        // Attach export function to the download button
         document.getElementById("downloadButton").addEventListener("click", exportToGLB);
     </script>
 </body>
