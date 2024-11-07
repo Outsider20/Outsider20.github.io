@@ -994,6 +994,8 @@
                         }
                     }
                 }
+            return true;  // Add this line
+            }
             
             function isStalemate(color) {
                 const king = findKing(color);
@@ -1090,6 +1092,7 @@
                 updatePieceScales(newScale);
             });
         }
+                
     </script>
 </body>
 </html>
