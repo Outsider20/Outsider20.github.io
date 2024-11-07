@@ -951,12 +951,28 @@
             }
             
             function generateMoveText(piece, from, to, capturedPiece) {
-                const pieceSymbol = piece.pieceInfo.type.charAt(0).toUpperCase();
+                // Get piece color and type with first letter capitalized
+                const color = piece.pieceInfo.color.charAt(0).toUpperCase() + piece.pieceInfo.color.slice(1);
+                const pieceType = piece.pieceInfo.type.charAt(0).toUpperCase() + piece.pieceInfo.type.slice(1);
+                
+                // Convert numerical coordinates to chess notation
                 const fromSquare = `${String.fromCharCode(97 + from.col)}${8 - from.row}`;
                 const toSquare = `${String.fromCharCode(97 + to.col)}${8 - to.row}`;
-                const captureText = capturedPiece ? 'x' : '';
                 
-                return `${moveCount + 1}. ${piece.pieceInfo.color} ${pieceSymbol}${fromSquare}${captureText}${toSquare}`;
+                // Build the base move text
+                let moveText = `${color} ${pieceType}: ${fromSquare} to ${toSquare}`;
+                
+                // Add capture information if a piece was captured
+                if (capturedPiece) {
+                    const capturedColor = capturedPiece.pieceInfo.color.charAt(0).toUpperCase() + 
+                                        capturedPiece.pieceInfo.color.slice(1);
+                    const capturedType = capturedPiece.pieceInfo.type.charAt(0).toUpperCase() + 
+                                       capturedPiece.pieceInfo.type.slice(1);
+                    moveText += ` (Capturing ${capturedColor} ${capturedType})`;
+                }
+                
+                // Add move number at the start
+                return `${moveCount + 1}. ${moveText}`;
             }
             
             function isCheckmate(color) {
