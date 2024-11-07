@@ -368,7 +368,7 @@
         function movePiece(piece, targetPos) {
             const currentPos = getBoardPosition(piece.position);
             const capturedPiece = boardState[targetPos.row][targetPos.col];
-        
+            
             // Create animation
             const frameRate = 30;
             const targetPosition = new BABYLON.Vector3(
@@ -376,7 +376,7 @@
                 piece.position.y,
                 targetPos.col - 4 + 0.5
             );
-        
+            
             const animation = new BABYLON.Animation(
                 "moveAnimation",
                 "position",
@@ -384,7 +384,7 @@
                 BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
                 BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
             );
-        
+            
             const keyFrames = [
                 {
                     frame: 0,
@@ -403,13 +403,13 @@
                     value: targetPosition
                 }
             ];
-        
+            
             animation.setKeys(keyFrames);
-        
+            
             // Update board state
             boardState[currentPos.row][currentPos.col] = null;
             boardState[targetPos.row][targetPos.col] = piece;
-        
+            
             // Handle capture
             if (capturedPiece) {
                 const fadeAnimation = new BABYLON.Animation(
@@ -419,7 +419,7 @@
                     BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
                     BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
                 );
-        
+            
                 fadeAnimation.setKeys([
                     {
                         frame: 0,
@@ -430,13 +430,13 @@
                         value: new BABYLON.Vector3(0, 0, 0)
                     }
                 ]);
-        
+            
                 capturedPiece.animations = [fadeAnimation];
                 scene.beginAnimation(capturedPiece, 0, frameRate, false, 1, () => {
                     capturedPiece.dispose();
                 });
             }
-        
+            
             // Begin movement animation
             piece.animations = [animation];
             scene.beginAnimation(piece, 0, frameRate, false, 1, () => {
@@ -445,9 +445,17 @@
                 const moveText = generateMoveText(piece, currentPos, targetPos, capturedPiece);
                 history.push(moveText);
                 document.getElementById('history').innerHTML = history.join('<br>');
-        
+                
                 // Switch turns
                 turn = turn === 'white' ? 'black' : 'white';
+                
+                // Check for checkmate or stalemate
+                if (isCheckmate(turn)) {
+                    const winner = turn === 'white' ? 'black' : 'white';
+                    endGame(winner);
+                } else if (isStalemate(turn)) {
+                    endGame('draw');
+                }
             });
         }
 
@@ -952,14 +960,12 @@
             }
             
             function isCheckmate(color) {
-                // For simplicity, we'll just check if the king has any legal moves
-                // A full implementation would need to check if any piece can prevent checkmate
                 const king = findKing(color);
                 if (!king) return true;
                 
                 const kingPos = getBoardPosition(king.position);
                 
-                // Check all possible king moves
+                // Check if the king has any legal moves
                 for (let row = -1; row <= 1; row++) {
                     for (let col = -1; col <= 1; col++) {
                         const targetRow = kingPos.row + row;
@@ -973,12 +979,59 @@
                     }
                 }
                 
-                return true;
-            }
+                // Check if any of the player's pieces can make a valid move
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const piece = boardState[i][j];
+                        if (piece && piece.pieceInfo.color === color) {
+                            for (let targetRow = 0; targetRow < 8; targetRow++) {
+                                for (let targetCol = 0; targetCol < 8; targetCol++) {
+                                    if (isValidMove(piece, { row: targetRow, col: targetCol })) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             
             function isStalemate(color) {
-                // Similar to checkmate check, but simpler for this implementation
-                return isCheckmate(color);
+                const king = findKing(color);
+                if (!king) return false;
+                
+                const kingPos = getBoardPosition(king.position);
+                
+                // Check if the king has any legal moves
+                for (let row = -1; row <= 1; row++) {
+                    for (let col = -1; col <= 1; col++) {
+                        const targetRow = kingPos.row + row;
+                        const targetCol = kingPos.col + col;
+                        
+                        if (targetRow >= 0 && targetRow < 8 && targetCol >= 0 && targetCol < 8) {
+                            if (isValidMove(king, { row: targetRow, col: targetCol })) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                
+                // Check if any of the player's pieces can make a valid move
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const piece = boardState[i][j];
+                        if (piece && piece.pieceInfo.color === color) {
+                            for (let targetRow = 0; targetRow < 8; targetRow++) {
+                                for (let targetCol = 0; targetCol < 8; targetCol++) {
+                                    if (isValidMove(piece, { row: targetRow, col: targetCol })) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                return true;
             }
             
             function findKing(color) {
