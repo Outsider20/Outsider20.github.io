@@ -97,6 +97,7 @@
   <script>
         const canvas = new fabric.Canvas('gameCanvas');
         const squareSize = 50;
+        let boardState = Array(8).fill().map(() => Array(8).fill(null));
         let turn = null;
     
 
