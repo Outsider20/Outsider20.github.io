@@ -97,7 +97,6 @@
             directionalLight.position = new BABYLON.Vector3(0, 10, 10);
             directionalLight.intensity = 0.6;
 
-            // Enhanced Rain System
             function createRainSystem() {
                 const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
                 
@@ -106,18 +105,18 @@
                 rainSystem.particleTexture = rainTexture;
                 
                 // Emission area
-                rainSystem.emitter = new BABYLON.Vector3(0, 20, 0); // Increased height for better visibility
+                rainSystem.emitter = new BABYLON.Vector3(0, 20, 0);
                 rainSystem.minEmitBox = new BABYLON.Vector3(-20, 0, -20);
                 rainSystem.maxEmitBox = new BABYLON.Vector3(20, 0, 20);
                 
                 // Particle appearance
-                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.5); // Increased alpha for visibility
+                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.5);
                 rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.5);
                 rainSystem.colorDead = new BABYLON.Color4(0.9, 0.9, 1.0, 0);
                 
                 // Particle size
-                rainSystem.minSize = 0.1; // Increased minimum size
-                rainSystem.maxSize = 0.2; // Increased maximum size
+                rainSystem.minSize = 0.1;
+                rainSystem.maxSize = 0.2;
                 
                 // Lifetime
                 rainSystem.minLifeTime = 1;
@@ -127,7 +126,7 @@
                 rainSystem.emitRate = 2000;
                 
                 // Direction and speed
-                rainSystem.direction1 = new BABYLON.Vector3(-1, -20, -1); // Increased downward velocity
+                rainSystem.direction1 = new BABYLON.Vector3(-1, -20, -1);
                 rainSystem.direction2 = new BABYLON.Vector3(1, -20, 1);
                 
                 // Gravity
@@ -153,7 +152,11 @@
                         }
                     }
                 };
-
+                
+                return rainSystem; // Return the created system
+            }
+            
+            // Create the rain system and store it in a constant
             const rainSystem = createRainSystem();
             rainSystem.stop(); // Start with rain off
 
