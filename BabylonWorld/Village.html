@@ -101,59 +101,58 @@
             function createRainSystem() {
                 const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
                 
-                // Create a more realistic rain drop texture
-                const rainTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/flare.png");
+                // Particle texture
+                const rainTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/flare.png", scene);
                 rainSystem.particleTexture = rainTexture;
                 
-                // Extend the emission area for wider coverage
-                rainSystem.emitter = new BABYLON.Vector3(0, 15, 0); // Lower height for emission
-                rainSystem.minEmitBox = new BABYLON.Vector3(-30, 0, -30); // Wider area
-                rainSystem.maxEmitBox = new BABYLON.Vector3(30, 0, 30);
+                // Emission area
+                rainSystem.emitter = new BABYLON.Vector3(0, 20, 0); // Increased height for better visibility
+                rainSystem.minEmitBox = new BABYLON.Vector3(-20, 0, -20);
+                rainSystem.maxEmitBox = new BABYLON.Vector3(20, 0, 20);
                 
-                // Adjust particle appearance
-                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.2);
-                rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.2);
-                rainSystem.colorDead = new BABYLON.Color4(0.9, 0.9, 1.0, 0); // Fade out at end
+                // Particle appearance
+                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.5); // Increased alpha for visibility
+                rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.5);
+                rainSystem.colorDead = new BABYLON.Color4(0.9, 0.9, 1.0, 0);
                 
-                // Adjust particle size for rain drops
-                rainSystem.minSize = 0.05;
-                rainSystem.maxSize = 0.15;
+                // Particle size
+                rainSystem.minSize = 0.1; // Increased minimum size
+                rainSystem.maxSize = 0.2; // Increased maximum size
                 
-                // Adjust lifetime for faster falling
-                rainSystem.minLifeTime = 0.7;
-                rainSystem.maxLifeTime = 1.0;
+                // Lifetime
+                rainSystem.minLifeTime = 1;
+                rainSystem.maxLifeTime = 2;
                 
-                // Increase emission rate for denser rain
-                rainSystem.emitRate = 3000;
+                // Emission rate
+                rainSystem.emitRate = 2000;
                 
-                // Adjust direction and speed for more realistic falling
-                rainSystem.direction1 = new BABYLON.Vector3(-0.5, -10, -0.5); // Faster downward velocity
-                rainSystem.direction2 = new BABYLON.Vector3(0.5, -10, 0.5);
+                // Direction and speed
+                rainSystem.direction1 = new BABYLON.Vector3(-1, -20, -1); // Increased downward velocity
+                rainSystem.direction2 = new BABYLON.Vector3(1, -20, 1);
                 
-                // Add gravity effect
+                // Gravity
                 rainSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
                 
-                // Add angular velocity for some variation
-                rainSystem.minAngularSpeed = -0.5;
-                rainSystem.maxAngularSpeed = 0.5;
+                // Angular speed
+                rainSystem.minAngularSpeed = 0;
+                rainSystem.maxAngularSpeed = 0;
                 
-                // Add slight emission power for initial velocity
+                // Emission power
                 rainSystem.minEmitPower = 1;
-                rainSystem.maxEmitPower = 2;
+                rainSystem.maxEmitPower = 3;
                 
-                // Add update function for collision detection
+                // Blend mode
+                rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+                
+                // Update function for collision
                 rainSystem.updateFunction = function(particles) {
                     for (let index = 0; index < particles.length; index++) {
                         const particle = particles[index];
-                        // If particle is near ground level, start fading it out
                         if (particle.position.y <= 0.5) {
-                            particle.age = particle.lifeTime - 0.01; // Begin particle fade out
+                            particle.age = particle.lifeTime;
                         }
                     }
                 };
-                
-                return rainSystem;
-            }
 
             const rainSystem = createRainSystem();
             rainSystem.stop(); // Start with rain off
