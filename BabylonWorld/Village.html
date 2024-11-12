@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Previous head content remains the same -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,10 +8,10 @@
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.js"></script>
     <script src="https://cdn.babylonjs.com/serializers/babylon.glTFSerializer.js"></script>
-    <!-- Addition 1: Add GUI library -->
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <!-- Previous styles remain the same -->
     <style>
-        /* Addition 2: Add CSS for controls */
+        /* Previous styles remain the same */
         .controls {
             position: absolute;
             top: 20px;
@@ -25,17 +26,51 @@
             margin: 5px;
             padding: 5px 10px;
         }
+        .time-controls {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .time-slider {
+            width: 200px;
+            margin: 10px 0;
+        }
+        .time-display {
+            font-family: monospace;
+            margin: 5px 0;
+        }
+        label {
+            display: block;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
+    <!-- Previous body content remains the same -->
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="downloadButton" style="position: absolute; top: 20px; left: 20px; z-index: 10;">Download Stickman GLB</button>
     
-    <!-- Addition 2: Add control panel -->
     <div class="controls">
+        <!-- Previous controls remain the same -->
         <button id="toggleRain">Toggle Rain</button>
         <button id="toggleMusic">Toggle Music</button>
-        <button id="switchTime">Switch Time</button>
+        <div class="time-controls">
+            <div class="time-display">Current Time: <span id="timeDisplay">12:00</span></div>
+            <label>
+                Time Speed:
+                <select id="timeSpeed">
+                    <option value="0">Paused</option>
+                    <option value="1">1x</option>
+                    <option value="5">5x</option>
+                    <option value="10">10x</option>
+                    <option value="50">50x</option>
+                </select>
+            </label>
+            <label>
+                Set Time:
+                <input type="range" id="timeSlider" class="time-slider" min="0" max="24" step="0.5" value="12">
+            </label>
+        </div>
     </div>
     
     <script>
@@ -43,13 +78,14 @@
         var engine = new BABYLON.Engine(canvas, true);
 
         const createScene = function () {
+            // Previous scene setup remains the same
             const scene = new BABYLON.Scene(engine);
             scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0));
 
             const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 1.5, Math.PI / 2.2, 15, new BABYLON.Vector3(0, 0, 0));
             camera.attachControl(canvas, true);
 
-            // Existing lighting setup...
+            // Previous lighting setup remains the same
             const ambientLight = new BABYLON.HemisphericLight("ambientLight", new BABYLON.Vector3(0, 1, 0), scene);
             ambientLight.intensity = 0.5;
 
@@ -60,43 +96,117 @@
             directionalLight.position = new BABYLON.Vector3(0, 10, 10);
             directionalLight.intensity = 0.6;
 
-            // Addition 3: Add particle system for rain
-            let rainSystem;
+            // Enhanced Rain System
             function createRainSystem() {
-                rainSystem = new BABYLON.ParticleSystem("rain", 5000, scene);
-                rainSystem.particleTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/flare.png");
-                rainSystem.emitter = new BABYLON.Vector3(0, 20, 0);
-                rainSystem.minEmitBox = new BABYLON.Vector3(-20, 0, -20);
-                rainSystem.maxEmitBox = new BABYLON.Vector3(20, 0, 20);
-                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.1);
-                rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.1);
-                rainSystem.minSize = 0.1;
-                rainSystem.maxSize = 0.3;
-                rainSystem.minLifeTime = 0.5;
+                const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
+                
+                // Create a more realistic rain drop texture
+                const rainTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/flare.png");
+                rainSystem.particleTexture = rainTexture;
+                
+                // Extend the emission area for wider coverage
+                rainSystem.emitter = new BABYLON.Vector3(0, 15, 0); // Lower height for emission
+                rainSystem.minEmitBox = new BABYLON.Vector3(-30, 0, -30); // Wider area
+                rainSystem.maxEmitBox = new BABYLON.Vector3(30, 0, 30);
+                
+                // Adjust particle appearance
+                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.2);
+                rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.2);
+                rainSystem.colorDead = new BABYLON.Color4(0.9, 0.9, 1.0, 0); // Fade out at end
+                
+                // Adjust particle size for rain drops
+                rainSystem.minSize = 0.05;
+                rainSystem.maxSize = 0.15;
+                
+                // Adjust lifetime for faster falling
+                rainSystem.minLifeTime = 0.7;
                 rainSystem.maxLifeTime = 1.0;
-                rainSystem.emitRate = 2000;
-                rainSystem.direction1 = new BABYLON.Vector3(-1, -8, -1);
-                rainSystem.direction2 = new BABYLON.Vector3(1, -8, 1);
+                
+                // Increase emission rate for denser rain
+                rainSystem.emitRate = 3000;
+                
+                // Adjust direction and speed for more realistic falling
+                rainSystem.direction1 = new BABYLON.Vector3(-0.5, -10, -0.5); // Faster downward velocity
+                rainSystem.direction2 = new BABYLON.Vector3(0.5, -10, 0.5);
+                
+                // Add gravity effect
                 rainSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
-                rainSystem.start();
-                rainSystem.stop();
+                
+                // Add angular velocity for some variation
+                rainSystem.minAngularSpeed = -0.5;
+                rainSystem.maxAngularSpeed = 0.5;
+                
+                // Add slight emission power for initial velocity
+                rainSystem.minEmitPower = 1;
+                rainSystem.maxEmitPower = 2;
+                
+                // Add update function for collision detection
+                rainSystem.updateFunction = function(particles) {
+                    for (let index = 0; index < particles.length; index++) {
+                        const particle = particles[index];
+                        // If particle is near ground level, start fading it out
+                        if (particle.position.y <= 0.5) {
+                            particle.age = particle.lifeTime - 0.01; // Begin particle fade out
+                        }
+                    }
+                };
+                
+                return rainSystem;
             }
-            createRainSystem();
 
-            // Addition 4: Add ambient sound
-            const music = new BABYLON.Sound("music", "https://www.babylonjs-playground.com/sounds/rain.mp3", scene, null, {
-                loop: true,
-                autoplay: false,
-                volume: 0.5
+            const rainSystem = createRainSystem();
+            rainSystem.stop(); // Start with rain off
+
+            // Previous time control system remains the same
+            let timeOfDay = 12;
+            let timeSpeed = 1;
+            const hoursToSeconds = 120;
+
+            // Previous time control functions remain the same
+            function updateTimeDisplay() {
+                const hours = Math.floor(timeOfDay);
+                const minutes = Math.floor((timeOfDay % 1) * 60);
+                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                document.getElementById('timeDisplay').textContent = timeString;
+                document.getElementById('timeSlider').value = timeOfDay;
+            }
+
+            function updateLighting() {
+                const sunAngle = (timeOfDay / 24) * Math.PI * 2;
+                directionalLight.position.x = Math.sin(sunAngle) * 10;
+                directionalLight.position.z = Math.cos(sunAngle) * 10;
+                directionalLight.position.y = 10 + Math.sin(sunAngle) * 5;
+
+                const baseIntensity = Math.sin(sunAngle);
+                const intensity = Math.max(0.2, (baseIntensity + 1) / 2);
+                directionalLight.intensity = intensity * 0.6;
+                ambientLight.intensity = intensity * 0.5;
+                spotLight.intensity = intensity * 0.8;
+
+                const skyBrightness = Math.max(0.2, (baseIntensity + 1) / 2);
+                scene.clearColor = new BABYLON.Color3(
+                    0.3 * skyBrightness,
+                    0.5 * skyBrightness,
+                    0.8 * skyBrightness
+                );
+            }
+
+            // Previous scene update logic remains the same
+            scene.onBeforeRenderObservable.add(() => {
+                if (timeSpeed > 0) {
+                    const deltaHours = (engine.getDeltaTime() / 1000) * (24 / hoursToSeconds) * timeSpeed;
+                    timeOfDay = (timeOfDay + deltaHours) % 24;
+                    updateTimeDisplay();
+                    updateLighting();
+                }
             });
 
-            // Addition 5: Add floating text labels with GUI
+            // Rest of the scene setup (GUI, village loading, etc.) remains the same
             const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
             
             BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb").then((result) => {
                 result.meshes.forEach((mesh) => {
                     if (mesh.name.startsWith("Billboard")) {
-                        // Add floating labels above buildings
                         const label = new BABYLON.GUI.TextBlock();
                         label.text = "Village Building";
                         label.color = "white";
@@ -116,26 +226,7 @@
                 });
             });
 
-            // Existing day/night cycle code...
-            let time = 0;
-            const dayNightCycle = 120;
-            scene.onBeforeRenderObservable.add(() => {
-                time += engine.getDeltaTime() / 1000;
-                time %= dayNightCycle;
-
-                const sunAngle = (time / dayNightCycle) * Math.PI * 2;
-                directionalLight.position.x = Math.sin(sunAngle) * 10;
-                directionalLight.position.z = Math.cos(sunAngle) * 10;
-                directionalLight.position.y = 10 + Math.sin(sunAngle * 2) * 5;
-                const skyColor = new BABYLON.Color3(
-                    0.5 + 0.5 * Math.sin(sunAngle),
-                    0.5 + 0.5 * Math.sin(sunAngle + Math.PI * 2 / 3),
-                    0.5 + 0.5 * Math.sin(sunAngle + (Math.PI * 4) / 3)
-                );
-                scene.clearColor = skyColor;
-            });
-
-            // Event listeners for new controls
+            // Previous event listeners remain the same
             document.getElementById("toggleRain").addEventListener("click", () => {
                 if (rainSystem.isStarted()) {
                     rainSystem.stop();
@@ -152,9 +243,18 @@
                 }
             });
 
-            document.getElementById("switchTime").addEventListener("click", () => {
-                time = (time + dayNightCycle / 2) % dayNightCycle; // Instantly switch between day and night
+            document.getElementById("timeSpeed").addEventListener("change", (e) => {
+                timeSpeed = parseFloat(e.target.value);
             });
+
+            document.getElementById("timeSlider").addEventListener("input", (e) => {
+                timeOfDay = parseFloat(e.target.value);
+                updateTimeDisplay();
+                updateLighting();
+            });
+
+            updateTimeDisplay();
+            updateLighting();
 
             return scene;
         };
