@@ -127,18 +127,17 @@
                 
                 // Direction and speed
                 rainSystem.direction1 = new BABYLON.Vector3(-0.1, -1, -0.1);
-                rainSystem.direction2 = new BABYLON.Vector3(0.1, -1, 0.11);
+                rainSystem.direction2 = new BABYLON.Vector3(0.1, -1, 0.1);
+                
+                // Speed
+                rainSystem.minEmitPower = 25;  // Increased from 0.1
+                rainSystem.maxEmitPower = 50;  // Increased from 0.3
                 
                 // Gravity
                 rainSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
                 
-                // Angular speed
-                rainSystem.minAngularSpeed = 0;
-                rainSystem.maxAngularSpeed = 0;
-                
-                // Emission power
-                rainSystem.minEmitPower = 0.1;
-                rainSystem.maxEmitPower = 0.3;
+                // Update speed
+                rainSystem.updateSpeed = 1/60;  // Added to ensure regular updates
                 
                 // Blend mode
                 rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
@@ -153,7 +152,7 @@
                     }
                 };
                 
-                return rainSystem; // Return the created system
+                return rainSystem;
             }
             
             // Create the rain system and store it in a constant
