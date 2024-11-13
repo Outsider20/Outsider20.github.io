@@ -99,6 +99,9 @@
 
             function createRainSystem() {
                 const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
+
+                // Disable direct renderer - this is crucial for movement!
+                rainSystem.createDirectRenderer = false;
                 
                 // Particle texture
                 const rainTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/flare.png", scene);
