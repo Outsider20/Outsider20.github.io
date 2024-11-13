@@ -119,15 +119,15 @@
                 rainSystem.maxSize = 0.2;
                 
                 // Lifetime
-                rainSystem.minLifeTime = 1;
-                rainSystem.maxLifeTime = 2;
+                rainSystem.minLifeTime = 0.6;
+                rainSystem.maxLifeTime = 1;
                 
                 // Emission rate
                 rainSystem.emitRate = 2000;
                 
                 // Direction and speed
-                rainSystem.direction1 = new BABYLON.Vector3(-1, -20, -1);
-                rainSystem.direction2 = new BABYLON.Vector3(1, -20, 1);
+                rainSystem.direction1 = new BABYLON.Vector3(-0.1, -1, -0.1);
+                rainSystem.direction2 = new BABYLON.Vector3(0.1, -1, 0.11);
                 
                 // Gravity
                 rainSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
@@ -137,8 +137,8 @@
                 rainSystem.maxAngularSpeed = 0;
                 
                 // Emission power
-                rainSystem.minEmitPower = 1;
-                rainSystem.maxEmitPower = 3;
+                rainSystem.minEmitPower = 0.1;
+                rainSystem.maxEmitPower = 0.3;
                 
                 // Blend mode
                 rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
