@@ -106,10 +106,6 @@
                 // Disable direct renderer - this is crucial for movement!
                 rainSystem.createDirectRenderer = false;
                 
-                // Particle texture
-                const rainTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/flare.png", scene);
-                rainSystem.particleTexture = rainTexture;
-                
                 // Where the particles are emitted from
                 rainSystem.emitter = new BABYLON.Vector3(0, 20, 0);
                 rainSystem.minEmitBox = new BABYLON.Vector3(-20, 0, -20);
