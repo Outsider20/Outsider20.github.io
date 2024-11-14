@@ -97,7 +97,7 @@
             directionalLight.intensity = 0.6;
 
             function createRainSystem(scene) {
-                const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
+                const rainSystem = new BABYLON.rainSystem("rain", 3000, scene);
                 
                 // Create a simple sprite texture
                 rainSystem.particleTexture = new BABYLON.Texture("https://Outsider20.github.io/BabylonWorld/texture_rain/flare.png", scene);
@@ -113,8 +113,8 @@
                 rainSystem.colorDead = new BABYLON.Color4(0.7, 0.8, 1.0, 0);
                 
                 // Size
-                particleSystem.minSize = 0.1;
-                particleSystem.maxSize = 0.5;
+                rainSystem.minSize = 0.1;
+                rainSystem.maxSize = 0.5;
                 
                 // Lifetime
                 rainSystem.minLifeTime = 1;
@@ -133,7 +133,7 @@
                 rainSystem.gravity = new BABYLON.Vector3(0, -20, 0);
                 
                 // Blend mode
-                rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+                rainSystem.blendMode = BABYLON.rainSystem.BLENDMODE_ADD;
                 
                 // Stop rotation
                 rainSystem.minAngularSpeed = 0;
