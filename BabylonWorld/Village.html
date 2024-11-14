@@ -103,9 +103,9 @@
                 rainSystem.particleTexture = new BABYLON.Texture("https://Outsider20.github.io/BabylonWorld/texture_rain/flare.png", scene);
                 
                 // Emission box configuration
-                rainSystem.emitter = new BABYLON.Vector3(0, 30, 0);
-                rainSystem.minEmitBox = new BABYLON.Vector3(-40, 0, -40);
-                rainSystem.maxEmitBox = new BABYLON.Vector3(40, 0, 40);
+                particleSystem.emitter = new BABYLON.Vector3(0, 75, 0);
+                particleSystem.minEmitBox = new BABYLON.Vector3(-80, 0, -80); 
+                particleSystem.maxEmitBox = new BABYLON.Vector3(80, 0, 80);
                 
                 // Particle appearance
                 rainSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.2);
@@ -113,8 +113,8 @@
                 rainSystem.colorDead = new BABYLON.Color4(0.7, 0.8, 1.0, 0);
                 
                 // Size
-                rainSystem.minSize = 0.03;
-                rainSystem.maxSize = 0.05;
+                particleSystem.minSize = 0.1;
+                particleSystem.maxSize = 0.5;
                 
                 // Lifetime
                 rainSystem.minLifeTime = 1;
