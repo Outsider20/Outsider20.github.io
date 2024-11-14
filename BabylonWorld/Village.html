@@ -97,7 +97,7 @@
             directionalLight.intensity = 0.6;
 
             function createRainSystem(scene) {
-                const rainSystem = new BABYLON.ParticleSystem("rain", 10000, scene);
+                const rainSystem = new BABYLON.ParticleSystem("rain", 100000, scene);
                 
                 // Create a simple sprite texture
                 rainSystem.particleTexture = new BABYLON.Texture("https://Outsider20.github.io/BabylonWorld/texture_rain/flare.png", scene);
