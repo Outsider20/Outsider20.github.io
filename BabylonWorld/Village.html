@@ -100,9 +100,8 @@
             function createRainSystem(scene) {
                 const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
                 
-                // Using a white box as the particle texture - no CORS issues
-                const rainTexture = new BABYLON.Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAQCAYAAAAxtt7zAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYSURBVBhXY/z//z8DEYCJgUhAlEL8egYGAHsjBNnGyM12AAAAAElFTkSuQmCC", scene);
-                rainSystem.particleTexture = rainTexture;
+                // Create a simple sprite texture
+                rainSystem.particleTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/flare.png", scene);
                 
                 // Emission box configuration
                 rainSystem.emitter = new BABYLON.Vector3(0, 30, 0);
@@ -110,19 +109,22 @@
                 rainSystem.maxEmitBox = new BABYLON.Vector3(40, 0, 40);
                 
                 // Particle appearance
-                rainSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.5);
-                rainSystem.color2 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.5);
+                rainSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.2);
+                rainSystem.color2 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.2);
                 rainSystem.colorDead = new BABYLON.Color4(0.7, 0.8, 1.0, 0);
                 
-                // Particle size
-                rainSystem.minSize = 0.05;
-                rainSystem.maxSize = 0.15;
+                // Size
+                rainSystem.minSize = 0.03;
+                rainSystem.maxSize = 0.05;
                 
-                // Lifetime configuration
+                // Lifetime
                 rainSystem.minLifeTime = 1;
                 rainSystem.maxLifeTime = 2;
                 
-                // Direction and speed
+                // Emission rate
+                rainSystem.emitRate = 5000;
+                
+                // Speed and direction
                 rainSystem.direction1 = new BABYLON.Vector3(0, -1, 0);
                 rainSystem.direction2 = new BABYLON.Vector3(0, -1, 0);
                 rainSystem.minEmitPower = 1;
@@ -131,18 +133,15 @@
                 // Gravity
                 rainSystem.gravity = new BABYLON.Vector3(0, -20, 0);
                 
-                // Emission rate
-                rainSystem.emitRate = 3000;
+                // Blend mode
+                rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
                 
-                // Angular speed
+                // Stop rotation
                 rainSystem.minAngularSpeed = 0;
                 rainSystem.maxAngularSpeed = 0;
                 
                 // Update speed
                 rainSystem.updateSpeed = 0.005;
-                
-                // Blend mode
-                rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
                 
                 // Ground collision
                 rainSystem.updateFunction = function(particles) {
