@@ -100,34 +100,26 @@
             function createRainSystem(scene) {
                 const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
                 
-                // Create a raindrop texture programmatically using a canvas
-                const textureCanvas = document.createElement("canvas");
-                textureCanvas.width = 8;
-                textureCanvas.height = 16;
-                const ctx = textureCanvas.getContext("2d");
+                // Create a simple texture directly as a URL
+                const canvas = document.createElement('canvas');
+                canvas.width = 4;
+                canvas.height = 16;
+                const ctx = canvas.getContext('2d');
                 
-                // Draw an elongated raindrop
-                ctx.fillStyle = "white";
-                ctx.beginPath();
-                ctx.ellipse(4, 8, 1, 6, 0, 0, Math.PI * 2);
-                ctx.fill();
+                // Create a gradient for a softer raindrop
+                const gradient = ctx.createLinearGradient(0, 0, 0, 16);
+                gradient.addColorStop(0, 'rgba(255,255,255,0)');
+                gradient.addColorStop(0.1, 'rgba(255,255,255,0.5)');
+                gradient.addColorStop(0.5, 'rgba(255,255,255,1)');
+                gradient.addColorStop(0.9, 'rgba(255,255,255,0.5)');
+                gradient.addColorStop(1, 'rgba(255,255,255,0)');
                 
-                // Create texture from canvas
-                const rainTexture = new BABYLON.RawTexture.CreateFromBase64String(
-                    textureCanvas.toDataURL(),
-                    scene,
-                    8,
-                    16,
-                    BABYLON.Engine.TEXTUREFORMAT_RGBA,
-                    false,
-                    false,
-                    BABYLON.Texture.TRILINEAR_SAMPLINGMODE
-                );
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 4, 16);
                 
+                // Create texture directly from canvas
+                const rainTexture = new BABYLON.Texture("data:," + canvas.toDataURL(), scene);
                 rainSystem.particleTexture = rainTexture;
-                
-                // Disable direct renderer for better performance
-                rainSystem.createDirectRenderer = false;
                 
                 // Emission box configuration
                 rainSystem.emitter = new BABYLON.Vector3(0, 20, 0);
