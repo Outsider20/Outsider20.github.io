@@ -229,10 +229,12 @@
                 if (rainSystem.isStarted()) {
                     rainSystem.stop();
                 } else {
+                    // Reset the system before starting it again
+                    rainSystem.reset();
                     rainSystem.start();
                 }
             });
-
+            
             document.getElementById("toggleMusic").addEventListener("click", () => {
                 if (music.isPlaying) {
                     music.pause();
