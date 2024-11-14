@@ -104,8 +104,8 @@
                 
                 // Emission box configuration
                 rainSystem.emitter = new BABYLON.Vector3(0, 75, 0);
-                rainSystem.minEmitBox = new BABYLON.Vector3(-80, 0, -80); 
-                rainSystem.maxEmitBox = new BABYLON.Vector3(80, 0, 80);
+                rainSystem.minEmitBox = new BABYLON.Vector3(-50, 0, -50); 
+                rainSystem.maxEmitBox = new BABYLON.Vector3(50, 0, 50);
                 
                 // Particle appearance
                 rainSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.2);
@@ -113,8 +113,8 @@
                 rainSystem.colorDead = new BABYLON.Color4(0.7, 0.8, 1.0, 0);
                 
                 // Size
-                rainSystem.minSize = 0.2;
-                rainSystem.maxSize = 0.5;
+                rainSystem.minSize = 0.1;
+                rainSystem.maxSize = 0.2;
                 
                 // Lifetime
                 rainSystem.minLifeTime = 3;
@@ -127,10 +127,10 @@
                 rainSystem.direction1 = new BABYLON.Vector3(0, -1, 0);
                 rainSystem.direction2 = new BABYLON.Vector3(0, -1, 0);
                 rainSystem.minEmitPower = 1;
-                rainSystem.maxEmitPower = 1.5;
+                rainSystem.maxEmitPower = 2;
                 
                 // Gravity
-                rainSystem.gravity = new BABYLON.Vector3(0, -40, 0);
+                rainSystem.gravity = new BABYLON.Vector3(0, -60, 0);
                 
                 // Blend mode
                 rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
