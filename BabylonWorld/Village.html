@@ -143,14 +143,15 @@
                 rainSystem.updateSpeed = 0.005;
                 
                 // Ground collision
-                rainSystem.updateFunction = function(particles) {
+                  rainSystem.isLocal = true;
+                  rainSystem.updateFunction = function(particles) {
                     for (let index = 0; index < particles.length; index++) {
-                        const particle = particles[index];
-                        if (particle.position.y <= 0.1) {
-                            particle.age = particle.lifeTime;
-                        }
+                      const particle = particles[index];
+                      if (particle.position.y <= 0.1) {
+                        particle.age = particle.lifeTime;
+                      }
                     }
-                };
+                  };
             
                 return rainSystem;
             }
