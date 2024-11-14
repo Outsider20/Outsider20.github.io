@@ -170,34 +170,74 @@
             }
 
             function updateLighting() {
-                const sunAngle = (timeOfDay / 24) * Math.PI * 2;
-                directionalLight.position.x = Math.sin(sunAngle) * 10;
-                directionalLight.position.z = Math.cos(sunAngle) * 10;
-                directionalLight.position.y = 10 + Math.sin(sunAngle) * 5;
-
-                const baseIntensity = Math.sin(sunAngle);
-                const intensity = Math.max(0.2, (baseIntensity + 1) / 2);
-                directionalLight.intensity = intensity * 0.6;
-                ambientLight.intensity = intensity * 0.5;
-                spotLight.intensity = intensity * 0.8;
-
-                const skyBrightness = Math.max(0.2, (baseIntensity + 1) / 2);
-                scene.clearColor = new BABYLON.Color3(
-                    0.3 * skyBrightness,
-                    0.5 * skyBrightness,
-                    0.8 * skyBrightness
-                );
-            }
-
-            // Previous scene update logic remains the same
-            scene.onBeforeRenderObservable.add(() => {
-                if (timeSpeed > 0) {
-                    const deltaHours = (engine.getDeltaTime() / 1000) * (24 / hoursToSeconds) * timeSpeed;
-                    timeOfDay = (timeOfDay + deltaHours) % 24;
-                    updateTimeDisplay();
-                    updateLighting();
-                }
-            });
+                        // Convert time to sun angle (adjusted for realistic day/night cycle)
+                        // 0 hours = -π/2 (midnight)
+                        // 6 hours = 0 (sunrise)
+                        // 12 hours = π/2 (noon)
+                        // 18 hours = π (sunset)
+                        const sunAngle = ((timeOfDay - 6) / 24) * Math.PI * 2;
+                
+                        // Update sun position
+                        directionalLight.position.x = Math.sin(sunAngle) * 10;
+                        directionalLight.position.z = Math.cos(sunAngle) * 10;
+                        directionalLight.position.y = 10 + Math.sin(sunAngle) * 5;
+                
+                        // Calculate light intensity based on time of day
+                        let intensity;
+                        if (timeOfDay >= 6 && timeOfDay <= 18) {
+                            // Daytime: Full intensity at noon, ramping up/down at sunrise/sunset
+                            intensity = Math.sin(((timeOfDay - 6) / 12) * Math.PI);
+                        } else {
+                            // Nighttime: Low intensity
+                            intensity = 0.1;
+                        }
+                
+                        // Apply intensity to lights
+                        directionalLight.intensity = intensity * 0.8;
+                        ambientLight.intensity = intensity * 0.5;
+                        spotLight.intensity = intensity * 0.6;
+                
+                        // Update sky color based on time
+                        let skyColor;
+                        if (timeOfDay >= 6 && timeOfDay <= 18) {
+                            // Daytime: Blue sky
+                            skyColor = new BABYLON.Color3(
+                                0.3 * intensity,
+                                0.5 * intensity,
+                                0.8 * intensity
+                            );
+                        } else if (timeOfDay > 18 && timeOfDay <= 19.5) {
+                            // Sunset: Orange/red sky
+                            const sunsetProgress = (timeOfDay - 18) / 1.5;
+                            skyColor = new BABYLON.Color3(
+                                0.8 * intensity,
+                                0.3 * intensity,
+                                0.1 * intensity
+                            );
+                        } else if (timeOfDay >= 4.5 && timeOfDay < 6) {
+                            // Sunrise: Orange/pink sky
+                            const sunriseProgress = (timeOfDay - 4.5) / 1.5;
+                            skyColor = new BABYLON.Color3(
+                                0.8 * intensity,
+                                0.4 * intensity,
+                                0.3 * intensity
+                            );
+                        } else {
+                            // Night: Dark blue sky
+                            skyColor = new BABYLON.Color3(0.05, 0.05, 0.1);
+                        }
+                        scene.clearColor = skyColor;
+                    }
+                
+                    // Update scene on each frame
+                    scene.onBeforeRenderObservable.add(() => {
+                        if (timeSpeed > 0) {
+                            const deltaHours = (engine.getDeltaTime() / 1000) * (24 / hoursToSeconds) * timeSpeed;
+                            timeOfDay = (timeOfDay + deltaHours) % 24;
+                            updateTimeDisplay();
+                            updateLighting();
+                        }
+                            }
 
             // Rest of the scene setup (GUI, village loading, etc.) remains the same
             const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
