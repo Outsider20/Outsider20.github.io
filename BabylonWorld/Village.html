@@ -228,7 +228,7 @@
                         }
                         scene.clearColor = skyColor;
                     }
-                
+        }
                     // Update scene on each frame
                     scene.onBeforeRenderObservable.add(() => {
                         if (timeSpeed > 0) {
@@ -237,7 +237,7 @@
                             updateTimeDisplay();
                             updateLighting();
                         }
-                            }
+                    }
 
             // Rest of the scene setup (GUI, village loading, etc.) remains the same
             const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
