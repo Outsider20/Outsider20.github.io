@@ -97,61 +97,82 @@
             directionalLight.position = new BABYLON.Vector3(0, 10, 10);
             directionalLight.intensity = 0.6;
 
-            function createRainSystem() {
+            function createRainSystem(scene) {
                 const rainSystem = new BABYLON.ParticleSystem("rain", 3000, scene);
-
-                const rainTexture = new BABYLON.Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABCSURBVChTY/j//z8DEYAJSpMFGKG2gAATAwN6IOH/agb21TDL4E4AKQIpBjGQOBQAFYHDAewOFNz8kDeQCepgoPYBABveFyHkNPkNAAAAAElFTkSuQmCC", scene);
+                
+                // Create a raindrop texture programmatically using a canvas
+                const textureCanvas = document.createElement("canvas");
+                textureCanvas.width = 8;
+                textureCanvas.height = 16;
+                const ctx = textureCanvas.getContext("2d");
+                
+                // Draw an elongated raindrop
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.ellipse(4, 8, 1, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Create texture from canvas
+                const rainTexture = new BABYLON.RawTexture.CreateFromBase64String(
+                    textureCanvas.toDataURL(),
+                    scene,
+                    8,
+                    16,
+                    BABYLON.Engine.TEXTUREFORMAT_RGBA,
+                    false,
+                    false,
+                    BABYLON.Texture.TRILINEAR_SAMPLINGMODE
+                );
+                
                 rainSystem.particleTexture = rainTexture;
                 
-                // Disable direct renderer - this is crucial for movement!
+                // Disable direct renderer for better performance
                 rainSystem.createDirectRenderer = false;
                 
-                // Where the particles are emitted from
+                // Emission box configuration
                 rainSystem.emitter = new BABYLON.Vector3(0, 20, 0);
-                rainSystem.minEmitBox = new BABYLON.Vector3(-20, 0, -20);
-                rainSystem.maxEmitBox = new BABYLON.Vector3(20, 0, 20);
+                rainSystem.minEmitBox = new BABYLON.Vector3(-30, 0, -30);
+                rainSystem.maxEmitBox = new BABYLON.Vector3(30, 0, 30);
                 
-                // Particle colors
-                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.5);
-                rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.5);
+                // Particle appearance
+                rainSystem.color1 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.3);
+                rainSystem.color2 = new BABYLON.Color4(0.9, 0.9, 1.0, 0.3);
                 rainSystem.colorDead = new BABYLON.Color4(0.9, 0.9, 1.0, 0);
                 
-                // Particle sizes
+                // Particle size
                 rainSystem.minSize = 0.1;
-                rainSystem.maxSize = 0.2;
+                rainSystem.maxSize = 0.15;
                 
-                // How long particles live
-                rainSystem.minLifeTime = 1;
-                rainSystem.maxLifeTime = 2;
+                // Lifetime configuration
+                rainSystem.minLifeTime = 0.8;
+                rainSystem.maxLifeTime = 1.5;
                 
-                // Emission rate
-                rainSystem.emitRate = 1500;
+                // Emission rate and speed
+                rainSystem.emitRate = 2000;
+                rainSystem.minEmitPower = 20;
+                rainSystem.maxEmitPower = 35;
                 
-                // Blend mode
-                rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
-                
-                // Gravity
+                // Direction and gravity
+                rainSystem.direction1 = new BABYLON.Vector3(-1, -5, -1);
+                rainSystem.direction2 = new BABYLON.Vector3(1, -5, 1);
                 rainSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
                 
-                // Initial speed/direction
-                rainSystem.direction1 = new BABYLON.Vector3(0, -1, 0);
-                rainSystem.direction2 = new BABYLON.Vector3(0, -1, 0);
-                rainSystem.minEmitPower = 15;
-                rainSystem.maxEmitPower = 30;
+                // Blend mode for better visual effect
+                rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
                 
                 // Update speed
                 rainSystem.updateSpeed = 0.01;
                 
-                // Ground collision
+                // Ground collision handling
                 rainSystem.updateFunction = function(particles) {
                     for (let index = 0; index < particles.length; index++) {
                         const particle = particles[index];
-                        if (particle.position.y <= 0) {
+                        if (particle.position.y <= 0.5) {
                             particle.age = particle.lifeTime;
                         }
                     }
                 };
-                
+            
                 return rainSystem;
             }
             
