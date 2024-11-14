@@ -113,7 +113,7 @@
                 rainSystem.colorDead = new BABYLON.Color4(0.7, 0.8, 1.0, 0);
                 
                 // Size
-                rainSystem.minSize = 0.1;
+                rainSystem.minSize = 0.2;
                 rainSystem.maxSize = 0.5;
                 
                 // Lifetime
@@ -126,11 +126,11 @@
                 // Speed and direction
                 rainSystem.direction1 = new BABYLON.Vector3(0, -1, 0);
                 rainSystem.direction2 = new BABYLON.Vector3(0, -1, 0);
-                rainSystem.minEmitPower = 1;
-                rainSystem.maxEmitPower = 2;
+                rainSystem.minEmitPower = 2;
+                rainSystem.maxEmitPower = 3;
                 
                 // Gravity
-                rainSystem.gravity = new BABYLON.Vector3(0, -20, 0);
+                rainSystem.gravity = new BABYLON.Vector3(0, -40, 0);
                 
                 // Blend mode
                 rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
