@@ -281,12 +281,21 @@
                     rainSystem.start();
                 }
             });
+
+            const music = new BABYLON.Sound("music", "Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3", scene, null, {
+                loop: true,
+                autoplay: false,
+                volume: 0.5 // Adjust volume as needed (0.0 to 1.0)
+            });
             
+            // Update or add the music toggle event listener
             document.getElementById("toggleMusic").addEventListener("click", () => {
                 if (music.isPlaying) {
                     music.pause();
+                    document.getElementById("toggleMusic").textContent = "Play Music";
                 } else {
                     music.play();
+                    document.getElementById("toggleMusic").textContent = "Pause Music";
                 }
             });
 
