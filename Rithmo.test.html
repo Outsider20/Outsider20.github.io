@@ -255,34 +255,6 @@
                               if (toRow === fromRow && toCol === fromCol) {
                                   return;
                               }
-                            
-                              if (isValidMove(fromRow, fromCol, toRow, toCol, this)) {
-                                  // Valid move logic (keep existing logic here)
-                                  const destPiece = boardState[toRow][toCol];
-                                  if (destPiece) {
-                                      canvas.remove(destPiece);
-                                  }
-                                      
-                                  boardState[toRow][toCol] = this;
-                                  boardState[fromRow][fromCol] = null;
-                              
-                                  const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
-                                  const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
-                                  updateHistory(this, from, to, destPiece);
-                              
-                                  turn = turn === 'white' ? 'black' : 'white';
-                                  moveCount++;
-                                  updateSelectableState();
-                                  startTimer();
-                              } else {
-                                  // Invalid move - revert position
-                                  this.set({
-                                      left: dragStartPosition.left,
-                                      top: dragStartPosition.top
-                                  });
-                                  this.setCoords();
-                                  alert("This is an invalid move. Try again");
-                              }
                                   
                               dragStartPosition = null;
                               canvas.renderAll();
@@ -291,7 +263,6 @@
                 }
             }
         }
-    }
 
         function createChessboard() {
             for (let row = 0; row < 8; row++) {
