@@ -78,6 +78,33 @@
         var engine = new BABYLON.Engine(canvas, true);
 
         const createScene = function () {
+            let music = null;
+
+            function initializeMusic() {
+                if (!music) {
+                    music = new BABYLON.Sound(
+                        "music", 
+                        "https://Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3", 
+                        scene, 
+                        () => {
+                            console.log("Music loaded successfully");
+                            music.play();
+                            document.getElementById("toggleMusic").textContent = "Pause Music";
+                        }, 
+                        {
+                            loop: true,
+                            autoplay: false,
+                            volume: 0.5
+                        }
+                    );
+
+                    music.onLoadError = () => {
+                        console.error("Error loading music file");
+                        document.getElementById("toggleMusic").textContent = "Music Load Error";
+                    };
+                }
+            }
+            
             // Previous scene setup remains the same
             const scene = new BABYLON.Scene(engine);
             scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0));
