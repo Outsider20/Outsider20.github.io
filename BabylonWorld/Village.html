@@ -79,29 +79,39 @@
 
         const createScene = function () {
             let music = null;
+            let audioContext = null;
 
             // Previous scene setup remains the same
             const scene = new BABYLON.Scene(engine);
             scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0));
             
             function initializeMusic() {
+                // Create the audio context if it doesn't exist
+                if (!audioContext) {
+                    audioContext = new AudioContext();
+                }
+        
                 if (!music) {
                     music = new BABYLON.Sound(
-                        "music", 
-                        "https://Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3", 
-                        scene, 
+                        "music",
+                        "https://Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3",
+                        scene,
                         () => {
                             console.log("Music loaded successfully");
                             music.play();
                             document.getElementById("toggleMusic").textContent = "Pause Music";
-                        }, 
+                        },
                         {
                             loop: true,
                             autoplay: false,
-                            volume: 0.5
+                            volume: 0.5,
+                            useCustomAttenuation: true,
+                            distanceModel: BABYLON.Sound.DISTANCE_MODEL_LINEAR,
+                            maxDistance: 100,
+                            rolloffFactor: 1
                         }
                     );
-
+        
                     music.onLoadError = () => {
                         console.error("Error loading music file");
                         document.getElementById("toggleMusic").textContent = "Music Load Error";
