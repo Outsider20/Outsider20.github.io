@@ -224,8 +224,17 @@
                     skyColor = new BABYLON.Color3(0.05, 0.05, 0.1);
                 }
                 
-                // Smooth transition for sky color
-                scene.clearColor = scene.clearColor.lerp(skyColor, 0.02);
+                // Smooth color transition by manual interpolation
+                if (!scene.clearColor || !(scene.clearColor instanceof BABYLON.Color3)) {
+                    scene.clearColor = skyColor;
+                } else {
+                    const lerpFactor = 0.02;
+                    scene.clearColor = new BABYLON.Color3(
+                        scene.clearColor.r + (skyColor.r - scene.clearColor.r) * lerpFactor,
+                        scene.clearColor.g + (skyColor.g - scene.clearColor.g) * lerpFactor,
+                        scene.clearColor.b + (skyColor.b - scene.clearColor.b) * lerpFactor
+                    );
+                }
             }
                     // Update scene on each frame
                     scene.onBeforeRenderObservable.add(() => {
