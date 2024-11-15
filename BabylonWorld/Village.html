@@ -172,44 +172,60 @@
             function updateLighting() {
                 const sunAngle = ((timeOfDay - 6) / 24) * Math.PI * 2;
                 
-                directionalLight.position.x = Math.sin(sunAngle) * 10;
-                directionalLight.position.z = Math.cos(sunAngle) * 10;
-                directionalLight.position.y = 10 + Math.sin(sunAngle) * 5;
+                directionalLight.position = new BABYLON.Vector3(
+                    Math.sin(sunAngle) * 10,
+                    Math.max(Math.sin(sunAngle), 0.1) * 10,
+                    Math.cos(sunAngle) * 10
+                );
                 
+                // Smooth intensity calculation
                 let intensity;
                 if (timeOfDay >= 6 && timeOfDay <= 18) {
                     intensity = Math.sin(((timeOfDay - 6) / 12) * Math.PI);
                 } else {
-                    intensity = 0.1;
+                    // Gradual falloff for dawn/dusk
+                    const nightProgress = (timeOfDay < 6) ? 
+                        (timeOfDay + 6) / 12 : 
+                        (30 - timeOfDay) / 12;
+                    intensity = Math.max(0.1, Math.min(nightProgress, 0.3));
                 }
                 
                 directionalLight.intensity = intensity * 0.8;
                 ambientLight.intensity = intensity * 0.5;
                 spotLight.intensity = intensity * 0.6;
                 
+                // Smoother sky color transitions
                 let skyColor;
                 if (timeOfDay >= 6 && timeOfDay <= 18) {
+                    // Daytime
                     skyColor = new BABYLON.Color3(
-                        0.3 * intensity,
-                        0.5 * intensity,
-                        0.8 * intensity
+                        0.3 + intensity * 0.1,
+                        0.5 + intensity * 0.1,
+                        0.8 + intensity * 0.1
                     );
                 } else if (timeOfDay > 18 && timeOfDay <= 19.5) {
+                    // Sunset
+                    const sunsetProgress = (timeOfDay - 18) / 1.5;
                     skyColor = new BABYLON.Color3(
-                        0.8 * intensity,
-                        0.3 * intensity,
-                        0.1 * intensity
+                        0.8 - sunsetProgress * 0.7,
+                        0.3 - sunsetProgress * 0.2,
+                        0.1
                     );
                 } else if (timeOfDay >= 4.5 && timeOfDay < 6) {
+                    // Sunrise
+                    const sunriseProgress = (timeOfDay - 4.5) / 1.5;
                     skyColor = new BABYLON.Color3(
-                        0.8 * intensity,
-                        0.4 * intensity,
-                        0.3 * intensity
+                        0.1 + sunriseProgress * 0.7,
+                        0.1 + sunriseProgress * 0.3,
+                        0.3 + sunriseProgress * 0.5
                     );
                 } else {
+                    // Night
                     skyColor = new BABYLON.Color3(0.05, 0.05, 0.1);
                 }
-                scene.clearColor = skyColor;
+                
+                // Smooth transition for sky color
+                scene.clearColor = scene.clearColor.lerp(skyColor, 0.02);
             }
                     // Update scene on each frame
                     scene.onBeforeRenderObservable.add(() => {
