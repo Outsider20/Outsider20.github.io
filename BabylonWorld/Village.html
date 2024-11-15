@@ -104,6 +104,11 @@
                     };
                 }
             }
+
+                // Initialize music when the scene is ready
+                scene.executeWhenReady(() => {
+                    initializeMusic();
+                });
             
             // Previous scene setup remains the same
             const scene = new BABYLON.Scene(engine);
