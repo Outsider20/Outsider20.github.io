@@ -80,6 +80,10 @@
         const createScene = function () {
             let music = null;
 
+            // Previous scene setup remains the same
+            const scene = new BABYLON.Scene(engine);
+            scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0));
+            
             function initializeMusic() {
                 if (!music) {
                     music = new BABYLON.Sound(
@@ -110,10 +114,6 @@
                     initializeMusic();
                 });
             
-            // Previous scene setup remains the same
-            const scene = new BABYLON.Scene(engine);
-            scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0));
-
             const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 1.5, Math.PI / 2.2, 15, new BABYLON.Vector3(0, 0, 0));
             camera.attachControl(canvas, true);
 
