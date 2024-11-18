@@ -148,75 +148,78 @@
 
              for (let row = 0; row < 8; row++) {
                     for (let col = 0; col < 16; col++) {
-                        const piece = initialBoardState[row][col];}
+                        const piece = initialBoardState[row][col];
                     
-            if (piece !== '.') {
-                    fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
-                    const svgPiece = fabric.util.groupSVGElements(objects, options);
-                    const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
-                        svgPiece.set({
-                            left: col * squareSize + squareSize / 2,
-                            top: row * squareSize + squareSize / 2,
-                            originX: 'center',
-                            originY: 'center',
-                            hasControls: false,
-                            hasBorders: false,
-                            selectable: true,
-                            pieceColor: pieceColor,
-                            pieceType: piece.toLowerCase()
-                        });
-                            
-                        boardState[row][col] = svgPiece;
-                        canvas.add(svgPiece);
+                        if (piece !== '.') {
+                                fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
+                                const svgPiece = fabric.util.groupSVGElements(objects, options);
+                                const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
+                                    svgPiece.set({
+                                        left: col * squareSize + squareSize / 2,
+                                        top: row * squareSize + squareSize / 2,
+                                        originX: 'center',
+                                        originY: 'center',
+                                        hasControls: false,
+                                        hasBorders: false,
+                                        selectable: true,
+                                        pieceColor: pieceColor,
+                                        pieceType: piece.toLowerCase()
+                                    });
+                                        
+                                    boardState[row][col] = svgPiece;
+                                    canvas.add(svgPiece);
 
-                            svgPiece.on('mousedown', function(event) {
-                                // Reset the piece's state
-                                this.setCoords();
-                                
-                                // If it's not this piece's turn or the game is over, prevent selection
-                                if (this.pieceColor !== turn) {
-                                    canvas.discardActiveObject();
-                                    canvas.renderAll();
-                                    return false;
+                                    svgPiece.on('mousedown', function(event) {
+                                        // Reset the piece's state
+                                        this.setCoords();
+                                        
+                                        // If it's not this piece's turn or the game is over, prevent selection
+                                        if (this.pieceColor !== turn) {
+                                            canvas.discardActiveObject();
+                                            canvas.renderAll();
+                                            return false;
+                                        }
+                                            
+                                        const currentRow = Math.floor(this.top / squareSize);
+                                        const currentCol = Math.floor(this.left / squareSize);
+                                          
+                                        // If there's an existing dragStartPosition
+                                        if (dragStartPosition) {
+                                            // If clicking the same piece, deselect it
+                                            if (dragStartPosition.row === currentRow && dragStartPosition.col === currentCol) {
+                                                this.set({
+                                                    left: dragStartPosition.left,
+                                                    top: dragStartPosition.top
+                                                });
+                                                dragStartPosition = null;
+                                                canvas.discardActiveObject();
+                                                canvas.renderAll();
+                                                return false;
+                                            } else {
+                                                // If clicking a different piece, update dragStartPosition
+                                                dragStartPosition = {
+                                                    row: currentRow,
+                                                    col: currentCol,
+                                                    left: this.left,
+                                                    top: this.top
+                                                };
+                                            }
+                                            } else {
+                                                // If no piece was previously selected, set dragStartPosition
+                                                dragStartPosition = {
+                                                    row: currentRow,
+                                                    col: currentCol,
+                                                    left: this.left,
+                                                    top: this.top
+                                                };
+                                            }
+                                            
+                                        // Make sure the piece is selectable and movable
+                                        this.selectable = true;
+                                    });
                                 }
-                                    
-                                const currentRow = Math.floor(this.top / squareSize);
-                                const currentCol = Math.floor(this.left / squareSize);
-                                  
-                                // If there's an existing dragStartPosition
-                                if (dragStartPosition) {
-                                    // If clicking the same piece, deselect it
-                                    if (dragStartPosition.row === currentRow && dragStartPosition.col === currentCol) {
-                                        this.set({
-                                            left: dragStartPosition.left,
-                                            top: dragStartPosition.top
-                                        });
-                                        dragStartPosition = null;
-                                        canvas.discardActiveObject();
-                                        canvas.renderAll();
-                                        return false;
-                                    } else {
-                                        // If clicking a different piece, update dragStartPosition
-                                        dragStartPosition = {
-                                            row: currentRow,
-                                            col: currentCol,
-                                            left: this.left,
-                                            top: this.top
-                                        };
-                                    }
-                                    } else {
-                                        // If no piece was previously selected, set dragStartPosition
-                                        dragStartPosition = {
-                                            row: currentRow,
-                                            col: currentCol,
-                                            left: this.left,
-                                            top: this.top
-                                        };
-                                    }
-                                    
-                                // Make sure the piece is selectable and movable
-                                this.selectable = true;
-                            });
+                          }
+                    }
 
 
                             this.selectable = true
