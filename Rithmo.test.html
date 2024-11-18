@@ -119,7 +119,9 @@
         const squareSize = 50;
         let boardState = Array(8).fill().map(() => Array(8).fill(null));
         let turn = null;
-    
+        let moveCount = 1;
+        let history = [];
+        let dragStartPosition = null;
 
 
       function addPieces() {
@@ -245,17 +247,32 @@
                                   dragStartPosition = null;
                                   return false;
                               }
-                                  
+                              
                               const toRow = Math.floor(this.top / squareSize);
                               const toCol = Math.floor(this.left / squareSize);
                               const fromRow = dragStartPosition.row;
                               const fromCol = dragStartPosition.col;
-                            
+                          
                               // If the piece was dropped in the same position it started from, keep it selected
                               if (toRow === fromRow && toCol === fromCol) {
                                   return;
                               }
-                                  
+                          
+                              const destPiece = boardState[toRow][toCol];
+                              if (destPiece) {
+                                  canvas.remove(destPiece);
+                              }
+                              
+                              boardState[toRow][toCol] = this;
+                              boardState[fromRow][fromCol] = null;
+                          
+                              const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
+                              const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
+                              updateHistory(this, from, to, destPiece);
+                          
+                              turn = turn === 'white' ? 'black' : 'white';
+                              moveCount++;
+                              
                               dragStartPosition = null;
                               canvas.renderAll();
                           });
@@ -281,9 +298,10 @@
             }
         };
 
-    function updateHistory(piece, from, to, capturedPiece) {
+        
+        function updateHistory(piece, from, to, destPiece) {
             let moveTextHtml = '';
-            let moveTextSpeech = '';
+            
             const pieceNames = {
                 'c': 'Circle', 't': 'Triangle', 's': 'Square',
             };
@@ -293,29 +311,23 @@
             const pieceName = pieceNames[piece.pieceType.toLowerCase()];
             const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
             
-            const moveDescription = `${playerColor} ${pieceName} ${from} to ${to}`;
+            const moveDescription = `${playerColor} ${pieceName} from ${from} to ${to}`;
             moveTextHtml += moveDescription;
             
-            if (capturedPiece) {
-                const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
-                const captureText = ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
+            if (destPiece) {
+                const capturedPieceName = pieceNames[destPiece.pieceType.toLowerCase()];
+                const captureText = ` capturing ${destPiece.pieceColor} ${capturedPieceName}`;
                 moveTextHtml += captureText;
-                
-                if (capturedPiece.pieceType.toLowerCase() === 'k') {
-                    const checkmateText = ` - Checkmate!`;
-                    moveTextHtml += checkmateText;
-                    moveTextSpeech += checkmateText;
-                    history.push(moveTextHtml);
-                    const historyDiv = document.getElementById('history');
-                    historyDiv.innerHTML = history.join('<br>');
-                    historyDiv.scrollTop = historyDiv.scrollHeight;
-                    
-                    endGame(piece.pieceColor);
-                    return;
-                }
             }
-
-
+        
+            // Add move to history
+            history.push(moveTextHtml);
+            
+            // Update history display
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.join('<br>');
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
 
     createChessboard();
     addPieces();
