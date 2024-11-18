@@ -263,30 +263,30 @@
         }
         
         function updateHistory(piece, from, to, destPiece) {
-            let moveTextHtml = '';
-            
-            const pieceNames = {
-                'c': 'Circle', 't': 'Triangle', 's': 'Square',
-            };
-            
-            moveTextHtml += `<span class="move-number">${moveCount}.</span> `;
-            
-            const pieceName = pieceNames[piece.pieceType.toLowerCase()];
-            const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
-            
-            const moveDescription = `${playerColor} ${pieceName} ${from} to ${to}`;
-            moveTextHtml += moveDescription;
-            
-            if (destPiece) {
-                const capturedPieceName = pieceNames[destPiece.pieceType.toLowerCase()];
-                moveTextHtml += ` capturing ${destPiece.pieceColor} ${capturedPieceName}`;
-            }
-
-            history.push(moveTextHtml);
-            const historyDiv = document.getElementById('history');
-            historyDiv.innerHTML = history.join('<br>');
-            historyDiv.scrollTop = historyDiv.scrollHeight;
-        }
+          let moveTextHtml = '';
+          
+          const pieceNames = {
+              'c': 'Circle', 't': 'Triangle', 's': 'Square',
+          };
+          
+          moveTextHtml += `<span class="move-number">${moveCount}.</span> `;
+          
+          const pieceName = pieceNames[piece.pieceType.toLowerCase()];
+          const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
+          
+          const moveDescription = `${playerColor} ${pieceName} ${from} to ${to}`;
+          moveTextHtml += moveDescription;
+          
+          if (destPiece) {
+              const capturedPieceName = pieceNames[destPiece.pieceType.toLowerCase()];
+              moveTextHtml += ` capturing ${destPiece.pieceColor} ${capturedPieceName}`;
+          }
+      
+          history.push(moveTextHtml);
+          const historyDiv = document.getElementById('history');
+          historyDiv.innerHTML = history.join('<br>');
+          historyDiv.scrollTop = historyDiv.scrollHeight;
+      }
 
     createChessboard();
     addPieces();
