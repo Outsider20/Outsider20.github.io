@@ -274,7 +274,7 @@
             const moveDescription = `${playerColor} ${pieceName} ${from} to ${to}`;
             moveTextHtml += moveDescription;
             
-            if (capturedPiece) {
+            if (destPiece) {
                 const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
                 moveTextHtml += ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
             }
