@@ -204,12 +204,15 @@
                             svgPiece.on('moving', function() {
                                 if (!dragStartPosition || this.pieceColor !== turn) return;
                                 
-                                const currentRow = Math.floor(this.top / squareSize);
                                 const currentCol = Math.floor(this.left / squareSize);
+                                const currentRow = Math.floor(this.top / squareSize);
                                 
+                                // Snap to grid center
                                 this.set({
                                     left: currentCol * squareSize + squareSize / 2,
-                                    top: currentRow * squareSize + squareSize / 2
+                                    top: currentRow * squareSize + squareSize / 2,
+                                    originX: 'center',
+                                    originY: 'center'
                                 });
                             });
     
@@ -275,8 +278,8 @@
             moveTextHtml += moveDescription;
             
             if (destPiece) {
-                const capturedPieceName = pieceNames[capturedPiece.pieceType.toLowerCase()];
-                moveTextHtml += ` capturing ${capturedPiece.pieceColor} ${capturedPieceName}`;
+                const capturedPieceName = pieceNames[destPiece.pieceType.toLowerCase()];
+                moveTextHtml += ` capturing ${destPiece.pieceColor} ${capturedPieceName}`;
             }
 
             history.push(moveTextHtml);
