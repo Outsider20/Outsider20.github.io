@@ -95,13 +95,13 @@
   <script>
         const canvas = new fabric.Canvas('gameCanvas');
         const squareSize = 50;
-        let turn = 'white'; // might be black
+        let turn = 'white';
         const history = [];
         let moveCount = 1;
-        let boardState = Array(8).fill().map(() => Array(16).fill(null));
+        let boardState = Array(8).fill().map(() => Array(16).fill(null)); // Changed to 16 columns
         let dragStartPosition = null;
-
-      function createChessboard() {
+        
+        function createChessboard() {
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 16; col++) {
                     const isLightSquare = (row + col) % 2 === 0;
@@ -117,10 +117,8 @@
                 }
             }
         }
-
-
-      function addPieces() {
-            
+        
+        function addPieces() {
             const pieces = {
                 's': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
                 't': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
@@ -129,8 +127,8 @@
                 'T': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
                 'C': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
             };
-
-                const initialBoardState = [
+        
+            const initialBoardState = [
                 ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
                 ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
                 ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
@@ -139,9 +137,9 @@
                 ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
                 ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
                 ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's']
-              ];
-
-             for (let row = 0; row < 8; row++) {
+            ];
+        
+            for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 16; col++) {
                     const piece = initialBoardState[row][col];
                     if (piece !== '.') {
@@ -157,16 +155,19 @@
                                 hasBorders: false,
                                 selectable: true,
                                 pieceColor: pieceColor,
-                                pieceType: piece.toLowerCase()
+                                pieceType: piece.toLowerCase(),
+                                scaleX: 0.8,
+                                scaleY: 0.8
                             });
                             
                             boardState[row][col] = svgPiece;
                             canvas.add(svgPiece);
-
+        
                             svgPiece.on('mousedown', function(event) {
-                                this.setCoords();
-                                
-                                if (this.pieceColor !== turn) return false;
+                                if (this.pieceColor !== turn) {
+                                    event.preventDefault();
+                                    return false;
+                                }
                                 
                                 const currentRow = Math.floor(this.top / squareSize);
                                 const currentCol = Math.floor(this.left / squareSize);
@@ -178,23 +179,26 @@
                                     top: this.top
                                 };
                             });
-    
-                            svgPiece.on('moving', function() {
-                                if (!dragStartPosition || this.pieceColor !== turn) return;
+        
+                            svgPiece.on('moving', function(event) {
+                                if (!dragStartPosition || this.pieceColor !== turn) {
+                                    return false;
+                                }
                                 
-                                const currentCol = Math.floor(this.left / squareSize);
-                                const currentRow = Math.floor(this.top / squareSize);
+                                const currentCol = Math.round(this.left / squareSize);
+                                const currentRow = Math.round(this.top / squareSize);
                                 
-                                // Snap to grid center
+                                // Ensure the piece stays within the board boundaries
+                                const snapLeft = Math.max(0, Math.min(15, currentCol)) * squareSize + squareSize / 2;
+                                const snapTop = Math.max(0, Math.min(7, currentRow)) * squareSize + squareSize / 2;
+                                
                                 this.set({
-                                    left: currentCol * squareSize + squareSize / 2,
-                                    top: currentRow * squareSize + squareSize / 2,
-                                    originX: 'center',
-                                    originY: 'center'
+                                    left: snapLeft,
+                                    top: snapTop
                                 });
                             });
-    
-                            svgPiece.on('mouseup', function() {
+        
+                            svgPiece.on('mouseup', function(event) {
                                 if (!dragStartPosition || this.pieceColor !== turn) {
                                     if (dragStartPosition) {
                                         this.set({
@@ -207,27 +211,51 @@
                                     return false;
                                 }
                                 
-                                const toRow = Math.floor(this.top / squareSize);
-                                const toCol = Math.floor(this.left / squareSize);
+                                const toRow = Math.round(this.top / squareSize);
+                                const toCol = Math.round(this.left / squareSize);
                                 const fromRow = dragStartPosition.row;
                                 const fromCol = dragStartPosition.col;
-                            
-                                if (toRow === fromRow && toCol === fromCol) {
+                                
+                                // Validate move is within bounds
+                                if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 15) {
+                                    this.set({
+                                        left: dragStartPosition.left,
+                                        top: dragStartPosition.top
+                                    });
+                                    canvas.renderAll();
+                                    dragStartPosition = null;
                                     return;
                                 }
-                            
+                                
+                                if (toRow === fromRow && toCol === fromCol) {
+                                    dragStartPosition = null;
+                                    return;
+                                }
+                                
                                 const destPiece = boardState[toRow][toCol];
                                 if (destPiece) {
+                                    if (destPiece.pieceColor === this.pieceColor) {
+                                        // Can't capture own piece
+                                        this.set({
+                                            left: dragStartPosition.left,
+                                            top: dragStartPosition.top
+                                        });
+                                        canvas.renderAll();
+                                        dragStartPosition = null;
+                                        return;
+                                    }
                                     canvas.remove(destPiece);
                                 }
                                 
+                                // Update board state
                                 boardState[toRow][toCol] = this;
                                 boardState[fromRow][fromCol] = null;
-                        
+                                
+                                // Update history with correct column notation
                                 const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
                                 const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
                                 updateHistory(this, from, to, destPiece);
-                        
+                                
                                 turn = turn === 'white' ? 'black' : 'white';
                                 moveCount++;
                                 
@@ -241,33 +269,22 @@
         }
         
         function updateHistory(piece, from, to, destPiece) {
-          let moveTextHtml = '';
-          
-          const pieceNames = {
-              'c': 'Circle', 't': 'Triangle', 's': 'Square',
-          };
-          
-          moveTextHtml += `<span class="move-number">${moveCount}.</span> `;
-          
-          const pieceName = pieceNames[piece.pieceType.toLowerCase()];
-          const playerColor = piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1);
-          
-          const moveDescription = `${playerColor} ${pieceName} ${from} to ${to}`;
-          moveTextHtml += moveDescription;
-          
-          if (destPiece) {
-              const capturedPieceName = pieceNames[destPiece.pieceType.toLowerCase()];
-              moveTextHtml += ` capturing ${destPiece.pieceColor} ${capturedPieceName}`;
-          }
-      
-          history.push(moveTextHtml);
-          const historyDiv = document.getElementById('history');
-          historyDiv.innerHTML = history.join('<br>');
-          historyDiv.scrollTop = historyDiv.scrollHeight;
-      }
-
-    createChessboard();
-    addPieces();
+            const pieceNames = {
+                'c': 'Circle',
+                't': 'Triangle',
+                's': 'Square'
+            };
+            
+            const moveTextHtml = `<span class="move-number">${moveCount}.</span> ${piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1)} ${pieceNames[piece.pieceType]} ${from} to ${to}${destPiece ? ' capturing ' + destPiece.pieceColor + ' ' + pieceNames[destPiece.pieceType] : ''}`;
+            
+            history.push(moveTextHtml);
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.join('<br>');
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+        
+        createChessboard();
+        addPieces();
   </script>
 </body>
 </html>
