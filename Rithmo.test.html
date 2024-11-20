@@ -191,6 +191,8 @@
 
                             pieceObject.on('mousedown', function(opt) {
                                 if (this.pieceColor !== turn) {
+                                    this.set({ opacity: 0.5 });
+                                    canvas.renderAll();
                                     return false;
                                 }
                                 dragStartPosition = {
@@ -202,16 +204,17 @@
                             });
 
                             pieceObject.on('mouseup', function(opt) {
+
+                                this.set({ opacity: 1 });
+                                
                                 if (!dragStartPosition || this.pieceColor !== turn) {
-                                    if (dragStartPosition) {
-                                        this.set({
-                                            left: dragStartPosition.left,
-                                            top: dragStartPosition.top
-                                        });
-                                        canvas.renderAll();
-                                    }
+                                   this.set({
+                                        left: dragStartPosition.left,
+                                        top: dragStartPosition.top
+                                    });
+                                    canvas.renderAll();
                                     dragStartPosition = null;
-                                    return;
+                                    return false;
                                 }
 
                                 const toRow = Math.floor(this.top / squareSize);
