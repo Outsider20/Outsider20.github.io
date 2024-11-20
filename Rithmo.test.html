@@ -130,6 +130,16 @@
             canvas.renderAll();
         }
 
+        function updateSelectableState() {
+           canvas.forEachObject(function(obj) {
+               if (obj.pieceColor) { // Check if it's a piece
+                   obj.selectable = obj.pieceColor === turn;
+                   obj.setCoords(); // Ensure coordinates update
+               }
+           });
+           canvas.renderAll();
+        }
+
         function addPieces() {
             const pieces = {
                 's': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
@@ -167,7 +177,7 @@
                                 scaleY: 0.7,
                                 hasControls: false,
                                 hasBorders: false,
-                                selectable: true,
+                                selectable: false,
                                 pieceColor: pieceColor,
                                 pieceType: piece.toLowerCase()
                             });
@@ -271,6 +281,7 @@
                     }
                 });
             });
+            updateSelectableState();
         }
 
         function updateHistory(piece, from, to, capturedPiece) {
