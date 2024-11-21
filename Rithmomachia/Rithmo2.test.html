@@ -204,7 +204,6 @@
 
                             pieceObject.on('mousedown', function(opt) {
                                 if (this.pieceColor !== turn) {
-                                    this.set({ opacity: 0.5 });
                                     canvas.renderAll();
                                     return false;
                                 }
@@ -217,9 +216,6 @@
                             });
 
                             pieceObject.on('mouseup', function(opt) {
-
-                                this.set({ opacity: 1 });
-                                
                                 if (!dragStartPosition || this.pieceColor !== turn) {
                                    this.set({
                                         left: dragStartPosition.left,
