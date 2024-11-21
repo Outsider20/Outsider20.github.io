@@ -281,22 +281,32 @@
                     rainSystem.start();
                 }
             });
-            const music = new BABYLON.Sound("music", "Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3", scene, null, {
-                loop: true,
-                autoplay: false,
-                volume: 0.5 // Adjust volume as needed (0.0 to 1.0)
-            });
-
-            // Update or add the music toggle event listener
-            document.getElementById("toggleMusic").addEventListener("click", () => {
-                if (music.isPlaying) {
-                    music.pause();
-                    document.getElementById("toggleMusic").textContent = "Play Music";
-                } else {
-                    music.play();
-                    document.getElementById("toggleMusic").textContent = "Pause Music";
-                }
-            });
+                // Create the music with looping enabled
+                const music = new BABYLON.Sound(
+                    "backgroundMusic", 
+                    "Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3", 
+                    scene, 
+                    null, 
+                    {
+                        loop: true,      // Enable looping
+                        autoplay: false, // Don't play automatically
+                        volume: 0.5      // Set initial volume to 50%
+                    }
+                );
+            
+                // Create music toggle button functionality
+                const musicButton = document.getElementById("toggleMusic");
+                musicButton.textContent = "Play Music"; // Set initial button text
+            
+                musicButton.addEventListener("click", () => {
+                    if (music.isPlaying) {
+                        music.pause();
+                        musicButton.textContent = "Play Music";
+                    } else {
+                        music.play();
+                        musicButton.textContent = "Pause Music";
+                    }
+                });
 
             document.getElementById("timeSpeed").addEventListener("change", (e) => {
                 timeSpeed = parseFloat(e.target.value);
