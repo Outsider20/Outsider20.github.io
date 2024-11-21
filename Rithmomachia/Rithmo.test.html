@@ -146,25 +146,28 @@
                 's': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
                 't': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
                 'c': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+                'p': 'https://upload.wikimedia.org/wikipedia/commons/0/02/Chess_pdt45.svg', 
                 'S': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
                 'T': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
                 'C': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+                'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', 
             };
 
             const initialBoardState = [
-                ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
-                ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
-                ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's']
+                ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
+                ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P91', 'S169'],
+                ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
+                ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
+                ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
+                ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
+                ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
+                ['s361', 'p190', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S26']
             ];
 
             initialBoardState.forEach((row, rowIndex) => {
                 row.forEach((piece, colIndex) => {
                     if (piece !== '.') {
+                        const basePieceType = piece[0];
                         fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
                             const pieceObject = fabric.util.groupSVGElements(objects, options);
                             const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
@@ -181,6 +184,7 @@
                                 selectable: false,
                                 pieceColor: pieceColor,
                                 pieceType: piece.toLowerCase()
+                                pieceValue: piece.slice(1) // Incase I need it (Store the numerical value)
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
@@ -202,7 +206,6 @@
 
                             pieceObject.on('mousedown', function(opt) {
                                 if (this.pieceColor !== turn) {
-                                    this.set({ opacity: 0.5 });
                                     canvas.renderAll();
                                     return false;
                                 }
@@ -215,9 +218,6 @@
                             });
 
                             pieceObject.on('mouseup', function(opt) {
-
-                                this.set({ opacity: 1 });
-                                
                                 if (!dragStartPosition || this.pieceColor !== turn) {
                                    this.set({
                                         left: dragStartPosition.left,
@@ -290,13 +290,10 @@
                 'c': 'Circle',
                 't': 'Triangle',
                 's': 'Square'
+                'p': 'Pyramid'
             };
 
-            const moveText = `<span class="move-number">${moveCount}.</span> ${
-                piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1)
-            } ${pieceNames[piece.pieceType]} ${from}-${to}${
-                capturedPiece ? ` captures ${capturedPiece.pieceColor} ${pieceNames[capturedPiece.pieceType]}` : ''
-            }`;
+            const moveText = `<span class="move-number">${moveCount}.</span> ${piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1)} ${pieceNames[piece.pieceType]} (${piece.pieceValue}) ${from}-${to}${capturedPiece ? ` captures ${capturedPiece.pieceColor} ${pieceNames[capturedPiece.pieceType]} (${capturedPiece.pieceValue})` : ''}`;
 
             history.push(moveText);
             const historyDiv = document.getElementById('history');
