@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Previous head content remains the same -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,13 +11,7 @@
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
     <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
+        /* Previous styles remain the same */
         .controls {
             position: absolute;
             top: 20px;
@@ -51,10 +46,12 @@
     </style>
 </head>
 <body>
+    <!-- Previous body content remains the same -->
     <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
     <button id="downloadButton" style="position: absolute; top: 20px; left: 20px; z-index: 10;">Download Stickman GLB</button>
-    
+
     <div class="controls">
+        <!-- Previous controls remain the same -->
         <button id="toggleRain">Toggle Rain</button>
         <button id="toggleMusic">Toggle Music</button>
         <div class="time-controls">
@@ -75,26 +72,20 @@
             </label>
         </div>
     </div>
-    
+
     <script>
         var canvas = document.getElementById("renderCanvas");
         var engine = new BABYLON.Engine(canvas, true);
 
         const createScene = function () {
-            let music = null;
-            let audioContext = null;
-            let environmentalSounds = null;
-
+            // Previous scene setup remains the same
             const scene = new BABYLON.Scene(engine);
             scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0));
 
-            // Camera setup with adjusted position for better view
-            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 1.5, Math.PI / 2.2, 30, new BABYLON.Vector3(0, 0, 0));
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 1.5, Math.PI / 2.2, 15, new BABYLON.Vector3(0, 0, 0));
             camera.attachControl(canvas, true);
-            camera.lowerRadiusLimit = 10;
-            camera.upperRadiusLimit = 100;
 
-            // Lighting setup
+            // Previous lighting setup remains the same
             const ambientLight = new BABYLON.HemisphericLight("ambientLight", new BABYLON.Vector3(0, 1, 0), scene);
             ambientLight.intensity = 0.5;
 
@@ -105,142 +96,71 @@
             directionalLight.position = new BABYLON.Vector3(0, 10, 10);
             directionalLight.intensity = 0.6;
 
-            // Environment Creation Functions
-            function createTerrain(scene) {
-                const groundSize = 200;
-                const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("terrain", 
-                    "https://assets.babylonjs.com/textures/heightMap.png", {
-                    width: groundSize,
-                    height: groundSize,
-                    subdivisions: 100,
-                    minHeight: 0,
-                    maxHeight: 10,
-                    updatable: false
-                });
-
-                const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
-                groundMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grass.png");
-                groundMaterial.diffuseTexture.uScale = 20;
-                groundMaterial.diffuseTexture.vScale = 20;
-                groundMaterial.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
-                groundMaterial.bumpTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grassn.png");
-                ground.material = groundMaterial;
-
-                ground.physicsImpostor = new BABYLON.PhysicsImpostor(
-                    ground,
-                    BABYLON.PhysicsImpostor.HeightmapImpostor,
-                    { mass: 0, restitution: 0.9 },
-                    scene
-                );
-
-                return ground;
-            }
-
-            function createSkybox(scene) {
-                const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
-                const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
-                skyboxMaterial.backFaceCulling = false;
-                skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("https://assets.babylonjs.com/textures/skybox", scene);
-                skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-                skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-                skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-                skybox.material = skyboxMaterial;
-                return skybox;
-            }
-
-            function addEnvironmentalSounds(scene) {
-                const ambientSound = new BABYLON.Sound(
-                    "ambient",
-                    "Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3",
-                    scene,
-                    null,
-                    {
-                        loop: true,
-                        autoplay: true,
-                        volume: 0.3,
-                        spatialSound: true,
-                        maxDistance: 100
-                    }
-                );
-          
-            function initializeMusic() {
-                if (!audioContext) {
-                    audioContext = new AudioContext();
-                }
-
-                if (!music) {
-                    music = new BABYLON.Sound(
-                        "music",
-                        "https://Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3",
-                        scene,
-                        () => {
-                            console.log("Music loaded successfully");
-                            music.play();
-                            document.getElementById("toggleMusic").textContent = "Pause Music";
-                        },
-                        {
-                            loop: true,
-                            autoplay: false,
-                            volume: 0.5,
-                            useCustomAttenuation: true,
-                            distanceModel: BABYLON.Sound.DISTANCE_MODEL_LINEAR,
-                            maxDistance: 100,
-                            rolloffFactor: 1
-                        }
-                    );
-
-                    music.onLoadError = () => {
-                        console.error("Error loading music file");
-                        document.getElementById("toggleMusic").textContent = "Music Load Error";
-                    };
-                }
-            }
-
-            // Initialize environment
-            const terrain = createTerrain(scene);
-            const skybox = createSkybox(scene);
-            const atmosphericEffects = createAtmosphericEffects(scene);
-            environmentalSounds = addEnvironmentalSounds(scene);
-
-            // Rain System
             function createRainSystem(scene) {
                 const rainSystem = new BABYLON.ParticleSystem("rain", 100000, scene);
+
+                // Create a simple sprite texture
                 rainSystem.particleTexture = new BABYLON.Texture("https://Outsider20.github.io/BabylonWorld/texture_rain/flare.png", scene);
+
+                // Emission box configuration
                 rainSystem.emitter = new BABYLON.Vector3(0, 75, 0);
-                rainSystem.minEmitBox = new BABYLON.Vector3(-50, 0, -50);
+                rainSystem.minEmitBox = new BABYLON.Vector3(-50, 0, -50); 
                 rainSystem.maxEmitBox = new BABYLON.Vector3(50, 0, 50);
+
+                // Particle appearance
                 rainSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.2);
                 rainSystem.color2 = new BABYLON.Color4(0.7, 0.8, 1.0, 0.2);
                 rainSystem.colorDead = new BABYLON.Color4(0.7, 0.8, 1.0, 0);
+
+                // Size
                 rainSystem.minSize = 0.1;
                 rainSystem.maxSize = 0.2;
+
+                // Lifetime
                 rainSystem.minLifeTime = 3;
                 rainSystem.maxLifeTime = 4;
+
+                // Emission rate
                 rainSystem.emitRate = 5000;
+
+                // Speed and direction
                 rainSystem.direction1 = new BABYLON.Vector3(0, -1, 0);
                 rainSystem.direction2 = new BABYLON.Vector3(0, -1, 0);
                 rainSystem.minEmitPower = 1;
                 rainSystem.maxEmitPower = 2;
+
+                // Gravity
                 rainSystem.gravity = new BABYLON.Vector3(0, -60, 0);
+
+                // Blend mode
                 rainSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+
+                // Stop rotation
                 rainSystem.minAngularSpeed = 0;
                 rainSystem.maxAngularSpeed = 0;
+
+                // Update speed
                 rainSystem.updateSpeed = 0.005;
-                rainSystem.isLocal = true;
-                rainSystem.onParticleCollide = function(particle, ground) {
+
+                 rainSystem.isLocal = true;
+                  rainSystem.onParticleCollide = function(particle, ground) {
+                    // Reset the particle's position to the emitter position
                     particle.position = rainSystem.emitter;
-                };
+                  };
+
                 return rainSystem;
             }
 
-            const rainSystem = createRainSystem(scene);
-            rainSystem.stop();
+            // Create the rain system and store it in a constant
+            const rainSystem = createRainSystem();
+            rainSystem.stop(); // Start with rain off
 
-            // Time Control System
+            // Previous time control system remains the same
             let timeOfDay = 12;
             let timeSpeed = 1;
             const hoursToSeconds = 120;
 
+            // Previous time control functions remain the same
             function updateTimeDisplay() {
                 const hours = Math.floor(timeOfDay);
                 const minutes = Math.floor((timeOfDay % 1) * 60);
@@ -249,30 +169,16 @@
                 document.getElementById('timeSlider').value = timeOfDay;
             }
 
-            function updateEnvironment(timeOfDay) {
-                if (timeOfDay >= 6 && timeOfDay <= 18) {
-                    scene.fogDensity = 0.001;
-                } else {
-                    scene.fogDensity = 0.003;
-                }
-
-                scene.fogColor = scene.clearColor.clone();
-
-                const windVolume = (timeOfDay >= 20 || timeOfDay <= 4) ? 0.3 : 0.1;
-                if (environmentalSounds && environmentalSounds.windSound) {
-                    environmentalSounds.windSound.setVolume(windVolume);
-                }
-            }
-
             function updateLighting() {
                 const sunAngle = ((timeOfDay - 6) / 24) * Math.PI * 2;
-                
+
                 directionalLight.position = new BABYLON.Vector3(
                     Math.sin(sunAngle) * 10,
                     Math.max(Math.sin(sunAngle), 0.1) * 10,
                     Math.cos(sunAngle) * 10
                 );
-                
+
+                // Smooth intensity calculation
                 let intensity;
                 if (timeOfDay >= 6 && timeOfDay <= 18) {
                     intensity = Math.sin(((timeOfDay - 6) / 12) * Math.PI);
@@ -283,11 +189,11 @@
                         (30 - timeOfDay) / 12;
                     intensity = Math.max(0.1, Math.min(nightProgress, 0.3));
                 }
-                
+
                 directionalLight.intensity = intensity * 0.8;
                 ambientLight.intensity = intensity * 0.5;
                 spotLight.intensity = intensity * 0.6;
-                
+
                 // Smoother sky color transitions
                 let skyColor;
                 if (timeOfDay >= 6 && timeOfDay <= 18) {
@@ -317,7 +223,7 @@
                     // Night
                     skyColor = new BABYLON.Color3(0.05, 0.05, 0.1);
                 }
-                
+
                 // Smooth color transition by manual interpolation
                 if (!scene.clearColor || !(scene.clearColor instanceof BABYLON.Color3)) {
                     scene.clearColor = skyColor;
@@ -342,7 +248,7 @@
 
             // Rest of the scene setup (GUI, village loading, etc.) remains the same
             const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-            
+
             BABYLON.SceneLoader.ImportMeshAsync("", "https://assets.babylonjs.com/meshes/", "village.glb").then((result) => {
                 result.meshes.forEach((mesh) => {
                     if (mesh.name.startsWith("Billboard")) {
@@ -375,17 +281,32 @@
                     rainSystem.start();
                 }
             });
+                // Create the music with looping enabled
+                const music = new BABYLON.Sound(
+                    "backgroundMusic", 
+                    "Outsider20.github.io/BabylonWorld/music/just-relax-11157.mp3", 
+                    scene, 
+                    null, 
+                    {
+                        loop: true,      // Enable looping
+                        autoplay: false, // Don't play automatically
+                        volume: 0.5      // Set initial volume to 50%
+                    }
+                );
             
-            // Update or add the music toggle event listener
-            document.getElementById("toggleMusic").addEventListener("click", () => {
-                if (music.isPlaying) {
-                    music.pause();
-                    document.getElementById("toggleMusic").textContent = "Play Music";
-                } else {
-                    music.play();
-                    document.getElementById("toggleMusic").textContent = "Pause Music";
-                }
-            });
+                // Create music toggle button functionality
+                const musicButton = document.getElementById("toggleMusic");
+                musicButton.textContent = "Play Music"; // Set initial button text
+            
+                musicButton.addEventListener("click", () => {
+                    if (music.isPlaying) {
+                        music.pause();
+                        musicButton.textContent = "Play Music";
+                    } else {
+                        music.play();
+                        musicButton.textContent = "Pause Music";
+                    }
+                });
 
             document.getElementById("timeSpeed").addEventListener("change", (e) => {
                 timeSpeed = parseFloat(e.target.value);
