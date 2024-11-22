@@ -305,14 +305,6 @@
         createChessboard();
         addPieces();
 
-        // Add window resize handler
-        window.addEventListener('resize', function() {
-            canvas.setDimensions({
-                width: canvas.getElement().parentNode.clientWidth,
-                height: canvas.getElement().parentNode.clientHeight
-            });
-            canvas.renderAll();
-        });
     </script>
 </body>
 </html>
