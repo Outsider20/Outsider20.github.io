@@ -141,18 +141,69 @@
            canvas.renderAll();
         }
 
-        function addPieces() {
-            const pieces = {
-                's': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
-                't': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
-                'c': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-                'p': 'https://upload.wikimedia.org/wikipedia/commons/0/02/Chess_pdt45.svg', 
-                'S': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-                'T': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
-                'C': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-                'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', 
-            };
+        // Load board background
+        function loadBoardBackground() {
+            return new Promise((resolve, reject) => {
+                fabric.Image.fromURL('images/board.png', function(boardImage) {
+                    boardImage.set({
+                        selectable: false,
+                        evented: false,
+                        left: 0,
+                        top: 0,
+                        scaleX: CANVAS_WIDTH / boardImage.width,
+                        scaleY: CANVAS_HEIGHT / boardImage.height
+                    });
+                    canvas.insertAt(boardImage, 0);
+                    resolve(boardImage);
+                }, function(error) {
+                    console.error('Failed to load board image:', error);
+                    reject(error);
+                });
+            });
+        }
 
+        function loadPieceImage(piece) {
+            return new Promise((resolve, reject) => {
+                // Determine color and type
+                const isWhite = piece === piece.toUpperCase();
+                const baseType = piece[0].toLowerCase();
+                const value = piece.slice(1);
+                
+                // Construct dynamic image path
+                const imagePath = `images/${value}_${isWhite ? 'white' : 'black'}_${
+                    {
+                        's': 'square',
+                        't': 'triangle', 
+                        'c': 'circle', 
+                        'p': 'pyramid'
+                    }[baseType]
+                }.png`;
+        
+                fabric.Image.fromURL(imagePath, function(img) {
+                    img.set({
+                        left: 0, // Will be set during board setup
+                        top: 0,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: squareSize / img.width,
+                        scaleY: squareSize / img.height,
+                        hasControls: false,
+                        hasBorders: false,
+                        selectable: false,
+                        pieceColor: isWhite ? 'white' : 'black',
+                        pieceType: baseType,
+                        pieceValue: value
+                    });
+        
+                    resolve(img);
+                }, function(error) {
+                    console.error(`Failed to load image for piece ${piece}:`, error);
+                    reject(error);
+                });
+            });
+        }
+
+        async function addPieces() {
             const initialBoardState = [
                 ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
                 ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P91', 'S169'],
@@ -164,31 +215,22 @@
                 ['s361', 'p190', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S26']
             ];
 
-            initialBoardState.forEach((row, rowIndex) => {
-                row.forEach((piece, colIndex) => {
-                    if (piece !== '.') {
-                        const basePieceType = piece[0];
-                        fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
-                            const pieceObject = fabric.util.groupSVGElements(objects, options);
-                            const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
-                            
-                            pieceObject.set({
-                                left: colIndex * squareSize + squareSize / 2,
-                                top: rowIndex * squareSize + squareSize / 2,
-                                originX: 'center',
-                                originY: 'center',
-                                scaleX: 0.7,
-                                scaleY: 0.7,
-                                hasControls: false,
-                                hasBorders: false,
-                                selectable: false,
-                                pieceColor: pieceColor,
-                                pieceType: piece.toLowerCase()
-                                pieceValue: piece.slice(1) // Incase I need it (Store the numerical value)
-                            });
-
-                            boardState[rowIndex][colIndex] = pieceObject;
-                            canvas.add(pieceObject);
+            const pieceLoadPromises = [];
+            
+                for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
+                    for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
+                        const piece = initialBoardState[rowIndex][colIndex];
+                        
+                        if (piece !== '.') {
+                            const piecePromise = loadPieceImage(piece).then(pieceObject => {
+                                // Position the piece
+                                pieceObject.set({
+                                    left: colIndex * squareSize + squareSize / 2,
+                                    top: rowIndex * squareSize + squareSize / 2
+                                });
+            
+                                boardState[rowIndex][colIndex] = pieceObject;
+                                canvas.add(pieceObject);
 
                             pieceObject.on('moving', function(opt) {
                                 if (this.pieceColor !== turn) {
@@ -302,8 +344,17 @@
         }
 
         // Initialize the game
-        createChessboard();
-        addPieces();
+        async function initializeGame() {
+            try {
+                await loadBoardBackground();
+                await addPieces();
+            } catch (error) {
+                console.error('Game initialization failed:', error);
+            }
+        }
+
+        // Start the game when window loads
+        window.onload = initializeGame;
 
     </script>
 </body>
