@@ -88,10 +88,14 @@
     </div>
 
     <script>
+
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 400;
+        
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
-            width: 800,
-            height: 400,
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
             selection: false,
             renderOnAddRemove: true
         });
