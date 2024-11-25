@@ -154,6 +154,7 @@
                         evented: false,
                         left: 0,
                         top: 0,
+                        angle: 90;
                         scaleX: CANVAS_WIDTH / boardImage.width,
                         scaleY: CANVAS_HEIGHT / boardImage.height
                     });
@@ -174,14 +175,21 @@
                 const value = piece.slice(1);
                 
                 // Construct dynamic image path
-                const imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
-                    {
-                        's': 'Square',
-                        't': 'Triangle', 
-                        'c': 'Circle', 
-                        'p': 'Pyramid'
-                    }[baseType]
-                }.png`;
+                let imagePath;
+                if (baseType === 'p') {
+                    // Direct path for 'p' pieces if they have a unique naming convention
+                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}.png`;
+                } else {
+                    // Original dynamic path generation
+                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
+                        {
+                            's': 'Square',
+                            't': 'Triangle', 
+                            'c': 'Circle', 
+                            'p': 'Pyramid'
+                        }[baseType]
+                    }.png`;
+                }
         
                 fabric.Image.fromURL(imagePath, function(img) {
                     img.set({
