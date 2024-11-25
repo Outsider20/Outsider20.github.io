@@ -155,8 +155,8 @@
                         left: 0,
                         top: 0,
                         //angle: 90,
-                        scaleX: (CANVAS_WIDTH+125) / boardImage.width,
-                        scaleY: (CANVAS_HEIGHT+80) / boardImage.height
+                        scaleX: CANVAS_WIDTH / boardImage.width,
+                        scaleY: CANVAS_HEIGHT / boardImage.height
                     });
                     canvas.insertAt(boardImage, 0);
                     resolve(boardImage);
