@@ -89,13 +89,13 @@
 
     <script>
 
-    const CANVAS_WIDTH = 800;
-    const CANVAS_HEIGHT = 400;
+    const CANVAS_WIDTH = 800+125;
+    const CANVAS_HEIGHT = 400+80;
         
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
-            width: CANVAS_WIDTH+150,
-            height: CANVAS_HEIGHT+80,
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
             selection: false,
             renderOnAddRemove: true
         });
@@ -155,8 +155,8 @@
                         left: 0,
                         top: 0,
                         //angle: 90,
-                        scaleX: CANVAS_WIDTH / boardImage.width,
-                        scaleY: CANVAS_HEIGHT / boardImage.height
+                        scaleX: (CANVAS_WIDTH+125) / boardImage.width,
+                        scaleY: (CANVAS_HEIGHT+80) / boardImage.height
                     });
                     canvas.insertAt(boardImage, 0);
                     resolve(boardImage);
