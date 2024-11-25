@@ -88,10 +88,14 @@
     </div>
 
     <script>
+
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 400;
+        
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
-            width: 800,
-            height: 400,
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
             selection: false,
             renderOnAddRemove: true
         });
@@ -144,12 +148,13 @@
         // Load board background
         function loadBoardBackground() {
             return new Promise((resolve, reject) => {
-                fabric.Image.fromURL('images/board.png', function(boardImage) {
+                fabric.Image.fromURL('Images/Board and pieces/Board.png', function(boardImage) {
                     boardImage.set({
                         selectable: false,
                         evented: false,
                         left: 0,
                         top: 0,
+                        //angle: 90,
                         scaleX: CANVAS_WIDTH / boardImage.width,
                         scaleY: CANVAS_HEIGHT / boardImage.height
                     });
@@ -170,14 +175,21 @@
                 const value = piece.slice(1);
                 
                 // Construct dynamic image path
-                const imagePath = `images/${value}_${isWhite ? 'white' : 'black'}_${
-                    {
-                        's': 'square',
-                        't': 'triangle', 
-                        'c': 'circle', 
-                        'p': 'pyramid'
-                    }[baseType]
-                }.png`;
+                let imagePath;
+                if (baseType === 'p') {
+                    // Direct path for 'p' pieces if they have a unique naming convention
+                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}.png`;
+                } else {
+                    // Original dynamic path generation
+                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
+                        {
+                            's': 'Square',
+                            't': 'Triangle', 
+                            'c': 'Circle', 
+                            'p': 'Pyramid'
+                        }[baseType]
+                    }.png`;
+                }
         
                 fabric.Image.fromURL(imagePath, function(img) {
                     img.set({
@@ -212,7 +224,7 @@
                 ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
                 ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
                 ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
-                ['s361', 'p190', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S26']
+                ['s361', 'p190', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
             ];
 
             const pieceLoadPromises = [];
@@ -322,8 +334,8 @@
                             });
                         });
                     }
-                });
-            });
+                };
+            };
             updateSelectableState();
         }
 
@@ -331,7 +343,7 @@
             const pieceNames = {
                 'c': 'Circle',
                 't': 'Triangle',
-                's': 'Square'
+                's': 'Square',
                 'p': 'Pyramid'
             };
 
