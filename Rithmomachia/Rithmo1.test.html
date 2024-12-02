@@ -454,9 +454,9 @@
                 if (line.trim()) {
                     const movePairs = line.split(' ');
                     movePairs.forEach(pair => {
-                        if (pair.toUpperCase().includes('x')) {
+                        if (pair.toUpperCase().includes('X')) {
                             // Handle capture move (e.g., A4B7xC12)
-                            const parts = pair.split('x'); // Split by 'x'
+                            const parts = pair.toUpperCase().split('X'); // Split by 'x'
                             const move = parts[0]; // First part is the move (e.g., A4B7)
                             const capture = parts[1]; // Second part is the captured piece's position (e.g., C12)
 
