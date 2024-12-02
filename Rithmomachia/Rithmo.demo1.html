@@ -273,8 +273,8 @@
             // Define grid size
             const rows = 8;
             const cols = 16;
-            const squareWidth = 863 / cols;
-            const squareHeight = 440 / rows;
+            const squareWidth = CANVAS_WIDTH / cols;
+            const squareHeight = CANVAS_HEIGHT / rows;
 
             // Convert from algebraic notation to row and column
             function positionToIndices(position) {
@@ -322,51 +322,70 @@
         function enableSnapping() {
             const rows = 8;
             const cols = 16;
-
+        
             // Calculate grid square size
-            const squareWidth = 863 / cols;
-            const squareHeight = 440 / rows;
-
+            const squareWidth = CANVAS_WIDTH / cols;
+            const squareHeight = CANVAS_HEIGHT / rows;
+        
             // Snap based on the closest grid center
             canvas.on('object:moving', function (event) {
                 const obj = event.target;
-
+        
                 // Get the current mouse position
                 const pointer = canvas.getPointer(event.e);
-
+        
                 // Variables to track the closest grid square
                 let closestLeft = 0;
                 let closestTop = 0;
                 let smallestDistance = Infinity;
-
+        
                 let oldRowIndex = -1;
                 let oldColIndex = -1;
-
+        
                 // Iterate over all grid square centers to find the closest
                 for (let row = 0; row < rows; row++) {
                     for (let col = 0; col < cols; col++) {
                         // Calculate the center of the current grid square
-                        const gridCenterX = col * squareWidth + 125 / 4 + squareWidth / 2;
-                        const gridCenterY = row * squareHeight + 20 + squareHeight / 2;
-
+                        const gridCenterX = col * squareWidth + squareWidth / 2;
+                        const gridCenterY = row * squareHeight + squareHeight / 2;
+        
                         // Calculate the distance between the mouse pointer and the grid center
                         const distance = Math.sqrt(
                             Math.pow(pointer.x - gridCenterX, 2) + Math.pow(pointer.y - gridCenterY, 2)
                         );
-
+        
                         // Update the closest grid square if this one is closer
                         if (distance < smallestDistance) {
                             smallestDistance = distance;
                             closestLeft = gridCenterX;
                             closestTop = gridCenterY;
-
+        
                             // Track the closest grid position (row, col)
                             oldRowIndex = row;
                             oldColIndex = col;
                         }
                     }
                 }
-
+        
+                // Update the piece's position to the closest grid square center
+                obj.left = closestLeft;
+                obj.top = closestTop;
+        
+                // Remove the piece from the old position in boardState
+                if (oldRowIndex !== -1 && oldColIndex !== -1) {
+                    boardState[oldRowIndex][oldColIndex] = null; // Clear the old position
+                }
+        
+                // Calculate new row and column indices based on the snapped position
+                const newRowIndex = Math.floor((closestTop - CANVAS_HEIGHT / rows / 2) / squareHeight);
+                const newColIndex = Math.floor((closestLeft - CANVAS_WIDTH / cols / 2) / squareWidth);
+        
+                // Add the piece to the new position in boardState
+                if (newRowIndex >= 0 && newRowIndex < rows && newColIndex >= 0 && newColIndex < cols) {
+                    boardState[newRowIndex][newColIndex] = obj; // Place the piece at the new position
+                }
+            });
+        }
                 // Update the piece's position to the closest grid square center
                 obj.left = closestLeft;
                 obj.top = closestTop;
