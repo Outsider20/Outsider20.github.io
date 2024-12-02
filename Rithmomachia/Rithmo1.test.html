@@ -182,7 +182,7 @@
                         const piece = initialBoardState[rowIndex][colIndex];
                         
                         if (piece !== '.') {
-                            const piecePromise = loadPieceImage(piece).then(pieceObject => {
+                            const piecePromise = await loadPieceImage(piece)
                                 // Position the piece
                                 pieceObject.set({
                                     left: colIndex * height + height / 2 + 125/4,
@@ -191,11 +191,10 @@
             
                                 boardState[rowIndex][colIndex] = pieceObject;
                                 canvas.add(pieceObject);
-                        });
+                        };
                     }
                 };
             };
-        }
 
         function createGrid() {
             const rows = 8; // Number of rows
@@ -444,16 +443,19 @@
 
         // Initialize the game
         async function initializeGame() {
-            try {
-                createGrid();
-                enableSnapping();
-                await loadBoardBackground();
-                await addPieces();
-                
-                canvas.renderAll();
-            } catch (error) {
-                console.error('Game initialization failed:', error);
-            }
+          try {
+            // Load the background image first
+            await loadBoardBackground();
+        
+            // Create the grid and add the pieces
+            createGrid();
+            await addPieces();
+        
+            enableSnapping();
+            canvas.renderAll();
+          } catch (error) {
+            console.error('Game initialization failed:', error);
+          }
         }
 
         
