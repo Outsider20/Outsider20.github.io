@@ -119,24 +119,17 @@
                 // Determine color and type
                 const isWhite = piece === piece.toUpperCase();
                 const baseType = piece[0].toLowerCase();
-                const value = piece.slice(1);
+                let value = piece.slice(1);
                 
                 // Construct dynamic image path
                 let imagePath;
-                if (baseType === 'p') {
-                    // Direct path for 'p' pieces if they have a unique naming convention
-                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}.png`;
-                } else {
-                    // Original dynamic path generation
-                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
-                        {
-                            's': 'Square',
-                            't': 'Triangle', 
-                            'c': 'Circle', 
-                            'p': 'Pyramid'
-                        }[baseType]
-                    }.png`;
-                }
+                imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
+                    {
+                        's': 'Square',
+                        't': 'Triangle', 
+                        'c': 'Circle', 
+                    }[baseType]
+                }.png`
         
                 fabric.Image.fromURL(imagePath, function(img) {
                     img.set({
@@ -165,13 +158,13 @@
         async function addPieces() {
             const initialBoardState = [
                 ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
-                ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', '.', 'S169'],
+                ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P', 'S169'],
                 ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
                 ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
                 ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
                 ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
                 ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
-                ['s361', '.', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
+                ['s361', 'p', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
 
             ];
 
@@ -179,22 +172,61 @@
 
             for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
                 for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
-                    const piece = initialBoardState[rowIndex][colIndex];
+                    let piece = initialBoardState[rowIndex][colIndex];
 
                     if (piece !== '.') {
-                        const piecePromise = loadPieceImage(piece).then(pieceObject => {
-                            // Position the piece
-                            pieceObject.set({
-                                left: colIndex * height + height / 2 + 125 / 4,
-                                top: rowIndex * length + length / 2 + 20
-                            });
+                        if (piece == 'p') {
+                            let pyramidObject = [];
+                            pyramid = ['c1', 'c4', 't9', 't16', 's25', 's36']
+                            pyramid.forEach(i => {
+                                const piecePromise = loadPieceImage(i).then(pieceObject => {
+                                    // Position the piece
+                                    pieceObject.set({
+                                        left: colIndex * height + height / 2 + 125 / 4,
+                                        top: rowIndex * length + length / 2 + 20
+                                    });
 
-                            boardState[rowIndex][colIndex] = pieceObject;
-                            canvas.add(pieceObject);
-                        });
+                                    pyramidObject.push(pieceObject);
+                                    canvas.add(pieceObject);
+                                });
+                                pieceLoadPromises.push(piecePromise);
+                            });
+                            boardState[rowIndex][colIndex] = pyramidObject;
+                        } else if (piece == 'P') {
+                            let pyramidObject = [];
+                            pyramid = ['C16', 'T25', 'T36', 'S49', 'S64']
+                            pyramid.forEach(i => {
+                                const piecePromise = loadPieceImage(i).then(pieceObject => {
+                                    // Position the piece
+                                    pieceObject.set({
+                                        left: colIndex * height + height / 2 + 125 / 4,
+                                        top: rowIndex * length + length / 2 + 20
+                                    });
+
+                                    pyramidObject.push(pieceObject);
+                                    canvas.add(pieceObject);
+                                });
+                                pieceLoadPromises.push(piecePromise);
+                            });
+                            boardState[rowIndex][colIndex] = pyramidObject;
+                        } else {
+                            const piecePromise = loadPieceImage(piece).then(pieceObject => {
+                                // Position the piece
+                                pieceObject.set({
+                                    left: colIndex * height + height / 2 + 125 / 4,
+                                    top: rowIndex * length + length / 2 + 20
+                                });
+
+                                boardState[rowIndex][colIndex] = pieceObject;
+                                canvas.add(pieceObject);
+                            });
+                            pieceLoadPromises.push(piecePromise);
+                        }
                     }
                 };
             };
+            // Wait for all pieces to be loaded before resolving
+            await Promise.all(pieceLoadPromises);
         }
 
         function createGrid() {
@@ -252,7 +284,6 @@
         }
 
         function movePiece(from, to) {
-            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Alphabetical row labels
 
             // Define grid size
             const rows = 8;
@@ -275,6 +306,11 @@
 
             // Find the piece at the 'from' position (e.g., C4)
             const piece = boardState[fromIndices.c][fromIndices.r];
+
+            if (boardState[toIndices.c][toIndices.r]) {
+                console.error(`Invalid move: Target position ${to} is already occupied.`);
+                return;
+            }
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
@@ -300,6 +336,33 @@
 
             } else {
                 console.log(`No piece found at ${from}`);
+            }
+        }
+
+        function capturePiece(position) {
+            if (isNaN(position.charAt(0))) {
+                const c = position.charCodeAt(0) - 65;
+                const r = Number(position.slice(1)) - 1;
+            } else if (isNaN(position.charAt(1))) {
+                const c = position.charCodeAt(1) - 65;
+                const r = Number(position.slice(2)) - 1;
+            }
+
+            // Find the piece at the specified position
+            const piece = boardState[c][r];
+
+            if (piece) {
+                piece.animate({ opacity: 0 }, {
+                    duration: 300,
+                    onChange: canvas.renderAll.bind(canvas),
+                    onComplete: () => {
+                        canvas.remove(piece);
+                        boardState[c][r] = null; // Clear the captured position
+                        console.log(`Piece at ${position} captured.`);
+                    }
+                });
+            } else {
+                console.log(`No piece found at ${position} to capture.`);
             }
         }
 
@@ -373,74 +436,133 @@
 
 
         function handleFileUpload(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const fileContent = e.target.result;
-                        const moves = parseMoves(fileContent);
-                        executeMoves(moves);
-                    };
-                    reader.readAsText(file);
-                }
-                resetGame()
+            const file = event.target.files[0];
+            if (file) {
+                resetGame();
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fileContent = e.target.result;
+                    const moves = parseMoves(fileContent);
+                    executeMoves(moves);
+                };
+                reader.readAsText(file);
+            }
         }
 
         function parseMoves(fileContent) {
-            // Split the file content by lines and process each line
+            // Split the file content by lines
             const lines = fileContent.split('\n');
             const moves = [];
 
-            // For each line, split it into pairs of moves
             lines.forEach(line => {
-                const positions = line.split(' ');
-                if (positions.length === 4) {
-                    moves.push([positions[0], positions[1], positions[2], positions[3]]);
+                if (line.trim()) {
+                    const movePairs = line.split(' ');
+                    movePairs.forEach(pair => {
+                        if (pair.includes('x')) {
+                            // Handle capture move (e.g., A4B7xC12)
+                            const parts = pair.split('x'); // Split by 'x'
+                            const move = parts[0]; // First part is the move (e.g., A4B7)
+                            const capture = parts[1]; // Second part is the captured piece's position (e.g., C12)
+
+                            const [from, to] = splitMove(move); // Split the move into from and to
+                            moves.push([from, to, capture]); // Include capture info in the array
+                        } else if (pair.length >= 4) {
+                            // Handle regular move (e.g., A4B7)
+                            const [from, to] = splitMove(pair);
+                            moves.push([from, to]); // Regular move without capture
+                        }
+                    });
                 }
             });
-
+            console.log(moves)
             return moves;
         }
 
+        // Helper function to split a move into from and to
+        function splitMove(move) {
+            let from;
+            let to;
+            if (isNaN(move.charAt(2))) {
+                const half = Math.floor(move.length / 2);
+                from = move.slice(0, half);
+                to = move.slice(half);
+            }
+            else {
+                from = move.slice(0, 3); 
+                to = move.slice(3); 
+                console.log(from, to)
+            }
+            return [from, to]; // Return the from and to positions
+        }
+
+
         function executeMoves(moves) {
             let index = 0;
-            const interval = setInterval(() => {
+
+            function playNextMove() {
                 if (index < moves.length) {
-                    const [from1, to1, from2, to2] = moves[index];
-                    
-                    // Move first piece (e.g., C4 to C5)
-                    movePiece(from1, to1);
-                    
-                    // Wait for the first move to finish before making the second move
+                    const move = moves[index];
+                    const from = move[0]; // Starting position
+                    const to = move[1];   // Target position
+                    const capture = move[2] || null; // Optional capture position
+
+                    // Perform the move
+                    movePiece(from, to);
+
+                    // Handle capture if specified
+                    if (capture) {
+                        setTimeout(() => {
+                            capturePiece(capture);
+                        }, 500); // Slight delay to align with move animation
+                    }
+
+                    // Wait before moving to the next move
                     setTimeout(() => {
-                        movePiece(from2, to2);
                         index++;
-                    }, 1000); // Adjust time for the first move to complete (in ms)
-
+                        playNextMove(); // Proceed to the next move
+                    }, 1000); // Adjust delay as needed
                 } else {
-                    clearInterval(interval); // Stop the loop when all moves are done
-
-                    // Once all moves are completed, reset the game board
-                    resetGame();
-                    if(isLooping){
-                        executeMoves(moves);
-                    }else{isLooping=true}
+                    resetGame().then(() => {
+                        if (isLooping) {
+                            executeMoves(moves);
+                        } else { isLooping = true }
+                    }).catch(error => {
+                        console.error('Error resetting the game:', error);
+                    });
                 }
-            }, 2000); // Delay between moves
+            }
+
+            playNextMove(); // Start executing moves
         }
 
 
         function resetGame() {
-            // Clear all objects on the canvas
-            canvas.clear();
-            
-            // Reset the board state to empty
-            boardState = Array(8).fill().map(() => Array(16).fill(null));
+            return new Promise((resolve, reject) => {
+                // Clear all objects on the canvas
+                canvas.clear();
 
-            loadBoardBackground(); // Reload the Board
-            createGrid(); // Recreate the grid
-            addPieces();  // Re-add the initial pieces
+                // Reset the board state to empty
+                boardState = Array(8).fill().map(() => Array(16).fill(null));
+
+                // Reload the board background
+                loadBoardBackground().then(() => {
+                    // Create the grid and add the pieces
+                    createGrid();
+
+                    // Wait for addPieces to finish loading the pieces before resolving the promise
+                    addPieces().then(() => {
+                        resolve(); // Resolve the promise once all pieces are loaded
+                    }).catch((error) => {
+                        console.error('Error loading pieces:', error);
+                        reject(error); // Reject if there's an error loading pieces
+                    });
+                }).catch((error) => {
+                    console.error('Error loading board background:', error);
+                    reject(error); // Reject if there's an error loading the board background
+                });
+            });
         }
+
 
         // Initialize the game
         async function initializeGame() {
