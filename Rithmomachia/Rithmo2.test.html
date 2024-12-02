@@ -12,13 +12,15 @@
         body {
             margin: 0;
             padding: 20px;
+            background-color: #533c3c;
         }
 
         .container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 40px;
+            gap: 20px;
+            height: 91vh;
             max-width: 1200px;
             margin: 0 auto;
         }
@@ -27,8 +29,13 @@
             font-family: 'Playfair Display', serif;
             font-size: 48px;
             font-weight: 600;
+            width: 350px;
+            padding: 15px;
+            margin: 0px;
             text-align: center;
-            color: #333;
+            background-color: #620404;
+            border-radius: 100px;
+            color: #000000;
         }
 
         .game-container {
@@ -40,8 +47,8 @@
 
         .game-board {
             position: relative;
-            width: 800px;
-            height: 400px;
+            width: fit-content;
+            max-width: 925px;
             border: 2px solid #333;
             border-radius: 8px;
             overflow: hidden;
@@ -52,267 +59,341 @@
             top: 0;
             left: 0;
         }
-
-        .history-container {
-            width: 300px;
-        }
-
-        #history {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-            line-height: 1.4;
-            background: #fff;
-        }
-
-        .move-number {
-            font-weight: bold;
-            color: #666;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="title">Rithmomachia</h1>
         <div class="game-container">
+            <input type="file" id="moveFileInput" accept=".txt" />
+            <button id="endLoopButton">Reset</button>
+        </div>
+        <div class="game-container">
             <div class="game-board">
                 <canvas id="gameCanvas"></canvas>
-            </div>
-            <div class="history-container">
-                <h2>Move History</h2>
-                <div id="history"></div>
             </div>
         </div>
     </div>
 
     <script>
+
+    const CANVAS_WIDTH = 925;
+    const CANVAS_HEIGHT = 480;
+        
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
-            width: 800,
-            height: 400,
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
             selection: false,
             renderOnAddRemove: true
         });
         
-        const squareSize = 50;
-        let turn = 'white';
-        const history = [];
-        let moveCount = 1;
+        const length = 785/16;
+        const height = 340/8;
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
-        let dragStartPosition = null;
+        let isLooping = true;
 
-        // Prevent default behavior for mouse events on canvas
-        canvas.on('mouse:down', function(opt) {
-            const evt = opt.e;
-            if (evt.preventDefault) {
-                evt.preventDefault();
-            }
-        });
-
-        function createChessboard() {
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 16; col++) {
-                    const isLightSquare = (row + col) % 2 === 0;
-                    const square = new fabric.Rect({
-                        left: col * squareSize,
-                        top: row * squareSize,
-                        width: squareSize,
-                        height: squareSize,
-                        fill: isLightSquare ? '#eee' : '#8B4513',
+        // Load board background
+        function loadBoardBackground() {
+            return new Promise((resolve, reject) => {
+                fabric.Image.fromURL('Images/Rithmomachia Art/Board.png', function(boardImage) {
+                    boardImage.set({
                         selectable: false,
-                        evented: false
+                        evented: false,
+                        left: 0,
+                        top: 0,
+                        scaleX: CANVAS_WIDTH / boardImage.width,
+                        scaleY: CANVAS_HEIGHT / boardImage.height
                     });
-                    canvas.add(square);
-                }
-            }
-            updateSelectableState();
-            canvas.renderAll();
-        }
-
-        function updateSelectableState() {
-           canvas.forEachObject(function(obj) {
-               if (obj.pieceColor) { // Check if it's a piece
-                   obj.selectable = obj.pieceColor === turn;
-                   obj.setCoords(); // Ensure coordinates update
-               }
-           });
-           canvas.renderAll();
-        }
-
-        function addPieces() {
-            const pieces = {
-                's': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
-                't': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
-                'c': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-                'p': 'https://upload.wikimedia.org/wikipedia/commons/0/02/Chess_pdt45.svg', 
-                'S': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-                'T': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
-                'C': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-                'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', 
-            };
-
-            const initialBoardState = [
-                ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
-                ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 'p', 's'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['.', 'T', 'C', 'C', '.', '.', '.', '.', '.', '.', '.', '.', 'c', 'c', 't', '.'],
-                ['S', 'S', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's'],
-                ['S', 'P', 'T', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't', 's', 's']
-            ];
-
-            initialBoardState.forEach((row, rowIndex) => {
-                row.forEach((piece, colIndex) => {
-                    if (piece !== '.') {
-                        fabric.loadSVGFromURL(pieces[piece], function(objects, options) {
-                            const pieceObject = fabric.util.groupSVGElements(objects, options);
-                            const pieceColor = piece === piece.toUpperCase() ? 'white' : 'black';
-                            
-                            pieceObject.set({
-                                left: colIndex * squareSize + squareSize / 2,
-                                top: rowIndex * squareSize + squareSize / 2,
-                                originX: 'center',
-                                originY: 'center',
-                                scaleX: 0.7,
-                                scaleY: 0.7,
-                                hasControls: false,
-                                hasBorders: false,
-                                selectable: false,
-                                pieceColor: pieceColor,
-                                pieceType: piece.toLowerCase()
-                            });
-
-                            boardState[rowIndex][colIndex] = pieceObject;
-                            canvas.add(pieceObject);
-
-                            pieceObject.on('moving', function(opt) {
-                                if (this.pieceColor !== turn) {
-                                    return false;
-                                }
-                            
-                                // Snap to grid during movement
-                                const gridX = Math.round(this.left / squareSize) * squareSize + squareSize / 2;
-                                const gridY = Math.round(this.top / squareSize) * squareSize + squareSize / 2;
-                                this.set({
-                                    left: gridX,
-                                    top: gridY
-                                });
-                            });
-
-                            pieceObject.on('mousedown', function(opt) {
-                                if (this.pieceColor !== turn) {
-                                    canvas.renderAll();
-                                    return false;
-                                }
-                                dragStartPosition = {
-                                    row: Math.floor(this.top / squareSize),
-                                    col: Math.floor(this.left / squareSize),
-                                    left: this.left,
-                                    top: this.top
-                                };
-                            });
-
-                            pieceObject.on('mouseup', function(opt) {
-                                if (!dragStartPosition || this.pieceColor !== turn) {
-                                   this.set({
-                                        left: dragStartPosition.left,
-                                        top: dragStartPosition.top
-                                    });
-                                    canvas.renderAll();
-                                    dragStartPosition = null;
-                                    return false;
-                                }
-
-                                const toRow = Math.floor(this.top / squareSize);
-                                const toCol = Math.floor(this.left / squareSize);
-                                const fromRow = dragStartPosition.row;
-                                const fromCol = dragStartPosition.col;
-
-                                // Validate move
-                                if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 15 ||
-                                    (toRow === fromRow && toCol === fromCol)) {
-                                    this.set({
-                                        left: dragStartPosition.left,
-                                        top: dragStartPosition.top
-                                    });
-                                    canvas.renderAll();
-                                    dragStartPosition = null;
-                                    return;
-                                }
-
-                                // Handle capture
-                                const destPiece = boardState[toRow][toCol];
-                                if (destPiece) {
-                                    if (destPiece.pieceColor === this.pieceColor) {
-                                        this.set({
-                                            left: dragStartPosition.left,
-                                            top: dragStartPosition.top
-                                        });
-                                        canvas.renderAll();
-                                        dragStartPosition = null;
-                                        return;
-                                    }
-                                    canvas.remove(destPiece);
-                                }
-
-                                // Update board state
-                                boardState[fromRow][fromCol] = null;
-                                boardState[toRow][toCol] = this;
-                                
-                                // Update history with correct coordinates
-                                const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
-                                const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
-                                updateHistory(this, from, to, destPiece);
-                                
-                                // Change turn and ensure piece is centered
-                                turn = turn === 'white' ? 'black' : 'white';
-                                this.set({
-                                    left: toCol * squareSize + squareSize / 2,
-                                    top: toRow * squareSize + squareSize / 2
-                                });
-                                dragStartPosition = null;
-                                canvas.renderAll();
-                            });
-                        });
-                    }
+                    canvas.insertAt(boardImage, 0);
+                    resolve(boardImage);
+                }, function(error) {
+                    console.error('Failed to load board image:', error);
+                    reject(error);
                 });
             });
-            updateSelectableState();
         }
 
-        function updateHistory(piece, from, to, capturedPiece) {
-            const pieceNames = {
-                'c': 'Circle',
-                't': 'Triangle',
-                's': 'Square'
+        function loadPieceImage(piece) {
+            return new Promise((resolve, reject) => {
+                // Determine color and type
+                const isWhite = piece === piece.toUpperCase();
+                const baseType = piece[0].toLowerCase();
+                const value = piece.slice(1);
+                
+                // Construct dynamic image path
+                let imagePath;
+                if (baseType === 'p') {
+                    // Direct path for 'p' pieces if they have a unique naming convention
+                    imagePath = `Images/Rithmomachia Art/${value}_${isWhite ? 'White' : 'Black'}.png`;
+                } else {
+                    // Original dynamic path generation
+                    imagePath = `Images/Rithmomachia Art/${value}_${isWhite ? 'White' : 'Black'}_${
+                        {
+                            's': 'Square',
+                            't': 'Triangle', 
+                            'c': 'Circle', 
+                            'p': 'Pyramid'
+                        }[baseType]
+                    }.png`;
+                }
+        
+                fabric.Image.fromURL(imagePath, function(img) {
+                    img.set({
+                        left: 0, // Will be set during board setup
+                        top: 0,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: 45 / img.width,
+                        scaleY: 45 / img.height,
+                        hasControls: false,
+                        hasBorders: false,
+                        selectable: false,
+                        pieceColor: isWhite ? 'white' : 'black',
+                        pieceType: baseType,
+                        pieceValue: value
+                    });
+        
+                    resolve(img);
+                }, function(error) {
+                    console.error(`Failed to load image for piece ${piece}:`, error);
+                    reject(error);
+                });
+            });
+        }
+
+        async function addPieces() {
+            const initialBoardState = [
+            ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
+            ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', '.', 'S169'],
+            ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
+            ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
+            ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
+            ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
+            ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
+            ['s361', '.', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
+
+            ];
+
+            const pieceLoadPromises = [];
+            
+                for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
+                    for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
+                        const piece = initialBoardState[rowIndex][colIndex];
+                        
+                        if (piece !== '.') {
+                            const piecePromise = loadPieceImage(piece).then(pieceObject => {
+                                // Position the piece
+                                pieceObject.set({
+                                    left: colIndex * height + height / 2 + 71,
+                                    top: rowIndex * length + length / 2 + 70
+                                });
+            
+                                boardState[rowIndex][colIndex] = pieceObject;
+                                canvas.add(pieceObject);
+                        });
+                    }
+                };
             };
+        }
 
-            const moveText = `<span class="move-number">${moveCount}.</span> ${
-                piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1)
-            } ${pieceNames[piece.pieceType]} ${from}-${to}${
-                capturedPiece ? ` captures ${capturedPiece.pieceColor} ${pieceNames[capturedPiece.pieceType]}` : ''
-            }`;
+        function createGrid() {
+            const rows = 8; // Number of rows
+            const cols = 16; // Number of columns
+            const squareWidth = 785 / cols; // Calculate the width of each grid square
+            const squareHeight = 340 / rows; // Calculate the height of each grid square
+            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
 
-            history.push(moveText);
-            const historyDiv = document.getElementById('history');
-            historyDiv.innerHTML = history.join('<br>');
-            historyDiv.scrollTop = historyDiv.scrollHeight;
+            // Create the grid
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    // Calculate the center position for the current square
+                    const centerX = col * squareWidth + squareWidth / 2 + 71; // Adjust left margin
+                    const centerY = row * squareHeight + squareHeight / 2 + 70; // Adjust top margin
+
+                    // Create the grid square
+                    const rect = new fabric.Rect({
+                        left: centerX - squareWidth / 2, // Adjust to start drawing from the top-left corner
+                        top: centerY - squareHeight / 2, // Adjust to start drawing from the top-left corner
+                        width: squareWidth,
+                        height: squareHeight,
+                        fill: 'transparent',
+                        stroke: 'black',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false // Prevent grid squares from being interactive
+                    });
+
+                    // Add the grid square to the canvas
+                    canvas.add(rect);
+
+                    // Determine the algebraic notation
+                    const file = alphabet[row]; // Row determines column label (A-H)
+                    const rank = col + 1; // Column determines row number (1-16)
+
+                    const algebraicNotation = `${file}${rank}`;
+
+                    // Create the text for algebraic notation
+                    const text = new fabric.Text(algebraicNotation, {
+                        left: centerX, // Centered in the square horizontally
+                        top: centerY, // Centered in the square vertically
+                        fontSize: 12,
+                        fontFamily: 'Arial',
+                        fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
+                        originX: 'center', // Align text by its center
+                        originY: 'center', // Align text by its center
+                        selectable: false, // Text should not be interactive
+                        evented: false // Text should not trigger events
+                    });
+
+                    // Add the text to the canvas
+                    canvas.add(text);
+                }
+            }
+        }
+
+        function movePiece(from, to) {
+            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Alphabetical row labels
+
+            // Define grid size
+            const rows = 8;
+            const cols = 16;
+            const squareWidth = 863 / cols;
+            const squareHeight = 440 / rows;
+
+            // Convert from algebraic notation to row and column
+            function positionToIndices(position) {
+                let c = position.charCodeAt(0) - 65;
+                let r = Number(position[1]) - 1;
+                if (position[2]) {
+                    r = Number(position[1] + position[2]) - 1;
+                }
+                return { c, r };
+            }
+
+            const fromIndices = positionToIndices(from);
+            const toIndices = positionToIndices(to);
+
+            // Find the piece at the 'from' position (e.g., C4)
+            const piece = boardState[fromIndices.c][fromIndices.r];
+
+            if (piece) {
+                // Calculate the target position (center of the square in grid)
+                const targetCenterX = toIndices.r * squareWidth + 125 / 4 + squareWidth / 2;
+                const targetCenterY = toIndices.c * squareHeight + 20 + squareHeight / 2;
+
+                // Animate the piece to the target position with smooth transition
+                piece.animate({
+                    left: targetCenterX,
+                    top: targetCenterY
+                }, {
+                    duration: 500, // Duration of the animation in milliseconds (adjust as needed)
+                    onChange: canvas.renderAll.bind(canvas), // Re-render the canvas during animation
+                    easing: fabric.util.ease.easeInOutQuad, // Smooth easing function
+                    onComplete: function() {
+                        // After the animation completes, update the piece position in the boardState
+                        boardState[fromIndices.c][fromIndices.r] = null;
+                        boardState[toIndices.c][toIndices.r] = piece;
+
+                        console.log(`Piece moved from ${from} to ${to}`);
+                    }
+                });
+
+            } else {
+                console.log(`No piece found at ${from}`);
+            }
+        }
+
+        function handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const fileContent = e.target.result;
+                        const moves = parseMoves(fileContent);
+                        executeMoves(moves);
+                    };
+                    reader.readAsText(file);
+                }
+                resetGame()
+        }
+
+        function parseMoves(fileContent) {
+            // Split the file content by lines and process each line
+            const lines = fileContent.split('\n');
+            const moves = [];
+
+            // For each line, split it into pairs of moves
+            lines.forEach(line => {
+                const positions = line.split(' ');
+                if (positions.length === 4) {
+                    moves.push([positions[0], positions[1], positions[2], positions[3]]);
+                }
+            });
+
+            return moves;
+        }
+
+        function executeMoves(moves) {
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < moves.length) {
+                    const [from1, to1, from2, to2] = moves[index];
+                    
+                    // Move first piece (e.g., C4 to C5)
+                    movePiece(from1, to1);
+                    
+                    // Wait for the first move to finish before making the second move
+                    setTimeout(() => {
+                        movePiece(from2, to2);
+                        index++;
+                    }, 1000); // Adjust time for the first move to complete (in ms)
+
+                } else {
+                    clearInterval(interval); // Stop the loop when all moves are done
+
+                    // Once all moves are completed, reset the game board
+                    resetGame();
+                    if(isLooping){
+                        executeMoves(moves);
+                    }else{isLooping=true}
+                }
+            }, 2000); // Delay between moves
+        }
+
+
+        function resetGame() {
+            // Clear all objects on the canvas
+            canvas.clear();
+            
+            // Reset the board state to empty
+            boardState = Array(8).fill().map(() => Array(16).fill(null));
+
+            loadBoardBackground(); // Reload the Board
+            createGrid(); // Recreate the grid
+            addPieces();  // Re-add the initial pieces
         }
 
         // Initialize the game
-        createChessboard();
-        addPieces();
+        async function initializeGame() {
+            try {
+                createGrid();
+                await loadBoardBackground();
+                await addPieces();
+                
+                canvas.renderAll();
+            } catch (error) {
+                console.error('Game initialization failed:', error);
+            }
+        }
 
-        // Add window resize handler
-        window.addEventListener('resize', function() {
-            canvas.setDimensions({
-                width: canvas.getElement().parentNode.clientWidth,
-                height: canvas.getElement().parentNode.clientHeight
-            });
-            canvas.renderAll();
+        
+
+        // Start the game when window loads
+        window.onload = initializeGame;
+        document.getElementById('moveFileInput').addEventListener('change', handleFileUpload);
+        document.getElementById('endLoopButton').addEventListener('click', () => {
+            isLooping = false;
         });
     </script>
 </body>

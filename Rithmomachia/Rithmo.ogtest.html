@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rithmomachia</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 600;
+            text-align: center;
+            color: #333;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .game-board {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .history-container {
+            width: 300px;
+        }
+
+        #history {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            background: #fff;
+        }
+
+        .move-number {
+            font-weight: bold;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Rithmomachia</h1>
+        <div class="game-container">
+            <div class="game-board">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+            <div class="history-container">
+                <h2>Move History</h2>
+                <div id="history"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+    const CANVAS_WIDTH = 800+125;
+    const CANVAS_HEIGHT = 400+80;
+
+        // Initialize canvas with proper dimensions
+        const canvas = new fabric.Canvas('gameCanvas', {
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
+            selection: false,
+            renderOnAddRemove: true
+        });
+
+        const squareSize = 50;
+        let turn = 'white';
+        const history = [];
+        let moveCount = 1;
+        let boardState = Array(8).fill().map(() => Array(16).fill(null));
+        let dragStartPosition = null;
+
+        // Prevent default behavior for mouse events on canvas
+        canvas.on('mouse:down', function(opt) {
+            const evt = opt.e;
+            if (evt.preventDefault) {
+                evt.preventDefault();
+            }
+        });
+
+        function createChessboard() {
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 16; col++) {
+                    const isLightSquare = (row + col) % 2 === 0;
+                    const square = new fabric.Rect({
+                        left: col * squareSize,
+                        top: row * squareSize,
+                        width: squareSize,
+                        height: squareSize,
+                        fill: isLightSquare ? '#eee' : '#8B4513',
+                        selectable: false,
+                        evented: false
+                    });
+                    canvas.add(square);
+                }
+            }
+            updateSelectableState();
+            canvas.renderAll();
+        }
+
+        function updateSelectableState() {
+           canvas.forEachObject(function(obj) {
+               if (obj.pieceColor) { // Check if it's a piece
+                   obj.selectable = obj.pieceColor === turn;
+                   obj.setCoords(); // Ensure coordinates update
+               }
+           });
+           canvas.renderAll();
+        }
+
+        // Load board background
+        function loadBoardBackground() {
+            return new Promise((resolve, reject) => {
+                fabric.Image.fromURL('Images/Board and pieces/Board-Rotate.png', function(boardImage) {
+                    boardImage.set({
+                        selectable: false,
+                        evented: false,
+                        left: 0,
+                        top: 0,
+                        //angle: 90,
+                        scaleX: CANVAS_WIDTH / boardImage.width,
+                        scaleY: CANVAS_HEIGHT / boardImage.height
+                    });
+                    canvas.insertAt(boardImage, 0);
+                    resolve(boardImage);
+                }, function(error) {
+                    console.error('Failed to load board image:', error);
+                    reject(error);
+                });
+            });
+        }
+
+        function loadPieceImage(piece) {
+            return new Promise((resolve, reject) => {
+                // Determine color and type
+                const isWhite = piece === piece.toUpperCase();
+                const baseType = piece[0].toLowerCase();
+                const value = piece.slice(1);
+
+                // Construct dynamic image path
+                let imagePath;
+                if (baseType === 'p') {
+                    // Direct path for 'p' pieces if they have a unique naming convention
+                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}.png`;
+                } else {
+                    // Original dynamic path generation
+                    imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
+                        {
+                            's': 'Square',
+                            't': 'Triangle',
+                            'c': 'Circle',
+                            'p': 'Pyramid'
+                        }[baseType]
+                    }.png`;
+                }
+
+                fabric.Image.fromURL(imagePath, function(img) {
+                    img.set({
+                        left: 0, // Will be set during board setup
+                        top: 0,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: squareSize / img.width,
+                        scaleY: squareSize / img.height,
+                        hasControls: false,
+                        hasBorders: false,
+                        selectable: false,
+                        pieceColor: isWhite ? 'white' : 'black',
+                        pieceType: baseType,
+                        pieceValue: value
+                    });
+
+                    resolve(img);
+                }, function(error) {
+                    console.error(`Failed to load image for piece ${piece}:`, error);
+                    reject(error);
+                });
+            });
+        }
+
+        async function addPieces() {
+            const initialBoardState = [
+                ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
+                ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P91', 'S169'],
+                ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
+                ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
+                ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
+                ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
+                ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
+                ['s361', 'p190', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
+            ];
+
+            const pieceLoadPromises = [];
+
+                for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
+                    for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
+                        const piece = initialBoardState[rowIndex][colIndex];
+
+                        if (piece !== '.') {
+                            const piecePromise = loadPieceImage(piece).then(pieceObject => {
+                                // Position the piece
+                                pieceObject.set({
+                                    left: colIndex * squareSize + squareSize / 2,
+                                    top: rowIndex * squareSize + squareSize / 2
+                                });
+
+                                boardState[rowIndex][colIndex] = pieceObject;
+                                canvas.add(pieceObject);
+
+                            pieceObject.on('moving', function(opt) {
+                                if (this.pieceColor !== turn) {
+                                    return false;
+                                }
+
+                                // Snap to grid during movement
+                                const gridX = Math.round(this.left / squareSize) * squareSize + squareSize / 2;
+                                const gridY = Math.round(this.top / squareSize) * squareSize + squareSize / 2;
+                                this.set({
+                                    left: gridX,
+                                    top: gridY
+                                });
+                            });
+
+                            pieceObject.on('mousedown', function(opt) {
+                                if (this.pieceColor !== turn) {
+                                    canvas.renderAll();
+                                    return false;
+                                }
+                                dragStartPosition = {
+                                    row: Math.floor(this.top / squareSize),
+                                    col: Math.floor(this.left / squareSize),
+                                    left: this.left,
+                                    top: this.top
+                                };
+                            });
+
+                            pieceObject.on('mouseup', function(opt) {
+                                if (!dragStartPosition || this.pieceColor !== turn) {
+                                   this.set({
+                                        left: dragStartPosition.left,
+                                        top: dragStartPosition.top
+                                    });
+                                    canvas.renderAll();
+                                    dragStartPosition = null;
+                                    return false;
+                                }
+
+                                const toRow = Math.floor(this.top / squareSize);
+                                const toCol = Math.floor(this.left / squareSize);
+                                const fromRow = dragStartPosition.row;
+                                const fromCol = dragStartPosition.col;
+
+                                // Validate move
+                                if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 15 ||
+                                    (toRow === fromRow && toCol === fromCol)) {
+                                    this.set({
+                                        left: dragStartPosition.left,
+                                        top: dragStartPosition.top
+                                    });
+                                    canvas.renderAll();
+                                    dragStartPosition = null;
+                                    return;
+                                }
+
+                                // Handle capture
+                                const destPiece = boardState[toRow][toCol];
+                                if (destPiece) {
+                                    if (destPiece.pieceColor === this.pieceColor) {
+                                        this.set({
+                                            left: dragStartPosition.left,
+                                            top: dragStartPosition.top
+                                        });
+                                        canvas.renderAll();
+                                        dragStartPosition = null;
+                                        return;
+                                    }
+                                    canvas.remove(destPiece);
+                                }
+
+                                // Update board state
+                                boardState[fromRow][fromCol] = null;
+                                boardState[toRow][toCol] = this;
+
+                                // Update history with correct coordinates
+                                const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
+                                const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
+                                updateHistory(this, from, to, destPiece);
+
+                                // Change turn and ensure piece is centered
+                                turn = turn === 'white' ? 'black' : 'white';
+                                this.set({
+                                    left: toCol * squareSize + squareSize / 2,
+                                    top: toRow * squareSize + squareSize / 2
+                                });
+                                dragStartPosition = null;
+                                canvas.renderAll();
+                            });
+                        });
+                    }
+                };
+            };
+            updateSelectableState();
+        }
+
+        function updateHistory(piece, from, to, capturedPiece) {
+            const pieceNames = {
+                'c': 'Circle',
+                't': 'Triangle',
+                's': 'Square',
+                'p': 'Pyramid'
+            };
+
+            const moveText = `<span class="move-number">${moveCount}.</span> ${piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1)} ${pieceNames[piece.pieceType]} (${piece.pieceValue}) ${from}-${to}${capturedPiece ? ` captures ${capturedPiece.pieceColor} ${pieceNames[capturedPiece.pieceType]} (${capturedPiece.pieceValue})` : ''}`;
+
+            history.push(moveText);
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.join('<br>');
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+
+        // Initialize the game
+        async function initializeGame() {
+            try {
+                await loadBoardBackground();
+                await addPieces();
+            } catch (error) {
+                console.error('Game initialization failed:', error);
+            }
+        }
+
+        // Start the game when window loads
+        window.onload = initializeGame;
+
+    </script>
+</body>
+</html>
