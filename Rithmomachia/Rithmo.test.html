@@ -103,13 +103,21 @@
         function loadBoardBackground() {
             return new Promise((resolve, reject) => {
                 fabric.Image.fromURL('Images/Board and pieces/Board-Rotate.png', function(boardImage) {
+                    // Extract the width and height of the background image
+                    const boardImageWidth = boardImage.width;
+                    const boardImageHeight = boardImage.height;
+                
+                    // Adjust the scaling of the background image to fit the canvas
+                    const scaleX = CANVAS_WIDTH / boardImageWidth;
+                    const scaleY = CANVAS_HEIGHT / boardImageHeight;
+                    
                     boardImage.set({
                         selectable: false,
                         evented: false,
                         left: 0,
                         top: 0,
-                        scaleX: CANVAS_WIDTH / boardImage.width,
-                        scaleY: CANVAS_HEIGHT / boardImage.height
+                        scaleX: scaleX,
+                        scaleY: scaleY,
                     });
                     canvas.insertAt(boardImage, 0);
                     resolve(boardImage);
@@ -206,16 +214,16 @@
         function createGrid() {
             const rows = 8; // Number of rows
             const cols = 16; // Number of columns
-            const squareWidth = 863 / cols; // Calculate the width of each grid square
-            const squareHeight = 440 / rows; // Calculate the height of each grid square
+            const squareWidth = CANVAS_WIDTH / cols; // Calculate the width of each grid square
+            const squareHeight = CANVAS_HEIGHT / rows; // Calculate the height of each grid square
             const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
 
             // Create the grid
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     // Calculate the center position for the current square
-                    const centerX = col * squareWidth + squareWidth / 2 + 125 / 4; // Adjust left margin
-                    const centerY = row * squareHeight + squareHeight / 2 + 20; // Adjust top margin
+                    const centerX = col * squareWidth + squareWidth / 2; // Adjust left margin
+                    const centerY = row * squareHeight + squareHeight / 2; // Adjust top margin
 
                     // Create the grid square
                     const rect = new fabric.Rect({
