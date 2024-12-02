@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
-
+        
         body {
             margin: 0;
             padding: 20px;
@@ -77,9 +77,16 @@
 
     <script>
 
-    const CANVAS_WIDTH = 800+125;
-    const CANVAS_HEIGHT = 400+80;
-
+        const GRID_WIDTH = 896
+        const GRID_HEIGHT = GRID_WIDTH/2
+        const OFFSET_HEIGHT = 35 
+        const OFFSET_WIDTH = 80
+        const CANVAS_WIDTH = GRID_WIDTH + OFFSET_WIDTH;
+        const CANVAS_HEIGHT = GRID_HEIGHT + OFFSET_HEIGHT;
+        const SQ = GRID_HEIGHT/8
+        const HORIZ_BUFF = SQ / 2 + OFFSET_HEIGHT/2
+        const VERT_BUFF = SQ / 2 + OFFSET_WIDTH/2
+        
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
             width: CANVAS_WIDTH,
@@ -88,10 +95,7 @@
             renderOnAddRemove: true
         });
 
-        const squareSize = 50;
-        let turn = 'white';
-        const history = [];
-        let moveCount = 1;
+        // Initialize Boardstate and the looping mechanism
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
 
@@ -130,7 +134,7 @@
                 const isWhite = piece === piece.toUpperCase();
                 const baseType = piece[0].toLowerCase();
                 const value = piece.slice(1);
-
+                
                 // Construct dynamic image path
                 let imagePath;
                 if (baseType === 'p') {
@@ -141,13 +145,13 @@
                     imagePath = `Images/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
                         {
                             's': 'Square',
-                            't': 'Triangle',
-                            'c': 'Circle',
+                            't': 'Triangle', 
+                            'c': 'Circle', 
                             'p': 'Pyramid'
                         }[baseType]
                     }.png`;
                 }
-
+        
                 fabric.Image.fromURL(imagePath, function(img) {
                     img.set({
                         left: 0, // Will be set during board setup
@@ -163,7 +167,7 @@
                         pieceType: baseType,
                         pieceValue: value
                     });
-
+        
                     resolve(img);
                 }, function(error) {
                     console.error(`Failed to load image for piece ${piece}:`, error);
@@ -186,11 +190,11 @@
             ];
 
             const pieceLoadPromises = [];
-
+            
                 for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
                     for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
                         const piece = initialBoardState[rowIndex][colIndex];
-
+                        
                         if (piece !== '.') {
                             const piecePromise = loadPieceImage(piece).then(pieceObject => {
                                 // Position the piece
@@ -198,23 +202,62 @@
                                     left: colIndex * SQ + HORIZ_BUFF,
                                     top: rowIndex * SQ + HORIZ_BUFF
                                 });
-
+            
                                 boardState[rowIndex][colIndex] = pieceObject;
                                 canvas.add(pieceObject);
+                        });
+                    }
+                };
+            };
+        }
 
-                            pieceObject.on('moving', function(opt) {
-                                if (this.pieceColor !== turn) {
-                                    return false;
-                                }
+        function createGrid() {
+            const rows = 8; // Number of rows
+            const cols = 16; // Number of columns
+            const squareWidth = CANVAS_WIDTH / cols; // Calculate the width of each grid square
+            const squareHeight = CANVAS_HEIGHT / rows; // Calculate the height of each grid square
+            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
 
-                                // Snap to grid during movement
-                                const gridX = Math.round(this.left / squareSize) * squareSize + squareSize / 2;
-                                const gridY = Math.round(this.top / squareSize) * squareSize + squareSize / 2;
-                                this.set({
-                                    left: gridX,
-                                    top: gridY
-                                });
-                            });
+            // Create the grid
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    // Calculate the center position for the current square
+                    const centerX = col * squareWidth + squareWidth / 2; // Adjust left margin
+                    const centerY = row * squareHeight + squareHeight / 2; // Adjust top margin
+
+                    // Create the grid square
+                    const rect = new fabric.Rect({
+                        left: centerX - squareWidth / 2, // Adjust to start drawing from the top-left corner
+                        top: centerY - squareHeight / 2, // Adjust to start drawing from the top-left corner
+                        width: squareWidth,
+                        height: squareHeight,
+                        fill: 'transparent',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false // Prevent grid squares from being interactive
+                    });
+
+                    // Add the grid square to the canvas
+                    canvas.add(rect);
+
+                    // Determine the algebraic notation
+                    const file = alphabet[row]; // Row determines column label (A-H)
+                    const rank = col + 1; // Column determines row number (1-16)
+
+                    const algebraicNotation = `${file}${rank}`;
+
+                    // Create the text for algebraic notation
+                    const text = new fabric.Text(algebraicNotation, {
+                        left: centerX, // Centered in the square horizontally
+                        top: centerY, // Centered in the square vertically
+                        fontSize: 12,
+                        fontFamily: 'Arial',
+                        fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
+                        originX: 'center', // Align text by its center
+                        originY: 'center', // Align text by its center
+                        selectable: false, // Text should not be interactive
+                        evented: false // Text should not trigger events
+                    });
 
                     // Add the text to the canvas
                     canvas.add(text);
@@ -322,29 +365,82 @@
                     }
                 }
 
-                                // Update board state
-                                boardState[fromRow][fromCol] = null;
-                                boardState[toRow][toCol] = this;
+                // Update the piece's position to the closest grid square center
+                obj.left = closestLeft;
+                obj.top = closestTop;
 
-                                // Update history with correct coordinates
-                                const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
-                                const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
-                                updateHistory(this, from, to, destPiece);
+                // Remove the piece from the old position in boardState
+                if (oldRowIndex !== -1 && oldColIndex !== -1) {
+                    boardState[oldRowIndex][oldColIndex] = null; // Clear the old position
+                }
 
-                                // Change turn and ensure piece is centered
-                                turn = turn === 'white' ? 'black' : 'white';
-                                this.set({
-                                    left: toCol * squareSize + squareSize / 2,
-                                    top: toRow * squareSize + squareSize / 2
-                                });
-                                dragStartPosition = null;
-                                canvas.renderAll();
-                            });
-                        });
-                    }
-                };
-            };
-            updateSelectableState();
+                // Calculate new row and column indices based on the snapped position
+                const newRowIndex = Math.floor((closestTop - 20) / squareHeight);
+                const newColIndex = Math.floor((closestLeft - 125 / 4) / squareWidth);
+
+                // Add the piece to the new position in boardState
+                if (newRowIndex >= 0 && newRowIndex < rows && newColIndex >= 0 && newColIndex < cols) {
+                    boardState[newRowIndex][newColIndex] = obj; // Place the piece at the new position
+                }
+            });
+        }
+
+
+        function handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const fileContent = e.target.result;
+                        const moves = parseMoves(fileContent);
+                        executeMoves(moves);
+                    };
+                    reader.readAsText(file);
+                }
+                resetGame()
+        }
+
+        function parseMoves(fileContent) {
+            // Split the file content by lines and process each line
+            const lines = fileContent.split('\n');
+            const moves = [];
+
+            // For each line, split it into pairs of moves
+            lines.forEach(line => {
+                const positions = line.split(' ');
+                if (positions.length === 4) {
+                    moves.push([positions[0], positions[1], positions[2], positions[3]]);
+                }
+            });
+
+            return moves;
+        }
+
+        function executeMoves(moves) {
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < moves.length) {
+                    const [from1, to1, from2, to2] = moves[index];
+                    
+                    // Move first piece (e.g., C4 to C5)
+                    movePiece(from1, to1);
+                    
+                    // Wait for the first move to finish before making the second move
+                    setTimeout(() => {
+                        movePiece(from2, to2);
+                        index++;
+                    }, 1000); // Adjust time for the first move to complete (in ms)
+
+                } else {
+                    clearInterval(interval); // Stop the loop when all moves are done
+
+                    // Once all moves are completed, reset the game board
+                    resetGame();
+                    if(isLooping){
+                        executeMoves(moves);
+                    }else{isLooping=true}
+                }
+            }, 2000); // Delay between moves
         }
 
 
