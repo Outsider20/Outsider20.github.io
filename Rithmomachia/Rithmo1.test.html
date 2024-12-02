@@ -164,37 +164,38 @@
 
         async function addPieces() {
             const initialBoardState = [
-            ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
-            ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', '.', 'S169'],
-            ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
-            ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
-            ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
-            ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
-            ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
-            ['s361', '.', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
+                ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
+                ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', '.', 'S169'],
+                ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
+                ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
+                ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
+                ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
+                ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
+                ['s361', '.', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
 
             ];
 
             const pieceLoadPromises = [];
-            
-                for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
-                    for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
-                        const piece = initialBoardState[rowIndex][colIndex];
-                        
-                        if (piece !== '.') {
-                            const piecePromise = await loadPieceImage(piece)
-                                // Position the piece
-                                pieceObject.set({
-                                    left: colIndex * height + height / 2 + 125/4,
-                                    top: rowIndex * length + length / 2 + 20
-                                });
-            
-                                boardState[rowIndex][colIndex] = pieceObject;
-                                canvas.add(pieceObject);
-                        };
+
+            for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
+                for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
+                    const piece = initialBoardState[rowIndex][colIndex];
+
+                    if (piece !== '.') {
+                        const piecePromise = loadPieceImage(piece).then(pieceObject => {
+                            // Position the piece
+                            pieceObject.set({
+                                left: colIndex * height + height / 2 + 125 / 4,
+                                top: rowIndex * length + length / 2 + 20
+                            });
+
+                            boardState[rowIndex][colIndex] = pieceObject;
+                            canvas.add(pieceObject);
+                        });
                     }
                 };
             };
+        }
 
         function createGrid() {
             const rows = 8; // Number of rows
