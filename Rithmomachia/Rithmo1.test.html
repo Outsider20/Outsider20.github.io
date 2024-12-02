@@ -340,13 +340,9 @@
         }
 
         function capturePiece(position) {
-            if (isNaN(position.charAt(0))) {
-                const c = position.charCodeAt(0) - 65;
-                const r = Number(position.slice(1)) - 1;
-            } else if (isNaN(position.charAt(1))) {
-                const c = position.charCodeAt(1) - 65;
-                const r = Number(position.slice(2)) - 1;
-            }
+
+            const c = position.charCodeAt(0) - 65;
+            const r = Number(position.slice(1)) - 1;
 
             // Find the piece at the specified position
             const piece = boardState[c][r];
