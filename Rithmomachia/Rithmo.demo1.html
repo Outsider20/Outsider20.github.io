@@ -192,23 +192,26 @@
             const pieceLoadPromises = [];
             
                 for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
-                    for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
-                        const piece = initialBoardState[rowIndex][colIndex];
-                        
-                        if (piece !== '.') {
-                            const piecePromise = await loadPieceImage(piece)
-                                // Position the piece
-                                pieceObject.set({
-                                    left: colIndex * SQ + CANVAS_WIDTH / 2 - GRID_WIDTH / 2 + HORIZ_BUFF,
-                                    top: rowIndex * SQ + CANVAS_HEIGHT / 2 - GRID_HEIGHT / 2 + VERT_BUFF
-                                });
-            
-                                boardState[rowIndex][colIndex] = pieceObject;
-                                canvas.add(pieceObject);
-                        };
-                    }
-                };
-            };
+                        for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
+                            const piece = initialBoardState[rowIndex][colIndex];
+                            
+                            if (piece !== '.') {
+                                try {
+                                    const pieceObject = await loadPieceImage(piece);
+                                    pieceObject.set({
+                                        left: colIndex * SQ + CANVAS_WIDTH / 2 - GRID_WIDTH / 2 + HORIZ_BUFF,
+                                        top: rowIndex * SQ + CANVAS_HEIGHT / 2 - GRID_HEIGHT / 2 + VERT_BUFF
+                                    });
+                
+                                    boardState[rowIndex][colIndex] = pieceObject;
+                                    canvas.add(pieceObject);
+                                } catch (error) {
+                                    console.error(`Failed to load piece ${piece}:`, error);
+                                }
+                            }
+                        }
+                }
+        }
 
         function createGrid() {
             const rows = 8; // Number of rows
