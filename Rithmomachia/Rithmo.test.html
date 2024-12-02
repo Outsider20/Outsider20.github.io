@@ -12,13 +12,15 @@
         body {
             margin: 0;
             padding: 20px;
+            background-color: #533c3c;
         }
 
         .container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 40px;
+            gap: 20px;
+            height: 91vh;
             max-width: 1200px;
             margin: 0 auto;
         }
@@ -27,8 +29,13 @@
             font-family: 'Playfair Display', serif;
             font-size: 48px;
             font-weight: 600;
+            width: 350px;
+            padding: 15px;
+            margin: 0px;
             text-align: center;
-            color: #333;
+            background-color: #620404;
+            border-radius: 100px;
+            color: #000000;
         }
 
         .game-container {
@@ -40,8 +47,8 @@
 
         .game-board {
             position: relative;
-            width: 800px;
-            height: 400px;
+            width: fit-content;
+            max-width: 1000px;
             border: 2px solid #333;
             border-radius: 8px;
             overflow: hidden;
@@ -52,45 +59,33 @@
             top: 0;
             left: 0;
         }
-
-        .history-container {
-            width: 300px;
-        }
-
-        #history {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-            line-height: 1.4;
-            background: #fff;
-        }
-
-        .move-number {
-            font-weight: bold;
-            color: #666;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="title">Rithmomachia</h1>
         <div class="game-container">
+            <input type="file" id="moveFileInput" accept=".txt" />
+            <button id="endLoopButton">Reset</button>
+        </div>
+        <div class="game-container">
             <div class="game-board">
                 <canvas id="gameCanvas"></canvas>
-            </div>
-            <div class="history-container">
-                <h2>Move History</h2>
-                <div id="history"></div>
             </div>
         </div>
     </div>
 
     <script>
 
-    const CANVAS_WIDTH = 800+125;
-    const CANVAS_HEIGHT = 400+80;
+        const GRID_WIDTH = 896
+        const GRID_HEIGHT = GRID_WIDTH/2
+        const OFFSET_HEIGHT = 35 
+        const OFFSET_WIDTH = 80
+        const CANVAS_WIDTH = GRID_WIDTH + OFFSET_WIDTH;
+        const CANVAS_HEIGHT = GRID_HEIGHT + OFFSET_HEIGHT;
+        const SQ = GRID_HEIGHT/8
+        const HORIZ_BUFF = SQ / 2 + OFFSET_HEIGHT/2
+        const VERT_BUFF = SQ / 2 + OFFSET_WIDTH/2
         
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
@@ -99,51 +94,10 @@
             selection: false,
             renderOnAddRemove: true
         });
-        
-        const squareSize = 50;
-        let turn = 'white';
-        const history = [];
-        let moveCount = 1;
+
+        // Initialize Boardstate and the looping mechanism
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
-        let dragStartPosition = null;
-
-        // Prevent default behavior for mouse events on canvas
-        canvas.on('mouse:down', function(opt) {
-            const evt = opt.e;
-            if (evt.preventDefault) {
-                evt.preventDefault();
-            }
-        });
-
-        function createChessboard() {
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 16; col++) {
-                    const isLightSquare = (row + col) % 2 === 0;
-                    const square = new fabric.Rect({
-                        left: col * squareSize,
-                        top: row * squareSize,
-                        width: squareSize,
-                        height: squareSize,
-                        fill: isLightSquare ? '#eee' : '#8B4513',
-                        selectable: false,
-                        evented: false
-                    });
-                    canvas.add(square);
-                }
-            }
-            updateSelectableState();
-            canvas.renderAll();
-        }
-
-        function updateSelectableState() {
-           canvas.forEachObject(function(obj) {
-               if (obj.pieceColor) { // Check if it's a piece
-                   obj.selectable = obj.pieceColor === turn;
-                   obj.setCoords(); // Ensure coordinates update
-               }
-           });
-           canvas.renderAll();
-        }
+        let isLooping = true;
 
         // Load board background
         function loadBoardBackground() {
@@ -154,7 +108,6 @@
                         evented: false,
                         left: 0,
                         top: 0,
-                        //angle: 90,
                         scaleX: CANVAS_WIDTH / boardImage.width,
                         scaleY: CANVAS_HEIGHT / boardImage.height
                     });
@@ -197,11 +150,11 @@
                         top: 0,
                         originX: 'center',
                         originY: 'center',
-                        scaleX: squareSize / img.width,
-                        scaleY: squareSize / img.height,
+                        scaleX: SQ*0.8 / img.width,
+                        scaleY: SQ*0.8 / img.height,
                         hasControls: false,
                         hasBorders: false,
-                        selectable: false,
+                        selectable: true,
                         pieceColor: isWhite ? 'white' : 'black',
                         pieceType: baseType,
                         pieceValue: value
@@ -217,14 +170,15 @@
 
         async function addPieces() {
             const initialBoardState = [
-                ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
-                ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P91', 'S169'],
-                ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
-                ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
-                ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
-                ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
-                ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
-                ['s361', 'p190', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
+            ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
+            ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', '.', 'S169'],
+            ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
+            ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
+            ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
+            ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
+            ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
+            ['s361', '.', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
+
             ];
 
             const pieceLoadPromises = [];
@@ -237,137 +191,285 @@
                             const piecePromise = loadPieceImage(piece).then(pieceObject => {
                                 // Position the piece
                                 pieceObject.set({
-                                    left: colIndex * squareSize + squareSize / 2,
-                                    top: rowIndex * squareSize + squareSize / 2
+                                    left: colIndex * SQ + HORIZ_BUFF,
+                                    top: rowIndex * SQ + HORIZ_BUFF
                                 });
             
                                 boardState[rowIndex][colIndex] = pieceObject;
                                 canvas.add(pieceObject);
-
-                            pieceObject.on('moving', function(opt) {
-                                if (this.pieceColor !== turn) {
-                                    return false;
-                                }
-                            
-                                // Snap to grid during movement
-                                const gridX = Math.round(this.left / squareSize) * squareSize + squareSize / 2;
-                                const gridY = Math.round(this.top / squareSize) * squareSize + squareSize / 2;
-                                this.set({
-                                    left: gridX,
-                                    top: gridY
-                                });
-                            });
-
-                            pieceObject.on('mousedown', function(opt) {
-                                if (this.pieceColor !== turn) {
-                                    canvas.renderAll();
-                                    return false;
-                                }
-                                dragStartPosition = {
-                                    row: Math.floor(this.top / squareSize),
-                                    col: Math.floor(this.left / squareSize),
-                                    left: this.left,
-                                    top: this.top
-                                };
-                            });
-
-                            pieceObject.on('mouseup', function(opt) {
-                                if (!dragStartPosition || this.pieceColor !== turn) {
-                                   this.set({
-                                        left: dragStartPosition.left,
-                                        top: dragStartPosition.top
-                                    });
-                                    canvas.renderAll();
-                                    dragStartPosition = null;
-                                    return false;
-                                }
-
-                                const toRow = Math.floor(this.top / squareSize);
-                                const toCol = Math.floor(this.left / squareSize);
-                                const fromRow = dragStartPosition.row;
-                                const fromCol = dragStartPosition.col;
-
-                                // Validate move
-                                if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 15 ||
-                                    (toRow === fromRow && toCol === fromCol)) {
-                                    this.set({
-                                        left: dragStartPosition.left,
-                                        top: dragStartPosition.top
-                                    });
-                                    canvas.renderAll();
-                                    dragStartPosition = null;
-                                    return;
-                                }
-
-                                // Handle capture
-                                const destPiece = boardState[toRow][toCol];
-                                if (destPiece) {
-                                    if (destPiece.pieceColor === this.pieceColor) {
-                                        this.set({
-                                            left: dragStartPosition.left,
-                                            top: dragStartPosition.top
-                                        });
-                                        canvas.renderAll();
-                                        dragStartPosition = null;
-                                        return;
-                                    }
-                                    canvas.remove(destPiece);
-                                }
-
-                                // Update board state
-                                boardState[fromRow][fromCol] = null;
-                                boardState[toRow][toCol] = this;
-                                
-                                // Update history with correct coordinates
-                                const from = String.fromCharCode(fromCol + 'a'.charCodeAt(0)) + (8 - fromRow);
-                                const to = String.fromCharCode(toCol + 'a'.charCodeAt(0)) + (8 - toRow);
-                                updateHistory(this, from, to, destPiece);
-                                
-                                // Change turn and ensure piece is centered
-                                turn = turn === 'white' ? 'black' : 'white';
-                                this.set({
-                                    left: toCol * squareSize + squareSize / 2,
-                                    top: toRow * squareSize + squareSize / 2
-                                });
-                                dragStartPosition = null;
-                                canvas.renderAll();
-                            });
                         });
                     }
                 };
             };
-            updateSelectableState();
         }
 
-        function updateHistory(piece, from, to, capturedPiece) {
-            const pieceNames = {
-                'c': 'Circle',
-                't': 'Triangle',
-                's': 'Square',
-                'p': 'Pyramid'
-            };
+        function createGrid() {
+            const rows = 8; // Number of rows
+            const cols = 16; // Number of columns
+            const squareWidth = 863 / cols; // Calculate the width of each grid square
+            const squareHeight = 440 / rows; // Calculate the height of each grid square
+            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
 
-            const moveText = `<span class="move-number">${moveCount}.</span> ${piece.pieceColor.charAt(0).toUpperCase() + piece.pieceColor.slice(1)} ${pieceNames[piece.pieceType]} (${piece.pieceValue}) ${from}-${to}${capturedPiece ? ` captures ${capturedPiece.pieceColor} ${pieceNames[capturedPiece.pieceType]} (${capturedPiece.pieceValue})` : ''}`;
+            // Create the grid
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    // Calculate the center position for the current square
+                    const centerX = col * squareWidth + squareWidth / 2 + 125 / 4; // Adjust left margin
+                    const centerY = row * squareHeight + squareHeight / 2 + 20; // Adjust top margin
 
-            history.push(moveText);
-            const historyDiv = document.getElementById('history');
-            historyDiv.innerHTML = history.join('<br>');
-            historyDiv.scrollTop = historyDiv.scrollHeight;
+                    // Create the grid square
+                    const rect = new fabric.Rect({
+                        left: centerX - squareWidth / 2, // Adjust to start drawing from the top-left corner
+                        top: centerY - squareHeight / 2, // Adjust to start drawing from the top-left corner
+                        width: squareWidth,
+                        height: squareHeight,
+                        fill: 'transparent',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false // Prevent grid squares from being interactive
+                    });
+
+                    // Add the grid square to the canvas
+                    canvas.add(rect);
+
+                    // Determine the algebraic notation
+                    const file = alphabet[row]; // Row determines column label (A-H)
+                    const rank = col + 1; // Column determines row number (1-16)
+
+                    const algebraicNotation = `${file}${rank}`;
+
+                    // Create the text for algebraic notation
+                    const text = new fabric.Text(algebraicNotation, {
+                        left: centerX, // Centered in the square horizontally
+                        top: centerY, // Centered in the square vertically
+                        fontSize: 12,
+                        fontFamily: 'Arial',
+                        fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
+                        originX: 'center', // Align text by its center
+                        originY: 'center', // Align text by its center
+                        selectable: false, // Text should not be interactive
+                        evented: false // Text should not trigger events
+                    });
+
+                    // Add the text to the canvas
+                    canvas.add(text);
+                }
+            }
+        }
+
+        function movePiece(from, to) {
+            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Alphabetical row labels
+
+            // Define grid size
+            const rows = 8;
+            const cols = 16;
+            const squareWidth = 863 / cols;
+            const squareHeight = 440 / rows;
+
+            // Convert from algebraic notation to row and column
+            function positionToIndices(position) {
+                let c = position.charCodeAt(0) - 65;
+                let r = Number(position[1]) - 1;
+                if (position[2]) {
+                    r = Number(position[1] + position[2]) - 1;
+                }
+                return { c, r };
+            }
+
+            const fromIndices = positionToIndices(from);
+            const toIndices = positionToIndices(to);
+
+            // Find the piece at the 'from' position (e.g., C4)
+            const piece = boardState[fromIndices.c][fromIndices.r];
+
+            if (piece) {
+                // Calculate the target position (center of the square in grid)
+                const targetCenterX = toIndices.r * squareWidth + 125 / 4 + squareWidth / 2;
+                const targetCenterY = toIndices.c * squareHeight + 20 + squareHeight / 2;
+
+                // Animate the piece to the target position with smooth transition
+                piece.animate({
+                    left: targetCenterX,
+                    top: targetCenterY
+                }, {
+                    duration: 500, // Duration of the animation in milliseconds (adjust as needed)
+                    onChange: canvas.renderAll.bind(canvas), // Re-render the canvas during animation
+                    easing: fabric.util.ease.easeInOutQuad, // Smooth easing function
+                    onComplete: function() {
+                        // After the animation completes, update the piece position in the boardState
+                        boardState[fromIndices.c][fromIndices.r] = null;
+                        boardState[toIndices.c][toIndices.r] = piece;
+
+                        console.log(`Piece moved from ${from} to ${to}`);
+                    }
+                });
+
+            } else {
+                console.log(`No piece found at ${from}`);
+            }
+        }
+
+        function enableSnapping() {
+            const rows = 8;
+            const cols = 16;
+
+            // Calculate grid square size
+            const squareWidth = 863 / cols;
+            const squareHeight = 440 / rows;
+
+            // Snap based on the closest grid center
+            canvas.on('object:moving', function (event) {
+                const obj = event.target;
+
+                // Get the current mouse position
+                const pointer = canvas.getPointer(event.e);
+
+                // Variables to track the closest grid square
+                let closestLeft = 0;
+                let closestTop = 0;
+                let smallestDistance = Infinity;
+
+                let oldRowIndex = -1;
+                let oldColIndex = -1;
+
+                // Iterate over all grid square centers to find the closest
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        // Calculate the center of the current grid square
+                        const gridCenterX = col * squareWidth + 125 / 4 + squareWidth / 2;
+                        const gridCenterY = row * squareHeight + 20 + squareHeight / 2;
+
+                        // Calculate the distance between the mouse pointer and the grid center
+                        const distance = Math.sqrt(
+                            Math.pow(pointer.x - gridCenterX, 2) + Math.pow(pointer.y - gridCenterY, 2)
+                        );
+
+                        // Update the closest grid square if this one is closer
+                        if (distance < smallestDistance) {
+                            smallestDistance = distance;
+                            closestLeft = gridCenterX;
+                            closestTop = gridCenterY;
+
+                            // Track the closest grid position (row, col)
+                            oldRowIndex = row;
+                            oldColIndex = col;
+                        }
+                    }
+                }
+
+                // Update the piece's position to the closest grid square center
+                obj.left = closestLeft;
+                obj.top = closestTop;
+
+                // Remove the piece from the old position in boardState
+                if (oldRowIndex !== -1 && oldColIndex !== -1) {
+                    boardState[oldRowIndex][oldColIndex] = null; // Clear the old position
+                }
+
+                // Calculate new row and column indices based on the snapped position
+                const newRowIndex = Math.floor((closestTop - 20) / squareHeight);
+                const newColIndex = Math.floor((closestLeft - 125 / 4) / squareWidth);
+
+                // Add the piece to the new position in boardState
+                if (newRowIndex >= 0 && newRowIndex < rows && newColIndex >= 0 && newColIndex < cols) {
+                    boardState[newRowIndex][newColIndex] = obj; // Place the piece at the new position
+                }
+            });
+        }
+
+
+        function handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const fileContent = e.target.result;
+                        const moves = parseMoves(fileContent);
+                        executeMoves(moves);
+                    };
+                    reader.readAsText(file);
+                }
+                resetGame()
+        }
+
+        function parseMoves(fileContent) {
+            // Split the file content by lines and process each line
+            const lines = fileContent.split('\n');
+            const moves = [];
+
+            // For each line, split it into pairs of moves
+            lines.forEach(line => {
+                const positions = line.split(' ');
+                if (positions.length === 4) {
+                    moves.push([positions[0], positions[1], positions[2], positions[3]]);
+                }
+            });
+
+            return moves;
+        }
+
+        function executeMoves(moves) {
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < moves.length) {
+                    const [from1, to1, from2, to2] = moves[index];
+                    
+                    // Move first piece (e.g., C4 to C5)
+                    movePiece(from1, to1);
+                    
+                    // Wait for the first move to finish before making the second move
+                    setTimeout(() => {
+                        movePiece(from2, to2);
+                        index++;
+                    }, 1000); // Adjust time for the first move to complete (in ms)
+
+                } else {
+                    clearInterval(interval); // Stop the loop when all moves are done
+
+                    // Once all moves are completed, reset the game board
+                    resetGame();
+                    if(isLooping){
+                        executeMoves(moves);
+                    }else{isLooping=true}
+                }
+            }, 2000); // Delay between moves
+        }
+
+
+        function resetGame() {
+            // Clear all objects on the canvas
+            canvas.clear();
+            
+            // Reset the board state to empty
+            boardState = Array(8).fill().map(() => Array(16).fill(null));
+
+            loadBoardBackground(); // Reload the Board
+            createGrid(); // Recreate the grid
+            addPieces();  // Re-add the initial pieces
         }
 
         // Initialize the game
         async function initializeGame() {
             try {
+                createGrid();
+                enableSnapping();
                 await loadBoardBackground();
                 await addPieces();
+                
+                canvas.renderAll();
             } catch (error) {
                 console.error('Game initialization failed:', error);
             }
         }
 
+        
+
         // Start the game when window loads
         window.onload = initializeGame;
-
+        document.getElementById('moveFileInput').addEventListener('change', handleFileUpload);
+        document.getElementById('endLoopButton').addEventListener('click', () => {
+            isLooping = false;
+        });
     </script>
 </body>
 </html>
