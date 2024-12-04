@@ -8,11 +8,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
-        
+
         body {
             margin: 0;
             padding: 20px;
-            background-color: #533c3c;
+            background-image: url('Images/Rithmomachia Art/Background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
         }
 
         .container {
@@ -46,7 +50,8 @@
         }
 
         #black-pyramid {
-            background-color: white;
+            background-color: black;
+            color: white;
             border-radius: 5px;
             text-justify: inter-word;
             text-align: center;
@@ -55,14 +60,42 @@
             width: 85px;
         }
 
+        .custom-file-label {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            border-radius: 10px;
+        }
+
         #white-pyramid {
-            background-color: black;
-            color: white;
+            background-color: white;
+            color: black;
             border-radius: 5px;
             text-align: center;
             height: 300px;
             min-width: 85px;
             width: 85px;
+        }
+
+        #endLoopButton {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        #pause {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
         }
 
         .game-board {
@@ -85,7 +118,8 @@
     <div class="container">
         <h1 class="title">Rithmomachia</h1>
         <div class="game-container">
-            <input type="file" id="moveFileInput" accept=".txt" />
+            <label for="moveFileInput" class="custom-file-label">Choose File</label>
+            <input type="file" id="moveFileInput" accept=".txt" style="display:none;" />
             <button id="endLoopButton">Reset</button>
             <button id="pause" onclick="PauseButton()">Pause</button>
         </div>
@@ -482,7 +516,10 @@
                         resetGame().then(() => {
                             if (isLooping) {
                                 executeMoves(moves);
-                            } else { isLooping = true }
+                            } else {
+                                isLooping = true
+                                document.getElementById('moveFileInput').value = '';
+                            }
                         }).catch(error => {
                             console.error('Error resetting the game:', error);
                         })

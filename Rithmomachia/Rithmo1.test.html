@@ -15,6 +15,27 @@
             background-color: #533c3c;
         }
 
+        .overlay {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.0);
+            z-index: 9999;
+            pointer-events: none; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
         .container {
             display: flex;
             flex-direction: column;
@@ -45,8 +66,19 @@
             justify-content: center;
         }
 
+        .custom-file-label {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            border-radius: 10px;
+        }
+
         #black-pyramid {
-            background-color: white;
+            background-color: black;
+            color: white;
             border-radius: 5px;
             text-justify: inter-word;
             text-align: center;
@@ -56,8 +88,8 @@
         }
 
         #white-pyramid {
-            background-color: black;
-            color: white;
+            background-color: white;
+            color: black;
             border-radius: 5px;
             text-align: center;
             height: 300px;
@@ -65,7 +97,25 @@
             width: 85px;
         }
 
-        .game-board {
+        #endLoopButton {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        #pause {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        #game-board {
             position: relative;
             width: fit-content;
             max-width: 925px;
@@ -83,15 +133,17 @@
 </head>
 <body>
     <div class="container">
+        <div class="overlay" id="videoContainer"></div>
         <h1 class="title">Rithmomachia</h1>
         <div class="game-container">
-            <input type="file" id="moveFileInput" accept=".txt" />
+            <label for="moveFileInput" class="custom-file-label">Choose File</label>
+            <input type="file" id="moveFileInput" accept=".txt" style="display:none;" />
             <button id="endLoopButton">Reset</button>
             <button id="pause" onclick="PauseButton()">Pause</button>
         </div>
         <div class="game-container">
             <div id="black-pyramid"><h3>Black<br />Pyramid</h3></div>
-            <div class="game-board">
+            <div id="game-board">
                 <canvas id="gameCanvas"></canvas>
             </div>
             <div id="white-pyramid"><h3>White<br />Pyramid</h3></div>
@@ -222,6 +274,29 @@
             };
             // Wait for all pieces to be loaded before resolving
             await Promise.all(pieceLoadPromises);
+        }
+
+        function playVideo(vid) {
+            cont = false;
+            const videoContainer = document.getElementById('videoContainer');
+
+            videoContainer.innerHTML = '';
+            videoContainer.style.pointerEvents = 'auto';
+
+            const video = document.createElement('video');
+            video.src = vid;
+            video.autoplay = true;
+            video.loop = false;
+            video.controls = false;
+            video.muted = true;
+
+            videoContainer.appendChild(video);
+
+            video.addEventListener('ended', () => {
+                videoContainer.innerHTML = '';
+                cont = true;
+                videoContainer.style.pointerEvents = 'none';
+            });
         }
 
         function updatePyramid(w, ary) {
@@ -549,7 +624,7 @@
                             index++;
                             playNextMove();
 
-                        }, 1000); // Adjust delay as needed
+                        }, 1200); // Adjust delay as needed
                     } else {
                         setTimeout(playNextMove, 500);
                     }
@@ -558,12 +633,15 @@
                         resetGame().then(() => {
                             if (isLooping) {
                                 executeMoves(moves);
-                            } else { isLooping = true }
+                            } else {
+                                isLooping = true
+                                document.getElementById('moveFileInput').value = '';
+                            }
                         }).catch(error => {
                             console.error('Error resetting the game:', error);
                         })
 
-                    }, 5000);
+                    }, 1000);
 
                 }
             }
@@ -637,6 +715,6 @@
         document.getElementById('endLoopButton').addEventListener('click', () => {
             isLooping = false;
         });
-    </script>
+    </script >
 </body>
 </html>
