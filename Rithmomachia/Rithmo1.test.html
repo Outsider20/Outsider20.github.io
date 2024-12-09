@@ -163,7 +163,7 @@
             renderOnAddRemove: true
         });
 
-        const length = 55;
+        const length = 55.8;
         const height = 54;
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
@@ -217,8 +217,8 @@
                         top: 0,
                         originX: 'center',
                         originY: 'center',
-                        scaleX: 45 / img.width,
-                        scaleY: 45 / img.height,
+                        scaleX: .75*length / img.width,
+                        scaleY: .75*height / img.height,
                         hasControls: false,
                         hasBorders: false,
                         selectable: true,
@@ -259,7 +259,7 @@
                             // Position the piece
                             pieceObject.set({
                                 left: colIndex * height + height / 2 + 125 / 4,
-                                top: rowIndex * length + length / 2 + 20
+                                top: rowIndex * length + length / 2 + 17
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
@@ -318,23 +318,21 @@
         function createGrid() {
             const rows = 8; // Number of rows
             const cols = 16; // Number of columns
-            const squareWidth = 863 / cols; // Calculate the width of each grid square
-            const squareHeight = 440 / rows; // Calculate the height of each grid square
             const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
 
             // Create the grid
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     // Calculate the center position for the current square
-                    const centerX = col * squareWidth + squareWidth / 2 + 125 / 4; // Adjust left margin
-                    const centerY = row * squareHeight + squareHeight / 2 + 20; // Adjust top margin
+                    const centerX = col * height + height / 2 + 125 / 4; // Adjust left margin
+                    const centerY = row * length + length / 2 + 17; // Adjust top margin
 
                     // Create the grid square
                     const rect = new fabric.Rect({
-                        left: centerX - squareWidth / 2, // Adjust to start drawing from the top-left corner
-                        top: centerY - squareHeight / 2, // Adjust to start drawing from the top-left corner
-                        width: squareWidth,
-                        height: squareHeight,
+                        left: centerX - height / 2, // Adjust to start drawing from the top-left corner
+                        top: centerY - length / 2, // Adjust to start drawing from the top-left corner
+                        width: height,
+                        height: length,
                         fill: 'transparent',
                         strokeWidth: 1,
                         selectable: false,
@@ -374,8 +372,6 @@
             // Define grid size
             const rows = 8;
             const cols = 16;
-            const squareWidth = 863 / cols;
-            const squareHeight = 440 / rows;
 
             // Convert from algebraic notation to row and column
             function positionToIndices(position) {
@@ -395,8 +391,8 @@
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
-                const targetCenterX = toIndices.r * squareWidth + 125 / 4 + squareWidth / 2;
-                const targetCenterY = toIndices.c * squareHeight + 20 + squareHeight / 2;
+                const targetCenterX = toIndices.r * height + 125 / 4 + height / 2;
+                const targetCenterY = toIndices.c * length + 17 + length / 2;
 
                 // Animate the piece to the target position with smooth transition
                 piece.animate({
@@ -466,10 +462,6 @@
             const rows = 8;
             const cols = 16;
 
-            // Calculate grid square size
-            const squareWidth = 863 / cols;
-            const squareHeight = 440 / rows;
-
             // Snap based on the closest grid center
             canvas.on('object:moving', function (event) {
                 const obj = event.target;
@@ -489,8 +481,8 @@
                 for (let row = 0; row < rows; row++) {
                     for (let col = 0; col < cols; col++) {
                         // Calculate the center of the current grid square
-                        const gridCenterX = col * squareWidth + 125 / 4 + squareWidth / 2;
-                        const gridCenterY = row * squareHeight + 20 + squareHeight / 2;
+                        const gridCenterX = col * height + 125 / 4 + height / 2;
+                        const gridCenterY = row * length + 17 + length / 2;
 
                         // Calculate the distance between the mouse pointer and the grid center
                         const distance = Math.sqrt(
@@ -520,8 +512,8 @@
                 }
 
                 // Calculate new row and column indices based on the snapped position
-                const newRowIndex = Math.floor((closestTop - 20) / squareHeight);
-                const newColIndex = Math.floor((closestLeft - 125 / 4) / squareWidth);
+                const newRowIndex = Math.floor((closestTop - 20) / length);
+                const newColIndex = Math.floor((closestLeft - 125 / 4) / height);
 
                 // Add the piece to the new position in boardState
                 if (newRowIndex >= 0 && newRowIndex < rows && newColIndex >= 0 && newColIndex < cols) {
@@ -680,19 +672,19 @@
 
         // Initialize the game
         async function initializeGame() {
-          try {
-            // Load the background image first
-            await loadBoardBackground();
+            try {
+                // Load the background image first
+                await loadBoardBackground();
 
-            // Create the grid and add the pieces
-            createGrid();
-            await addPieces();
+                // Create the grid and add the pieces
+                createGrid();
+                await addPieces();
 
-            enableSnapping();
-            canvas.renderAll();
-          } catch (error) {
+                enableSnapping();
+                canvas.renderAll();
+            } catch (error) {
             console.error('Game initialization failed:', error);
-          }
+            }
         }
 
         function PauseButton() {
