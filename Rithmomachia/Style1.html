@@ -370,10 +370,6 @@
 
         function movePiece(from, to) {
 
-            // Define grid size
-            const rows = 8;
-            const cols = 16;
-
             // Convert from algebraic notation to row and column
             function positionToIndices(position) {
                 let c = position.toUpperCase().charCodeAt(0) - 65;
