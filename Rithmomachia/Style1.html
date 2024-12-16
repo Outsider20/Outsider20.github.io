@@ -288,14 +288,24 @@
             video.src = vid;
             video.autoplay = true;
             video.loop = false;
-            video.controls = true;
+            video.controls = false;
             video.muted = true;
 
             videoContainer.appendChild(video);
 
-            video.addEventListener('ended', () => {
-                videoContainer.innerHTML = '';
-                cont = true;
+            video.addEventListener('ended', () => { 
+                let opacity = 1;
+                const fadeInterval = setInterval(() => {
+                    if (opacity > 0) {
+                        opacity -= 0.01;
+                        video.style.opacity = opacity;
+                    } else {
+                        clearInterval(fadeInterval); // Stop fading when opacity reaches 0
+                    }
+                }, 10); // Adjust the interval for speed
+                setTimeout(function () {
+                    cont = true;
+                }, 500);
                 videoContainer.style.pointerEvents = 'none';
             });
         }
@@ -396,7 +406,7 @@
                     left: targetCenterX,
                     top: targetCenterY
                 }, {
-                    duration: 500, // Duration of the animation in milliseconds (adjust as needed)
+                    duration: 1000, // Duration of the animation in milliseconds (adjust as needed)
                     onChange: canvas.renderAll.bind(canvas), // Re-render the canvas during animation
                     easing: fabric.util.ease.easeInOutQuad, // Smooth easing function
                     onComplete: function() {
@@ -413,7 +423,21 @@
             }
         }
 
-        function capturePiece(position,value) {
+        function capturePiece(position, value, type) {
+            switch (type) {
+                case "s":
+                    playVideo("Images/Board and pieces/Siege 1.mp4");
+                    break;
+                case "n":
+                    playVideo("Images/Board and pieces/Encounter.mp4");
+                    break;
+                case "r":
+                    playVideo("Images/Board and pieces/Eruption 1.mp4");
+                    break;
+                case "d":
+                    playVideo("Images/Board and pieces/Deceit.mp4");
+                    break;
+            }
             for (let i = 0; i < position.length; i++) {
                 const c = position[i].toUpperCase().charCodeAt(0) - 65;
                 const r = Number(position[i].slice(1)) - 1;
@@ -550,7 +574,10 @@
                         if (pair.toUpperCase().includes('X')) {
                             // Handle capture move (e.g., A1A2xC4c9)
                             const parts = pair.split('x'); // Split by 'x'
-                            const [move, ...captures] = parts;
+                            let [move, ...captures] = parts;
+                            const c = captures[0].match(/([snrd])(.*)/i);
+                            console.log(c);
+                            captures[0] = c[2];
                             let take = [];
                             let ids = [];
 
@@ -562,7 +589,7 @@
                             });
 
                             const [from, to] = splitMove(move); // Split the move into 'from' and 'to'
-                            moves.push([from, to, take, ids]); // Add the parsed capture
+                            moves.push([from, to, take, ids, c[1]]); // Add the parsed capture
                         } else if (pair.length >= 4) {
                             // Handle regular move (e.g., A1A2)
                             const [from, to] = splitMove(pair);
@@ -608,8 +635,8 @@
                         // Handle capture if specified
                         if (captures) {
                             setTimeout(() => {
-                                capturePiece(captures, move[3]);
-                            }, 600); // Slight delay to align with move animation
+                                capturePiece(captures, move[3], move[4]);
+                            }, 1100); // Slight delay to align with move animation
                         }
 
                         // Wait before moving to the next move
@@ -617,9 +644,9 @@
                             index++;
                             playNextMove();
 
-                        }, 1200); // Adjust delay as needed
+                        }, 2000); // Adjust delay as needed
                     } else {
-                        setTimeout(playNextMove, 500);
+                        setTimeout(playNextMove, 1000);
                     }
                 } else {
                     setTimeout(() => {
@@ -680,7 +707,7 @@
                 // Create the grid and add the pieces
                 //createGrid();
                 await addPieces();
-                //playVideo("Images/3313_rain_raining_rain_drops_RaindropsVidevo.mp4");
+                //playVideo("Images/Board and pieces/Intro.mp4");
 
                 enableSnapping();
                 canvas.renderAll();
