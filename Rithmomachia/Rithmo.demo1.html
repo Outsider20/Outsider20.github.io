@@ -426,16 +426,16 @@
         function capturePiece(position, value, type) {
             switch (type) {
                 case "s":
-                    playVideo("Images/Board and pieces/Siege 1.mp4");
+                    playVideo("Images/Board and pieces/Siege ${isWhite ? 'White' : 'Black'}.mp4");
                     break;
                 case "n":
-                    playVideo("Images/Board and pieces/Encounter.mp4");
+                    playVideo("Images/Board and pieces/Encounter ${isWhite ? 'White' : 'Black'}.mp4");
                     break;
                 case "r":
-                    playVideo("Images/Board and pieces/Eruption 1.mp4");
+                    playVideo("Images/Board and pieces/Eruption ${isWhite ? 'White' : 'Black'}.mp4");
                     break;
                 case "d":
-                    playVideo("Images/Board and pieces/Deceit.mp4");
+                    playVideo("Images/Board and pieces/Deceit ${isWhite ? 'White' : 'Black'}.mp4");
                     break;
             }
             for (let i = 0; i < position.length; i++) {
