@@ -153,6 +153,7 @@
 
     <script>
 
+        const WhiteOrBlack = NULL;
         const CANVAS_WIDTH = 925;
         const CANVAS_HEIGHT = 480;
 
@@ -424,19 +425,24 @@
         }
 
         function capturePiece(position, value, type) {
-            const isWhite = piece === piece.toUpperCase();
+            const firstPos = position[0];
+            const firstRow = firstPos.toUpperCase().charCodeAt(0) - 65;
+            const firstCol = Number(firstPos.slice(1)) - 1;
+            const firstPiece = boardState[firstRow][firstCol];
+            const pieceColor = firstPiece ? firstPiece.pieceColor : null;
+            
             switch (type) {
                 case "s":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'white' : 'black'}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Siege ${pieceColor.tolowercase()}.mp4`);
                     break;
                 case "n":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Encounter ${isWhite ? 'white' : 'black'}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Encounter ${pieceColor.tolowercase()}.mp4`);
                     break;
                 case "r":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Eruption ${isWhite ? 'white' : 'black'}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Eruption ${pieceColor.tolowercase()}.mp4`);
                     break;
                 case "d":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Deceit ${isWhite ? 'white' : 'black'}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Deceit ${pieceColor.tolowercase()}.mp4`);
                     break;
             }
             for (let i = 0; i < position.length; i++) {
