@@ -428,20 +428,20 @@
             const firstRow = firstPos.toUpperCase().charCodeAt(0) - 65;
             const firstCol = Number(firstPos.slice(1)) - 1;
             const firstPiece = boardState[firstRow][firstCol];
-            const pieceColor = firstPiece ? firstPiece.pieceColor : null;
+            const pieceColor = firstPiece ? firstPiece.pieceColor.toLowerCase() : null;
             
             switch (type) {
                 case "s":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Siege ${pieceColor.tolowercase()}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Siege ${pieceColor}.mp4`);
                     break;
                 case "n":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Encounter ${pieceColor.tolowercase()}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Encounter ${pieceColor}.mp4`);
                     break;
                 case "r":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Eruption ${pieceColor.tolowercase()}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Eruption ${pieceColor}.mp4`);
                     break;
                 case "d":
-                    playVideo(`Images/Rithmomachia/captures and intro with sound/Deceit ${pieceColor.tolowercase()}.mp4`);
+                    playVideo(`Images/Rithmomachia/captures and intro with sound/Deceit ${pieceColor}.mp4`);
                     break;
             }
             for (let i = 0; i < position.length; i++) {
