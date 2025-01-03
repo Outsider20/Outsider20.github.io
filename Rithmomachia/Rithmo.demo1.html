@@ -424,6 +424,7 @@
         }
 
         function capturePiece(position, value, type) {
+            const isWhite = piece === piece.toUpperCase();
             switch (type) {
                 case "s":
                     playVideo(`Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'white' : 'black'}.mp4`);
