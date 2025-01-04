@@ -203,7 +203,7 @@
                 if (baseType == 'p') {
                     imagePath = `Images/Rithmomachia Art/${isWhite ? 'White' : 'Black'}_Pyramid.png`
                     value = isWhite ? ['c1', 'c4', 't9', 't16', 's25', 's36'] : ['C16', 'T25', 'T36', 'S49', 'S64']
-                }else {
+                } else {
                     imagePath = `Images/Rithmomachia Art/${value}_${isWhite ? 'White' : 'Black'}_${{
                             's': 'Square',
                             't': 'Triangle',
@@ -430,7 +430,7 @@
             const firstPiece = boardState[firstRow][firstCol];
             const pieceColor = firstPiece ? firstPiece.pieceColor : null;
             const pieceColor2 = pieceColor.toLowerCase();
-             const oppositeColor = capturedColor === 'white' ? 'black' : 'white';
+             const oppositeColor = pieceColor2 === 'white' ? 'black' : 'white';
             
             switch (type) {
                 case "s":
