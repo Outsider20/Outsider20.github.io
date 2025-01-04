@@ -267,8 +267,8 @@
                         const piecePromise = loadPieceImage(piece).then(pieceObject => {
                             // Position the piece
                             pieceObject.set({
-                                left: colIndex * height + height / 2 + 125 / 4,
-                                top: rowIndex * length + length / 2 + 17
+                                left: colIndex * height + height / 2 + 71,
+                                top: rowIndex * length + length / 2 + 71
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
