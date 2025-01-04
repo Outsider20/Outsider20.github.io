@@ -430,7 +430,7 @@
             const firstPiece = boardState[firstRow][firstCol];
             const pieceColor = firstPiece ? firstPiece.pieceColor : null;
             const pieceColor2 = pieceColor.toLowerCase();
-             const oppositeColor = capturedColor === 'white' ? 'black' : 'white';
+             const oppositeColor = pieceColor2 === 'white' ? 'black' : 'white';
             
             switch (type) {
                 case "s":
