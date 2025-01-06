@@ -334,8 +334,8 @@
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     // Calculate the center position for the current square
-                    const centerX = col * height + height / 2 + 125 / 4; // Adjust left margin
-                    const centerY = row * length + length / 2 + 17; // Adjust top margin
+                    const centerX = col * squareWidth + squareWidth / 2 + 71; // Adjust left margin
+                    const centerY = row * squareHeight + squareHeight / 2 + 70; // Adjust top margin
 
                     // Create the grid square
                     const rect = new fabric.Rect({
