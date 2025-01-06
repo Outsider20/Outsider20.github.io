@@ -205,11 +205,10 @@
                     value = isWhite ? ['c1', 'c4', 't9', 't16', 's25', 's36'] : ['C16', 'T25', 'T36', 'S49', 'S64']
                 }else {
                     imagePath = `Images/HUNT-Pieces/${{
-                            's': 'Sq',
-                            't': 'Tri',
-                            'c': 'Circ',
-                        }[baseType]}${value}
-                    }.png`;
+                        's': 'Sq',
+                        't': 'Tri',
+                        'c': 'Circ'
+                    }[baseType]}${value}.png`;
                 }
 
                 fabric.Image.fromURL(imagePath, function(img) {
