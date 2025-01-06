@@ -12,11 +12,7 @@
         body {
             margin: 0;
             padding: 20px;
-            background-image: url('Images/Rithmomachia Art/Background.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            height: 100vh;
+            background-color: #533c3c;
         }
 
         .overlay {
@@ -159,10 +155,6 @@
 
         const CANVAS_WIDTH = 925;
         const CANVAS_HEIGHT = 480;
-        const rows = 8; // Number of rows
-        const cols = 16; // Number of columns
-        const squareWidth = 785 / cols; // Calculate the width of each grid square
-        const squareHeight = 340 / rows; // Calculate the height of each grid square
 
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
@@ -172,8 +164,8 @@
             renderOnAddRemove: true
         });
 
-        const length = 680/16;
-        const height = 392/8;
+        const length = 55.8;
+        const height = 54;
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
@@ -181,7 +173,7 @@
         // Load board background
         function loadBoardBackground() {
             return new Promise((resolve, reject) => {
-                fabric.Image.fromURL('Images/Rithmomachia Art/Board.png', function(boardImage) {
+                fabric.Image.fromURL('Images/HUNT-Pieces/HUNT-NewBoard-01.jpg', function(boardImage) {
                     boardImage.set({
                         selectable: false,
                         evented: false,
@@ -209,14 +201,14 @@
                 // Construct dynamic image path
                 let imagePath;
                 if (baseType == 'p') {
-                    imagePath = `Images/Rithmomachia Art/${isWhite ? 'White' : 'Black'}_Pyramid.png`
+                    imagePath = `Images/HUNT-Pieces/Stack${isWhite ? 'White' : 'Brown'}.png`
                     value = isWhite ? ['c1', 'c4', 't9', 't16', 's25', 's36'] : ['C16', 'T25', 'T36', 'S49', 'S64']
-                } else {
-                    imagePath = `Images/Rithmomachia Art/${value}_${isWhite ? 'White' : 'Black'}_${{
-                            's': 'Square',
-                            't': 'Triangle',
-                            'c': 'Circle',
-                        }[baseType]
+                }else {
+                    imagePath = `Images/HUNT-Pieces/${{
+                            's': 'Sq',
+                            't': 'Tri',
+                            'c': 'Circ',
+                        }[baseType]}${value}
                     }.png`;
                 }
 
@@ -226,8 +218,8 @@
                         top: 0,
                         originX: 'center',
                         originY: 'center',
-                        scaleX: 40 / img.width,
-                        scaleY: 40 / img.height,
+                        scaleX: .75*length / img.width,
+                        scaleY: .75*height / img.height,
                         hasControls: false,
                         hasBorders: false,
                         selectable: true,
@@ -267,8 +259,8 @@
                         const piecePromise = loadPieceImage(piece).then(pieceObject => {
                             // Position the piece
                             pieceObject.set({
-                                left: colIndex * height + height / 2 + 71,
-                                top: rowIndex * length + length / 2 + 71
+                                left: colIndex * height + height / 2 + 125 / 4,
+                                top: rowIndex * length + length / 2 + 17
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
@@ -343,13 +335,13 @@
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     // Calculate the center position for the current square
-                    const centerX = col * squareWidth + squareWidth / 2 + 71; // Adjust left margin
-                    const centerY = row * squareHeight + squareHeight / 2 + 70; // Adjust top margin
+                    const centerX = col * height + height / 2 + 125 / 4; // Adjust left margin
+                    const centerY = row * length + length / 2 + 17; // Adjust top margin
 
                     // Create the grid square
                     const rect = new fabric.Rect({
-                        left: centerX - squareWidth / 2, // Adjust to start drawing from the top-left corner
-                        top: centerY - squareHeight / 2, // Adjust to start drawing from the top-left corner
+                        left: centerX - height / 2, // Adjust to start drawing from the top-left corner
+                        top: centerY - length / 2, // Adjust to start drawing from the top-left corner
                         width: height,
                         height: length,
                         fill: 'transparent',
@@ -432,26 +424,18 @@
         }
 
         function capturePiece(position, value, type) {
-            const firstPos = position[0];
-            const firstRow = firstPos.toUpperCase().charCodeAt(0) - 65;
-            const firstCol = Number(firstPos.slice(1)) - 1;
-            const firstPiece = boardState[firstRow][firstCol];
-            const pieceColor = firstPiece ? firstPiece.pieceColor : null;
-            const pieceColor2 = pieceColor.toLowerCase();
-             const oppositeColor = pieceColor2 === 'white' ? 'black' : 'white';
-            
             switch (type) {
                 case "s":
-                    playVideo(`Images/Rithmomachia Art/Siege final draft with sound.MP4`);
+                    playVideo(`Images/Rith/Siege Video.mp4`);
                     break;
                 case "n":
-                    playVideo(`Images/Rithmomachia Art/Encounter final draft with sound.MP4`);
+                    playVideo(`Images/Rith/Encounter Video.mp4`);
                     break;
                 case "r":
-                    playVideo(`Images/Rithmomachia Art/Eruption final draft with sound.MP4`);
+                    playVideo(`Images/Rith/Eruption Video.mp4`);
                     break;
                 case "d":
-                    playVideo(`Images/Rithmomachia Art/Deceit final draft with sound.MP4`);
+                    playVideo(`Images/Rith/Deceit Video.mp4`);
                     break;
             }
             for (let i = 0; i < position.length; i++) {
@@ -719,7 +703,7 @@
             try {
                 
                 // Play Intro 
-                playVideo('Images/Rithmomachia Art/Intro final animation with sound.MP4')
+                playVideo('Images/Rith/HUNTRithCutscene.mp4')
 
                 
                 // Load the background image first
@@ -728,7 +712,7 @@
                 // Create the grid and add the pieces
                 //createGrid();
                 await addPieces();
-                //playVideo("Images/Board and pieces/Intro.MP4");
+                //playVideo("Images/Board and pieces/Intro.mp4");
 
                 enableSnapping();
                 canvas.renderAll();
