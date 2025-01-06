@@ -155,6 +155,10 @@
 
         const CANVAS_WIDTH = 925;
         const CANVAS_HEIGHT = 480;
+        const rows = 8; // Number of rows
+        const cols = 16; // Number of columns
+        const squareWidth = 785 / cols; // Calculate the width of each grid square
+        const squareHeight = 340 / rows; // Calculate the height of each grid square
 
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
