@@ -155,10 +155,6 @@
 
         const CANVAS_WIDTH = 925;
         const CANVAS_HEIGHT = 480;
-        const rows = 8; // Number of rows
-        const cols = 16; // Number of columns
-        const squareWidth = 780 / cols; // Calculate the width of each grid square
-        const squareHeight = 330 / rows; // Calculate the height of each grid square
 
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
@@ -168,8 +164,8 @@
             renderOnAddRemove: true
         });
 
-        const length = 680/16;
-        const height = 392/8;
+        const length = 45.5;
+        const height = 40;
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
@@ -262,8 +258,8 @@
                         const piecePromise = loadPieceImage(piece).then(pieceObject => {
                             // Position the piece
                             pieceObject.set({
-                                left: colIndex * height + height / 2 + 102,
-                                top: rowIndex * length + length / 2 + 35
+                                left: colIndex * length + length / 2 + 95,
+                                top: rowIndex * height + height / 2 + 77
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
@@ -338,17 +334,18 @@
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     // Calculate the center position for the current square
-                    const centerX = col * squareWidth + squareWidth / 2 + 90; // Adjust left margin
-                    const centerY = row * squareHeight + squareHeight / 2 + 45; // Adjust top margin
+                    const centerX = col * length + length/2 + 95; // Adjust left margin
+                    const centerY = row * height + height/2 + 77; // Adjust top margin
 
                     // Create the grid square
                     const rect = new fabric.Rect({
-                        left: centerX - height / 2, // Adjust to start drawing from the top-left corner
-                        top: centerY - length / 2, // Adjust to start drawing from the top-left corner
-                        width: height,
-                        height: length,
+                        left: centerX - length / 2, // Adjust to start drawing from the top-left corner
+                        top: centerY - height / 2, // Adjust to start drawing from the top-left corner
+                        width: length,
+                        height: height,
                         fill: 'transparent',
                         strokeWidth: 1,
+                        stroke: 'red',
                         selectable: false,
                         evented: false // Prevent grid squares from being interactive
                     });
@@ -401,8 +398,8 @@
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
-                const targetCenterX = toIndices.r * height + 102 + height / 2;
-                const targetCenterY = toIndices.c * length + 35 + length / 2;
+                const targetCenterX = toIndices.r * height + height / 2 + 77;
+                const targetCenterY = toIndices.c * length + length / 2 + 95;
 
                 // Animate the piece to the target position with smooth transition
                 piece.animate({
@@ -506,8 +503,8 @@
                 for (let row = 0; row < rows; row++) {
                     for (let col = 0; col < cols; col++) {
                         // Calculate the center of the current grid square
-                        const gridCenterX = col * height + 102 + height / 2;
-                        const gridCenterY = row * length + 35 + length / 2;
+                        const gridCenterX = col * length + length / 2 + 95;
+                        const gridCenterY = row * height + height / 2 + 77;
 
                         // Calculate the distance between the mouse pointer and the grid center
                         const distance = Math.sqrt(
@@ -683,8 +680,6 @@
 
                 // Reload the board background
                 loadBoardBackground().then(() => {
-                    // Create the grid and add the pieces
-                    // createGrid();
 
                     // Wait for addPieces to finish loading the pieces before resolving the promise
                     addPieces().then(() => {
@@ -706,16 +701,13 @@
             try {
                 
                 // Play Intro 
-                playVideo('Images/Rith/HUNTRithCutscene.mp4')
+                //playVideo('Images/Rith/HUNTRithCutscene.mp4')
 
                 
                 // Load the background image first
                 await loadBoardBackground();
 
-                // Create the grid and add the pieces
-                //createGrid();
                 await addPieces();
-                //playVideo("Images/Board and pieces/Intro.mp4");
 
                 enableSnapping();
                 canvas.renderAll();

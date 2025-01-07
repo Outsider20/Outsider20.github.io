@@ -333,59 +333,6 @@
 
         }
 
-
-        function createGrid() {
-            const rows = 8; // Number of rows
-            const cols = 16; // Number of columns
-            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
-
-            // Create the grid
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    // Calculate the center position for the current square
-                    const centerX = col * squareWidth + squareWidth / 2 + 71; // Adjust left margin
-                    const centerY = row * squareHeight + squareHeight / 2 + 70; // Adjust top margin
-
-                    // Create the grid square
-                    const rect = new fabric.Rect({
-                        left: centerX - squareWidth / 2, // Adjust to start drawing from the top-left corner
-                        top: centerY - squareHeight / 2, // Adjust to start drawing from the top-left corner
-                        width: height,
-                        height: length,
-                        fill: 'transparent',
-                        strokeWidth: 1,
-                        selectable: false,
-                        evented: false // Prevent grid squares from being interactive
-                    });
-
-                    // Add the grid square to the canvas
-                    canvas.add(rect);
-
-                    // Determine the algebraic notation
-                    const file = alphabet[row]; // Row determines column label (A-H)
-                    const rank = col + 1; // Column determines row number (1-16)
-
-                    const algebraicNotation = `${file}${rank}`;
-
-                    // Create the text for algebraic notation
-                    const text = new fabric.Text(algebraicNotation, {
-                        left: centerX, // Centered in the square horizontally
-                        top: centerY, // Centered in the square vertically
-                        fontSize: 12,
-                        fontFamily: 'Arial',
-                        fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
-                        originX: 'center', // Align text by its center
-                        originY: 'center', // Align text by its center
-                        selectable: false, // Text should not be interactive
-                        evented: false // Text should not trigger events
-                    });
-
-                    // Add the text to the canvas
-                    canvas.add(text);
-                }
-            }
-        }
-
         function movePiece(from, to) {
 
             // Convert from algebraic notation to row and column
@@ -406,8 +353,8 @@
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
-                const targetCenterX = toIndices.r * height + 125 / 4 + height / 2;
-                const targetCenterY = toIndices.c * length + 17 + length / 2;
+                const targetCenterX = toIndices.r * height + height / 2 + 71;
+                const targetCenterY = toIndices.c * length + length / 2 + 71;
 
                 // Animate the piece to the target position with smooth transition
                 piece.animate({
@@ -519,8 +466,8 @@
                 for (let row = 0; row < rows; row++) {
                     for (let col = 0; col < cols; col++) {
                         // Calculate the center of the current grid square
-                        const gridCenterX = col * height + 125 / 4 + height / 2;
-                        const gridCenterY = row * length + 17 + length / 2;
+                        const gridCenterX = col * height + height / 2 + 71;
+                        const gridCenterY = row * length + length / 2 + 71;
 
                         // Calculate the distance between the mouse pointer and the grid center
                         const distance = Math.sqrt(
@@ -719,7 +666,7 @@
             try {
                 
                 // Play Intro 
-                playVideo('Images/Rithmomachia Art/Intro final animation with sound.MP4')
+                //playVideo('Images/Rithmomachia Art/Intro final animation with sound.MP4')
 
                 
                 // Load the background image first
