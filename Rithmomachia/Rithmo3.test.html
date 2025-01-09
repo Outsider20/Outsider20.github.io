@@ -165,7 +165,7 @@
         });
 
         const length = 46;
-        const height = 40.75;
+        const height = 41;
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
@@ -259,7 +259,7 @@
                             // Position the piece
                             pieceObject.set({
                                 left: colIndex * length + length / 2 + 92.75,
-                                top: rowIndex * height + height / 2 + 74.75
+                                top: rowIndex * height + height / 2 + 75
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
