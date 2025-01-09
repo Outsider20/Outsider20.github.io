@@ -217,8 +217,8 @@
                         top: 0,
                         originX: 'center',
                         originY: 'center',
-                        scaleX: .75*length / img.width,
-                        scaleY: .75*height / img.height,
+                        scaleX: .76*length / img.width,
+                        scaleY: .76*height / img.height,
                         hasControls: false,
                         hasBorders: false,
                         selectable: true,
@@ -258,8 +258,8 @@
                         const piecePromise = loadPieceImage(piece).then(pieceObject => {
                             // Position the piece
                             pieceObject.set({
-                                left: colIndex * length + length / 2 + 95,
-                                top: rowIndex * height + height / 2 + 77
+                                left: colIndex * length + length / 2 + 90,
+                                top: rowIndex * height + height / 2 + 70
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
@@ -398,8 +398,8 @@
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
-                const targetCenterX = toIndices.r * length + length / 2 + 77;
-                const targetCenterY = toIndices.c * height + height / 2 + 95;
+                const targetCenterX = toIndices.r * length + length / 2 + 95;
+                const targetCenterY = toIndices.c * height + height / 2 + 77;
 
                 // Animate the piece to the target position with smooth transition
                 piece.animate({
@@ -701,7 +701,7 @@
             try {
                 
                 // Play Intro 
-                //playVideo('Images/Rith/HUNTRithCutscene.mp4')
+                playVideo('Images/Rith/HUNTRithCutscene.mp4')
 
                 
                 // Load the background image first
