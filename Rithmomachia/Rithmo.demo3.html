@@ -164,8 +164,8 @@
             renderOnAddRemove: true
         });
 
-        const length = 45.5;
-        const height = 40;
+        const length = 46;
+        const height = 41;
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
@@ -258,8 +258,8 @@
                         const piecePromise = loadPieceImage(piece).then(pieceObject => {
                             // Position the piece
                             pieceObject.set({
-                                left: colIndex * length + length / 2 + 95,
-                                top: rowIndex * height + height / 2 + 77
+                                left: colIndex * length + length / 2 + 92.75,
+                                top: rowIndex * height + height / 2 + 75
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
@@ -398,8 +398,8 @@
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
-                const targetCenterX = toIndices.r * length + length / 2 + 95;
-                const targetCenterY = toIndices.c * height + height / 2 + 77;
+                const targetCenterX = toIndices.r * length + length / 2 + 92.75;
+                const targetCenterY = toIndices.c * height + height / 2 + 75;
 
                 // Animate the piece to the target position with smooth transition
                 piece.animate({
