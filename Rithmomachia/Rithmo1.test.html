@@ -36,6 +36,10 @@
             height: 100%;
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         .container {
             display: flex;
             flex-direction: column;
@@ -107,13 +111,21 @@
         }
 
         #startButton {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background-color: #777777;
             color: black;
-            padding: 10px 20px;
+            padding: 15px 30px;
             border: none;
             cursor: pointer;
             border-radius: 10px;
+            z-index: 10000;
+            font-size: 20px;
+            position:absolute;
         }
+
 
         #pause {
             background-color: #777777;
@@ -142,22 +154,24 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" >
+        <div>
+            <button id="startButton">Start Game</button>
+        </div>
         <div class="overlay" id="videoContainer"></div>
         <h1 class="title">Rithmomachia</h1>
         <div class="game-container">
-            <button id="startButton">Start Game</button>
-            <label for="moveFileInput" class="custom-file-label">Choose File</label>
-            <input type="file" id="moveFileInput" accept=".txt" style="display:none;" />
-            <button id="endLoopButton">Reset</button>
-            <button id="pause" onclick="PauseButton()">Pause</button>
+            <label id = "fileLabel" for="moveFileInput" class="custom-file-label hidden" >Choose File</label>
+            <input type="file" id="moveFileInput" accept=".txt" style="display:none;"/>
+            <button id="endLoopButton" class="hidden">Reset</button>
+            <button id="pause" onclick="PauseButton()" class="hidden">Pause</button>
         </div>
         <div class="game-container">
-            <div id="black-pyramid"><h3>Black<br />Pyramid</h3></div>
+            <div id="black-pyramid" class="hidden"><h3>Black<br />Pyramid</h3></div>
             <div id="game-board">
                 <canvas id="gameCanvas"></canvas>
             </div>
-            <div id="white-pyramid"><h3>White<br />Pyramid</h3></div>
+            <div id="white-pyramid" class="hidden"><h3>White<br />Pyramid</h3></div>
         </div>
     </div>
 
@@ -183,8 +197,13 @@
 
         function StartGame() {
             canvas.clear();
-            playVideo('Images/Rithmomachia/captures and intro with sound/Intro.mp4')
+            playVideo('Images/Rithmomachia/captures and intro with sound/Intro.mp4');
             initializeGame();
+            document.getElementById('fileLabel').classList.remove('hidden');
+            document.getElementById('endLoopButton').classList.remove('hidden');
+            document.getElementById('pause').classList.remove('hidden');
+            document.getElementById('black-pyramid').classList.remove('hidden');
+            document.getElementById('white-pyramid').classList.remove('hidden');
         }
 
         const length = (CANVAS_WIDTH-OFFSET_WIDTH)/16;
