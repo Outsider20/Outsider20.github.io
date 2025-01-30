@@ -106,6 +106,15 @@
             border-radius: 10px;
         }
 
+        #startButton {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
         #pause {
             background-color: #777777;
             color: black;
@@ -137,6 +146,7 @@
         <div class="overlay" id="videoContainer"></div>
         <h1 class="title">Rithmomachia</h1>
         <div class="game-container">
+            <button id="startButton">Start Game</button>
             <label for="moveFileInput" class="custom-file-label">Choose File</label>
             <input type="file" id="moveFileInput" accept=".txt" style="display:none;" />
             <button id="endLoopButton">Reset</button>
@@ -166,48 +176,13 @@
             renderOnAddRemove: true
         });
 
-        function createStartScreen() {
-            //canvas.clear();
-            // const title = new fabric.Text("Rithmomachia", {
-            //     fontSize: 40,
-            //     fill: "white",
-            //     top: 100, 
-            //     left: canvas.width / 2,
-            //     originX: "center"
-            // });
-
-            const StartButton = new fabric.Rect({
-                width: 200,
-                height: 50,
-                fill: "blue",
-                top: 200,
-                left: canvas.width / 2,
-                originX: "center",
-                rx: 10, 
-                ry: 10
-            });
-
-            const buttonText = new fabric.Text("Start Game", {
-                fontSize: 24,
-                fill: "white",
-                top: 215,
-                left: canvas.width / 2,
-                originX: "center"
-            });
-
-            const buttonGroup = new fabric.Group([StartButton, buttonText], {
-                selectable: false
-            });
-
-            canvas.add(/*title,*/ buttonGroup);
-
-            buttonGroup.on("mouse:down", function () {
-                StartGame();
-            });
-        }
+        document.getElementById('startButton').addEventListener('click', function() {
+            StartGame();
+        });
 
         function StartGame() {
             canvas.clear();
+            playVideo('Images/Rithmomachia/captures and intro with sound/Intro.mp4')
             initializeGame();
         }
 
@@ -336,7 +311,7 @@
             video.autoplay = true;
             video.loop = false;
             video.controls = false;
-            video.muted = true;
+            video.muted = false;
 
             videoContainer.appendChild(video);
 
@@ -722,6 +697,7 @@
         async function initializeGame() {
             try {
                 // Load the background image first
+
                 await loadBoardBackground();
 
                 // Create the grid and add the pieces
@@ -750,7 +726,7 @@
 
 
         // Start the game when window loads
-        window.onload = createStartScreen;//initializeGame;
+        //window.onload = createStartScreen;//initializeGame;
         document.getElementById('moveFileInput').addEventListener('change', handleFileUpload);
         document.getElementById('endLoopButton').addEventListener('click', () => {
             isLooping = false;
