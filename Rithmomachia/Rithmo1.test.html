@@ -110,23 +110,6 @@
             border-radius: 10px;
         }
 
-        #startButton {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #777777;
-            color: black;
-            padding: 15px 30px;
-            border: none;
-            cursor: pointer;
-            border-radius: 10px;
-            z-index: 10000;
-            font-size: 20px;
-            position:absolute;
-        }
-
-
         #pause {
             background-color: #777777;
             color: black;
@@ -151,15 +134,40 @@
             top: 0;
             left: 0;
         }
+
+        #startButton {
+            background-color: #777777;
+            color: black;
+            padding: 15px 30px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 20px;
+        }
+
+        #StartScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image: url('Images/Board and pieces/Board-Rotate.png');
+            background-size: cover;
+            background-position: center;
+            width: 1000px; 
+            height: 800px; 
+            border-radius: 20px;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container" >
-        <div>
-            <button id="startButton">Start Game</button>
-        </div>
         <div class="overlay" id="videoContainer"></div>
         <h1 class="title">Rithmomachia</h1>
+        <div id="StartScreen">
+            <!--Going to make another canvas for the start screen eventually  Darin-->
+            <button id="startButton">Start Game</button>
+        </div>
         <div class="game-container">
             <label id = "fileLabel" for="moveFileInput" class="custom-file-label hidden" >Choose File</label>
             <input type="file" id="moveFileInput" accept=".txt" style="display:none;"/>
@@ -168,7 +176,7 @@
         </div>
         <div class="game-container">
             <div id="black-pyramid" class="hidden"><h3>Black<br />Pyramid</h3></div>
-            <div id="game-board">
+            <div id="game-board" class="hidden">
                 <canvas id="gameCanvas"></canvas>
             </div>
             <div id="white-pyramid" class="hidden"><h3>White<br />Pyramid</h3></div>
@@ -191,7 +199,7 @@
         });
 
         document.getElementById('startButton').addEventListener('click', function() {
-            document.getElementById('startButton').style.display = 'none';
+            document.getElementById('StartScreen').classList.add('hidden');
             StartGame();
         });
 
@@ -204,6 +212,7 @@
             document.getElementById('pause').classList.remove('hidden');
             document.getElementById('black-pyramid').classList.remove('hidden');
             document.getElementById('white-pyramid').classList.remove('hidden');
+            document.getElementById('game-board').classList.remove('hidden');
         }
 
         const length = (CANVAS_WIDTH-OFFSET_WIDTH)/16;
