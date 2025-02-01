@@ -165,7 +165,7 @@
         <div class="overlay" id="videoContainer"></div>
         <h1 class="title">Rithmomachia</h1>
         <div id="StartScreen">
-            <!--Going to make another canvas for the start screen eventually  Darin-->
+            <!--Going to make another canvas for the start screen eventually maybe Darin-->
             <button id="startButton">Start Game</button>
         </div>
         <div class="game-container">
@@ -182,6 +182,9 @@
             <div id="white-pyramid" class="hidden"><h3>White<br />Pyramid</h3></div>
         </div>
     </div>
+    <video id="introVideo" preload="auto" style="display: none;">
+        <source src="Images/Rithmomachia/captures and intro with sound/Intro.mp4" type="video/mp4">
+    </video>
 
     <script>
 
@@ -198,6 +201,12 @@
             renderOnAddRemove: true
         });
 
+        const introVideo = document.getElementById("introVideo");
+
+        introVideo.oncanplaythrough = () => {
+            console.log("Intro video is preloaded and ready.");
+        };
+
         document.getElementById('startButton').addEventListener('click', function() {
             document.getElementById('StartScreen').classList.add('hidden');
             StartGame();
@@ -205,7 +214,7 @@
 
         function StartGame() {
             canvas.clear();
-            playVideo('Images/Rithmomachia/captures and intro with sound/Intro.mp4');
+            playIntroVideo();
             initializeGame();
             document.getElementById('fileLabel').classList.remove('hidden');
             document.getElementById('endLoopButton').classList.remove('hidden');
@@ -327,6 +336,29 @@
             // Wait for all pieces to be loaded before resolving
             await Promise.all(pieceLoadPromises);
         }
+
+        function playIntroVideo() {
+            const videoContainer = document.getElementById('videoContainer');
+
+            videoContainer.innerHTML = '';
+            videoContainer.style.pointerEvents = 'auto';
+
+            const video = document.getElementById('introVideo');
+            video.autoplay = true;
+            video.loop = false;
+            video.controls = false;
+            video.muted = false;
+
+            videoContainer.appendChild(video);
+            video.style.display = "block";
+            video.play();
+            
+            video.addEventListener('ended', () => {
+                videoContainer.innerHTML = '';
+                videoContainer.style.pointerEvents = 'none';
+            });
+        }
+
 
         function playVideo(vid) {
             cont = false;
