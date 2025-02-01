@@ -160,6 +160,7 @@
         }
     </style>
 </head>
+<!-- Added the hidden class to nearly every element as a way to toggle their display on and off more conveniently  -Darin-->
 <body>
     <div class="container" >
         <div class="overlay" id="videoContainer"></div>
@@ -182,6 +183,7 @@
             <div id="white-pyramid" class="hidden"><h3>White<br />Pyramid</h3></div>
         </div>
     </div>
+    <!--Preload Intro video Darin-->
     <video id="introVideo" preload="auto" style="display: none;">
         <source src="Images/Rithmomachia/captures and intro with sound/Intro.mp4" type="video/mp4">
     </video>
@@ -201,17 +203,19 @@
             renderOnAddRemove: true
         });
 
+        //Check that intro video is loaded in console -Darin
         const introVideo = document.getElementById("introVideo");
-
         introVideo.oncanplaythrough = () => {
             console.log("Intro video is preloaded and ready.");
         };
 
+        //When start button is clicked it hides itself and calls start game -Darin
         document.getElementById('startButton').addEventListener('click', function() {
             document.getElementById('StartScreen').classList.add('hidden');
             StartGame();
         });
 
+        //Plays preloaded intro video, initializes game, and unhides all elements that were previously hidden that are needed for the game. -Darin
         function StartGame() {
             canvas.clear();
             playIntroVideo();
@@ -337,6 +341,7 @@
             await Promise.all(pieceLoadPromises);
         }
 
+        //Made a play intro function for an easy access way to play the intro video without rewritting the playVideo function. -Darin
         function playIntroVideo() {
             const videoContainer = document.getElementById('videoContainer');
 
@@ -786,7 +791,7 @@
 
 
 
-        // Start the game when window loads
+        //Not needed anymore as I have a start button in -Darin
         //window.onload = //initializeGame;
         document.getElementById('moveFileInput').addEventListener('change', handleFileUpload);
         document.getElementById('endLoopButton').addEventListener('click', () => {
