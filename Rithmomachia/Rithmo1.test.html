@@ -135,7 +135,7 @@
             left: 0;
         }
 
-        #startButton {
+        #startButton, #muteButton{
             background-color: #777777;
             color: black;
             padding: 15px 30px;
@@ -168,6 +168,7 @@
         <div id="StartScreen">
             <!--Going to make another canvas for the start screen eventually maybe Darin-->
             <button id="startButton">Start Game</button>
+            <button id="muteButton">Mute</button>
         </div>
         <div class="game-container">
             <label id = "fileLabel" for="moveFileInput" class="custom-file-label hidden" >Choose File</label>
@@ -190,6 +191,8 @@
 
     <script>
 
+        let isMuted = false;
+        
         const CANVAS_WIDTH = 1000;
         const OFFSET_WIDTH = 65;
         const CANVAS_HEIGHT = 500;
@@ -215,6 +218,22 @@
             StartGame();
         });
 
+        document.getElementById('muteButton').addEventListener('click', function() {
+            isMuted = !isMuted;
+            this.textContent = isMuted ? 'Unmute' : 'Mute';
+            
+            // Update mute state for intro video
+            const introVideo = document.getElementById('introVideo');
+            introVideo.muted = isMuted;
+            
+            // Update any currently playing videos in the video container
+            const videoContainer = document.getElementById('videoContainer');
+            const activeVideos = videoContainer.getElementsByTagName('video');
+            for (let video of activeVideos) {
+                video.muted = isMuted;
+            }
+        });
+        
         //Plays preloaded intro video, initializes game, and unhides all elements that were previously hidden that are needed for the game. -Darin
         function StartGame() {
             canvas.clear();
@@ -352,7 +371,7 @@
             video.autoplay = true;
             video.loop = false;
             video.controls = false;
-            video.muted = false;
+            video.muted = isMuted;
 
             videoContainer.appendChild(video);
             video.style.display = "block";
@@ -377,7 +396,7 @@
             video.autoplay = true;
             video.loop = false;
             video.controls = false;
-            video.muted = false;
+            video.muted = isMuted;
 
             videoContainer.appendChild(video);
 
