@@ -501,45 +501,68 @@
             }
         }
 
-        function capturePiece(position,value=null) {
+        function capturePiece(position, value, type) {
+            const firstPos = position[0];
+            const firstRow = firstPos.toUpperCase().charCodeAt(0) - 65;
+            const firstCol = Number(firstPos.slice(1)) - 1;
+            const firstPiece = boardState[firstRow][firstCol];
+            const pieceColor = firstPiece ? firstPiece.pieceColor : null;
+            const pieceColor2 = pieceColor.toLowerCase();
+             const oppositeColor = pieceColor2 === 'white' ? 'black' : 'white';
+            
+            switch (type) {
+                case "s":
+                    playVideo(`Images/Rithmomachia Art/Siege final draft with sound.MP4`);
+                    break;
+                case "n":
+                    playVideo(`Images/Rithmomachia Art/Encounter final draft with sound.MP4`);
+                    break;
+                case "r":
+                    playVideo(`Images/Rithmomachia Art/Eruption final draft with sound.MP4`);
+                    break;
+                case "d":
+                    playVideo(`Images/Rithmomachia Art/Deceit final draft with sound.MP4`);
+                    break;
+            }
+            for (let i = 0; i < position.length; i++) {
+                const c = position[i].toUpperCase().charCodeAt(0) - 65;
+                const r = Number(position[i].slice(1)) - 1;
 
-            const c = position.toUpperCase().charCodeAt(0) - 65;
-            const r = Number(position.slice(1)) - 1;
+                // Find the piece at the specified position
+                const piece = boardState[c][r];
 
-            // Find the piece at the specified position
-            const piece = boardState[c][r];
-
-            if (piece) {
-                if (Array.isArray(piece.pieceValue)) {
-                    let index = piece.pieceValue.indexOf(value);
-                    piece.pieceValue.splice(index, 1);
-                    updatePyramid(piece.pieceColor, piece.pieceValue);
-                    if (piece.pieceValue.length == 0) {
+                if (piece) {
+                    if (Array.isArray(piece.pieceValue)) {
+                        let index = piece.pieceValue.indexOf(value[i]);
+                        piece.pieceValue.splice(index, 1);
+                        updatePyramid(piece.pieceColor, piece.pieceValue);
+                        if (piece.pieceValue.length == 0) {
+                            piece.animate({ opacity: 0 }, {
+                                duration: 500,
+                                onChange: canvas.renderAll.bind(canvas),
+                                onComplete: () => {
+                                    canvas.remove(piece);
+                                    boardState[c][r] = null; // Clear the captured position
+                                    console.log(`Pyramid at ${position[i]} empty.`);
+                                }
+                            });
+                        };
+                    }
+                    else {
                         piece.animate({ opacity: 0 }, {
                             duration: 500,
                             onChange: canvas.renderAll.bind(canvas),
                             onComplete: () => {
                                 canvas.remove(piece);
                                 boardState[c][r] = null; // Clear the captured position
-                                console.log(`Pyramid at ${position} empty.`);
+                                console.log(`Piece at ${position[i]} captured.`);
                             }
                         });
-                    };
-                }
-                else {
-                    piece.animate({ opacity: 0 }, {
-                        duration: 500,
-                        onChange: canvas.renderAll.bind(canvas),
-                        onComplete: () => {
-                            canvas.remove(piece);
-                            boardState[c][r] = null; // Clear the captured position
-                            console.log(`Piece at ${position} captured.`);
-                        }
-                    });
-                }
+                    }
 
-            } else {
-                console.log(`No piece found at ${position} to capture.`);
+                } else {
+                    console.log(`No piece found at ${position[i]} to capture.`);
+                }
             }
         }
 
@@ -637,16 +660,22 @@
                         if (pair.toUpperCase().includes('X')) {
                             // Handle capture move (e.g., A1A2xC4c9)
                             const parts = pair.split('x'); // Split by 'x'
-                            const move = parts[0]; // First part is the move (e.g., A1A2)
-                            const captureDetails = parts[1]; // Second part is the capture info (e.g., C4c9)
+                            let [move, ...captures] = parts;
+                            const c = captures[0].match(/([snrd])(.*)/i);
+                            console.log(c);
+                            captures[0] = c[2];
+                            let take = [];
+                            let ids = [];
 
                             // Extract capture position and unique ID (e.g., "C4" and "c9")
-                            const captureMatch = captureDetails.match(/^([A-H][0-9]*)([c,t,s,C,T,S]\d+)/i);
-                            const capture = captureMatch[1]; // Capture position (e.g., "C4")
-                            const id = captureMatch[2]; // Captured piece info (e.g., "c9")
+                            captures.forEach(cap => {
+                                const captureMatch = cap.match(/([A-H][0-9]*)([c,t,s,C,T,S]\d+)/i);
+                                take.push(captureMatch[1]); // Capture position (e.g., "C4")
+                                ids.push(captureMatch[2]); // Captured piece info (e.g., "c9")
+                            });
 
                             const [from, to] = splitMove(move); // Split the move into 'from' and 'to'
-                            moves.push([from, to, capture, id]); // Add the parsed capture
+                            moves.push([from, to, take, ids, c[1]]); // Add the parsed capture
                         } else if (pair.length >= 4) {
                             // Handle regular move (e.g., A1A2)
                             const [from, to] = splitMove(pair);

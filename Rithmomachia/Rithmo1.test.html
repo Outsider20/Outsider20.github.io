@@ -542,48 +542,6 @@
             }
         }
 
-        // function capturePiece(position,value=null) {
-
-        //     const c = position.toUpperCase().charCodeAt(0) - 65;
-        //     const r = Number(position.slice(1)) - 1;
-
-        //     // Find the piece at the specified position
-        //     const piece = boardState[c][r];
-
-        //     if (piece) {
-        //         if (Array.isArray(piece.pieceValue)) {
-        //             let index = piece.pieceValue.indexOf(value);
-        //             piece.pieceValue.splice(index, 1);
-        //             updatePyramid(piece.pieceColor, piece.pieceValue);
-        //             if (piece.pieceValue.length == 0) {
-        //                 piece.animate({ opacity: 0 }, {
-        //                     duration: 500,
-        //                     onChange: canvas.renderAll.bind(canvas),
-        //                     onComplete: () => {
-        //                         canvas.remove(piece);
-        //                         boardState[c][r] = null; // Clear the captured position
-        //                         console.log(`Pyramid at ${position} empty.`);
-        //                     }
-        //                 });
-        //             };
-        //         }
-        //         else {
-        //             piece.animate({ opacity: 0 }, {
-        //                 duration: 500,
-        //                 onChange: canvas.renderAll.bind(canvas),
-        //                 onComplete: () => {
-        //                     canvas.remove(piece);
-        //                     boardState[c][r] = null; // Clear the captured position
-        //                     console.log(`Piece at ${position} captured.`);
-        //                 }
-        //             });
-        //         }
-
-        //     } else {
-        //         console.log(`No piece found at ${position} to capture.`);
-        //     }
-        // }
-
         function capturePiece(position, value, type) {
             const firstPos = position[0];
             const firstRow = firstPos.toUpperCase().charCodeAt(0) - 65;
@@ -730,39 +688,6 @@
                 reader.readAsText(file);
             }
         }
-
-        // function parseMoves(fileContent) {
-        //     // Split the file content by lines
-        //     const lines = fileContent.split('\n');
-        //     const moves = [];
-
-        //     lines.forEach(line => {
-        //         if (line.trim()) {
-        //             const movePairs = line.split(' '); // Split by space
-        //             movePairs.forEach(pair => {
-        //                 if (pair.toUpperCase().includes('X')) {
-        //                     // Handle capture move (e.g., A1A2xC4c9)
-        //                     const parts = pair.split('x'); // Split by 'x'
-        //                     const move = parts[0]; // First part is the move (e.g., A1A2)
-        //                     const captureDetails = parts[1]; // Second part is the capture info (e.g., C4c9)
-
-        //                     // Extract capture position and unique ID (e.g., "C4" and "c9")
-        //                     const captureMatch = captureDetails.match(/^([A-H][0-9]*)([c,t,s,C,T,S]\d+)/i);
-        //                     const capture = captureMatch[1]; // Capture position (e.g., "C4")
-        //                     const id = captureMatch[2]; // Captured piece info (e.g., "c9")
-
-        //                     const [from, to] = splitMove(move); // Split the move into 'from' and 'to'
-        //                     moves.push([from, to, capture, id]); // Add the parsed capture
-        //                 } else if (pair.length >= 4) {
-        //                     // Handle regular move (e.g., A1A2)
-        //                     const [from, to] = splitMove(pair);
-        //                     moves.push([from, to]); // Add regular move
-        //                 }
-        //             });
-        //         }
-        //     });
-        //     return moves;
-        // }
 
         function parseMoves(fileContent) {
             // Split the file content by lines
