@@ -233,6 +233,23 @@
                 video.muted = isMuted;
             }
         });
+
+        //Can also mute and unmute audio by pressing m on the keyboard
+        document.addEventListener("keydown", function(event){
+            if(event.key == "m" || event.key === "M")
+            {
+                isMuted = !isMuted;
+            
+                const introVideo = document.getElementById('introVideo');
+                introVideo.muted = isMuted;
+            
+                const videoContainer = document.getElementById('videoContainer');
+                const activeVideos = videoContainer.getElementsByTagName('video');
+                for (let video of activeVideos) {
+                    video.muted = isMuted;
+            }
+            }
+        });
         
         //Plays preloaded intro video, initializes game, and unhides all elements that were previously hidden that are needed for the game. -Darin
         function StartGame() {
