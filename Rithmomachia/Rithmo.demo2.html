@@ -134,28 +134,68 @@
             top: 0;
             left: 0;
         }
+
+        #startButton, #muteButton{
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 20px;
+        }
+
+        #StartScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image: url('Images/Rithmomachia Art/Board.png');
+            background-size: cover;
+            background-position: center;
+            width: 1000px; 
+            height: 800px; 
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" >
         <div class="overlay" id="videoContainer"></div>
         <h1 class="title">Rithmomachia</h1>
-        <div class="game-container">
-            <label for="moveFileInput" class="custom-file-label">Choose File</label>
-            <input type="file" id="moveFileInput" accept=".txt" style="display:none;" />
-            <button id="endLoopButton">Reset</button>
-            <button id="pause" onclick="PauseButton()">Pause</button>
+        <div id="StartScreen">
+            <!--Going to make another canvas for the start screen eventually maybe Darin-->
+            <button id="startButton">Start Game</button>
+            <button id="muteButton">Mute</button>
         </div>
         <div class="game-container">
-            <div id="black-pyramid"><h3>Black<br />Pyramid</h3></div>
-            <div id="game-board">
+            <label id = "fileLabel" for="moveFileInput" class="custom-file-label hidden" >Choose File</label>
+            <input type="file" id="moveFileInput" accept=".txt" style="display:none;"/>
+            <button id="endLoopButton" class="hidden">Reset</button>
+            <button id="pause" onclick="PauseButton()" class="hidden">Pause</button>
+        </div>
+        <div class="game-container">
+            <div id="black-pyramid" class="hidden"><h3>Black<br />Pyramid</h3></div>
+            <div id="game-board" class="hidden">
                 <canvas id="gameCanvas"></canvas>
             </div>
-            <div id="white-pyramid"><h3>White<br />Pyramid</h3></div>
+            <div id="white-pyramid" class="hidden"><h3>White<br />Pyramid</h3></div>
         </div>
     </div>
 
+    <!--Preload Intro video Darin-->
+    <video id="introVideo" preload="auto" style="display: none;">
+        <source src="Images/Rithmomachia Art/Intro final animation with sound.MP4" type="video/mp4">
+    </video>
+
     <script>
+
+        let isMuted = false;
 
         const CANVAS_WIDTH = 925;
         const CANVAS_HEIGHT = 480;
@@ -177,6 +217,67 @@
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
+
+        //Check that intro video is loaded in console -Darin
+        const introVideo = document.getElementById("introVideo");
+        introVideo.oncanplaythrough = () => {
+            console.log("Intro video is preloaded and ready.");
+        };
+
+        //When start button is clicked it hides itself and calls start game -Darin
+        document.getElementById('startButton').addEventListener('click', function() {
+            document.getElementById('StartScreen').classList.add('hidden');
+            StartGame();
+        });
+
+        document.getElementById('muteButton').addEventListener('click', function() {
+            isMuted = !isMuted;
+            this.textContent = isMuted ? 'Unmute' : 'Mute';
+            
+            // Update mute state for intro video
+            const introVideo = document.getElementById('introVideo');
+            introVideo.muted = isMuted;
+            
+            // Update any currently playing videos in the video container
+            const videoContainer = document.getElementById('videoContainer');
+            const activeVideos = videoContainer.getElementsByTagName('video');
+            for (let video of activeVideos) {
+                video.muted = isMuted;
+            }
+        });
+
+        //Can also mute and unmute audio by pressing m on the keyboard
+        document.addEventListener("keydown", function(event){
+            if(event.key == "m" || event.key === "M")
+            {
+                isMuted = !isMuted;
+                document.getElementById('muteButton').textContent = isMuted ? 'Unmute' : 'Mute';
+            
+                const introVideo = document.getElementById('introVideo');
+                introVideo.muted = isMuted;
+            
+                const videoContainer = document.getElementById('videoContainer');
+                const activeVideos = videoContainer.getElementsByTagName('video');
+                for (let video of activeVideos) {
+                    video.muted = isMuted;
+            }
+            }
+        });
+
+       //Plays preloaded intro video, initializes game, and unhides all elements that were previously hidden that are needed for the game. -Darin
+       function StartGame() {
+            canvas.clear();
+            playIntroVideo();
+            initializeGame();
+            document.getElementById('fileLabel').classList.remove('hidden');
+            document.getElementById('endLoopButton').classList.remove('hidden');
+            document.getElementById('pause').classList.remove('hidden');
+            document.getElementById('black-pyramid').classList.remove('hidden');
+            document.getElementById('white-pyramid').classList.remove('hidden');
+            document.getElementById('game-board').classList.remove('hidden');
+        }
+
+
 
         // Load board background
         function loadBoardBackground() {
@@ -285,6 +386,29 @@
             await Promise.all(pieceLoadPromises);
         }
 
+        //Made a play intro function for an easy access way to play the intro video without rewritting the playVideo function. -Darin
+        function playIntroVideo() {
+            const videoContainer = document.getElementById('videoContainer');
+
+            videoContainer.innerHTML = '';
+            videoContainer.style.pointerEvents = 'auto';
+
+            const video = document.getElementById('introVideo');
+            video.autoplay = true;
+            video.loop = false;
+            video.controls = false;
+            video.muted = isMuted;
+
+            videoContainer.appendChild(video);
+            video.style.display = "block";
+            video.play();
+            
+            video.addEventListener('ended', () => {
+                videoContainer.innerHTML = '';
+                videoContainer.style.pointerEvents = 'none';
+            });
+        }
+
         function playVideo(vid) {
             cont = false;
             const videoContainer = document.getElementById('videoContainer');
@@ -297,7 +421,7 @@
             video.autoplay = true;
             video.loop = false;
             video.controls = false;
-            video.muted = true;
+            video.muted = isMuted;
 
             videoContainer.appendChild(video);
 
@@ -598,7 +722,7 @@
                         // Handle capture if specified
                         if (captures) {
                             setTimeout(() => {
-                                capturePiece(captures, move[3], move[4]);
+                                capturePiece(captures, move[3], move[4]);m 
                             }, 1100); // Slight delay to align with move animation
                         }
 
@@ -664,9 +788,6 @@
         // Initialize the game
         async function initializeGame() {
             try {
-                
-                // Play Intro 
-                playVideo('Images/Rithmomachia Art/Intro final animation with sound.MP4')
 
                 
                 // Load the background image first
@@ -696,10 +817,6 @@
             }
         }
 
-
-
-        // Start the game when window loads
-        window.onload = initializeGame;
         document.getElementById('moveFileInput').addEventListener('change', handleFileUpload);
         document.getElementById('endLoopButton').addEventListener('click', () => {
             isLooping = false;
