@@ -251,6 +251,7 @@
             if(event.key == "m" || event.key === "M")
             {
                 isMuted = !isMuted;
+                document.getElementById('muteButton').textContent = isMuted ? 'Unmute' : 'Mute';
             
                 const introVideo = document.getElementById('introVideo');
                 introVideo.muted = isMuted;
@@ -721,7 +722,7 @@
                         // Handle capture if specified
                         if (captures) {
                             setTimeout(() => {
-                                capturePiece(captures, move[3], move[4]);
+                                capturePiece(captures, move[3], move[4]);m 
                             }, 1100); // Slight delay to align with move animation
                         }
 

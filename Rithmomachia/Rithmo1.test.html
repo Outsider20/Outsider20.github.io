@@ -240,6 +240,7 @@
             if(event.key == "m" || event.key === "M")
             {
                 isMuted = !isMuted;
+                document.getElementById('muteButton').textContent = isMuted ? 'Unmute' : 'Mute';
             
                 const introVideo = document.getElementById('introVideo');
                 introVideo.muted = isMuted;
