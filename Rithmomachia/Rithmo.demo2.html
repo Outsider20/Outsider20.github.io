@@ -262,6 +262,10 @@
                     video.muted = isMuted;
             }
             }
+            else if(event.key == "s" || event.key == "S")
+            {
+                SkipVideo();
+            }
         });
 
        //Plays preloaded intro video, initializes game, and unhides all elements that were previously hidden that are needed for the game. -Darin
@@ -277,7 +281,18 @@
             document.getElementById('game-board').classList.remove('hidden');
         }
 
-
+        function SkipVideo(){
+            const videoContainer = document.getElementById('videoContainer'); 
+            if(videoContainer.innerHTML != "")
+            {
+                videoContainer.innerHTML = "";
+                videoContainer.style.pointerEvents = 'none';
+                cont = true;
+            }
+            else{
+                console.log("No video to skip") 
+            }
+        }
 
         // Load board background
         function loadBoardBackground() {
