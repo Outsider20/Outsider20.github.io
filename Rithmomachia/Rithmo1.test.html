@@ -61,6 +61,7 @@
             background-color: #620404;
             border-radius: 100px;
             color: #000000;
+            z-index: 9998;
         }
 
         .game-container {
@@ -159,6 +160,8 @@
             height: 800px; 
             border-radius: 20px;
             padding: 20px;
+            transition: transform 0.5s ease; 
+            transform-origin: center center; 
         }
     </style>
 </head>
@@ -230,6 +233,8 @@
         });
 
         document.getElementById('teamChangeButton').addEventListener('click', function(){
+            const startScreen = document.getElementById('StartScreen');
+
             let Black_Pyramid = document.getElementById("black-pyramid");
             let White_Pyramid = document.getElementById("white-pyramid");
 
@@ -241,9 +246,16 @@
 
             team = team === "Black" ? "White" : "Black";
 
+            if (team === "White") {
+                startScreen.style.transform = "rotate(180deg)";
+            } else {
+                startScreen.style.transform = "rotate(0deg)";
+            }
+
             this.textContent = `Change Team (Current team: ${team})`
 
             console.log(`Changed to ${team} team`);
+
 
         })
 
