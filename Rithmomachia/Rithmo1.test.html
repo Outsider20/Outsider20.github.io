@@ -138,16 +138,6 @@
             left: 0;
         }
 
-        #startButton, #muteButton, #teamChangeButton, #themeChangeButton, #settingsButton{
-            background-color: #777777;
-            color: black;
-            padding: 15px 30px;
-            border: none;
-            cursor: pointer;
-            border-radius: 10px;
-            font-size: 20px;
-        }
-
         #StartScreen {
             display: flex;
             flex-direction: column;
@@ -163,6 +153,28 @@
             transition: transform 0.5s ease; 
             transform-origin: center center; 
         }
+
+        #StartScreen button {
+            background-color: #777777;
+            color: black;
+            padding: 15px 30px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 20px;
+            margin: 10px 0;
+            transform: rotate(0deg) !important; 
+            transition: background-color 0.3s ease; 
+            z-index: 1; 
+        }
+
+        #StartScreen button:hover {
+            background-color: #888888;
+        }
+
+        #StartScreen button:active {
+            background-color: #666666;
+        }
     </style>
 </head>
 <!-- Added the hidden class to nearly every element as a way to toggle their display on and off more conveniently  -Darin-->
@@ -173,13 +185,9 @@
         <div id="StartScreen">
             <!--Going to make another canvas for the start screen eventually maybe Darin-->
             <button id="startButton">Start Game</button>
-            <br>
             <button id="muteButton">Mute</button>
-            <br>
             <button id="teamChangeButton">Change Team (Current team: Black)</button>
-            <br>
             <button id="themeChangeButton">Change Theme</button>
-            <br>
             <button id="settingsButton">Settings</button>
         </div>
         <div class="game-container">
