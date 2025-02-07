@@ -329,6 +329,21 @@
                         scaleX: CANVAS_WIDTH / boardImage.width,
                         scaleY: CANVAS_HEIGHT / boardImage.height
                     });
+
+                    if (team === "White") {
+                        boardImage.set({
+                            angle: 180,
+                            left: CANVAS_WIDTH,
+                            top: CANVAS_HEIGHT
+                        });
+                    } else {
+                        boardImage.set({
+                            angle: 0,
+                            left: 0,
+                            top: 0
+                        });
+                    }
+
                     canvas.insertAt(boardImage, 0);
                     resolve(boardImage);
                 }, function(error) {
