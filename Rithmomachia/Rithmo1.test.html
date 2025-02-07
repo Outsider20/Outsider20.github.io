@@ -89,6 +89,7 @@
             height: 300px;
             min-width: 85px;
             width: 85px;
+            order: -1;
         }
 
         #white-pyramid {
@@ -99,6 +100,7 @@
             height: 300px;
             min-width: 85px;
             width: 85px;
+            order: 1;
         }
 
         #endLoopButton {
@@ -171,7 +173,7 @@
             <br>
             <button id="muteButton">Mute</button>
             <br>
-            <button id="teamChangeButton">Change Team</button>
+            <button id="teamChangeButton">Change Team (Current team: Black)</button>
             <br>
             <button id="themeChangeButton">Change Theme</button>
             <br>
@@ -199,6 +201,7 @@
     <script>
 
         let isMuted = false;
+        let team = "Black";
         
         const CANVAS_WIDTH = 1000;
         const OFFSET_WIDTH = 65;
@@ -225,6 +228,24 @@
             document.getElementById('muteButton').classList.add('hidden');
             StartGame();
         });
+
+        document.getElementById('teamChangeButton').addEventListener('click', function(){
+            let Black_Pyramid = document.getElementById("black-pyramid");
+            let White_Pyramid = document.getElementById("white-pyramid");
+
+            let BlackOrder = window.getComputedStyle(Black_Pyramid).order;
+            let WhiteOrder = window.getComputedStyle(White_Pyramid).order;
+
+            Black_Pyramid.style.order = WhiteOrder;
+            White_Pyramid.style.order = BlackOrder;
+
+            team = team === "Black" ? "White" : "Black";
+
+            this.textContent = `Change Team (Current team: ${team})`
+
+            console.log(`Changed to ${team} team`);
+
+        })
 
         document.getElementById('muteButton').addEventListener('click', function() {
             isMuted = !isMuted;
@@ -363,7 +384,7 @@
         }
 
         async function addPieces() {
-            const initialBoardState = [
+            const initialBoardState = team === "Black" ? [
                 ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
                 ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P', 'S169'],
                 ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
@@ -372,7 +393,15 @@
                 ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
                 ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
                 ['s361', 'p', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
-
+            ] : [
+                ['S25', 'S15', 'T9', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't100', 'p', 's361'],
+                ['S81', 'S45', 'T25', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't64', 's120', 's225'],
+                ['.', 'T6', 'C4', 'C2', '.', '.', '.', '.', '.', '.', '.', '.', 'c9', 'c81', 't90', '.'],
+                ['.', 'T20', 'C16', 'C4', '.', '.', '.', '.', '.', '.', '.', '.', 'c7', 'c49', 't56', '.'],
+                ['.', 'T42', 'C36', 'C6', '.', '.', '.', '.', '.', '.', '.', '.', 'c5', 'c25', 't30', '.'],
+                ['.', 'T72', 'C64', 'C8', '.', '.', '.', '.', '.', '.', '.', '.', 'c3', 'c9', 't12', '.'],
+                ['S169', 'P', 'T49', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't36', 's66', 's121'],
+                ['S289', 'S153', 'T81', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't16', 's28', 's49']
             ];
 
             const pieceLoadPromises = [];
