@@ -90,6 +90,7 @@
             height: 300px;
             min-width: 85px;
             width: 85px;
+            /* Added order attribute for team change functionality and moving the pyramid display Darin*/
             order: -1;
         }
 
@@ -101,6 +102,7 @@
             height: 300px;
             min-width: 85px;
             width: 85px;
+            /* Order here too Darin*/
             order: 1;
         }
 
@@ -151,6 +153,7 @@
             overflow: hidden;
         }
 
+        /* Added to flip background without flipping the entire start screen Darin */
         #backgroundWrapper {
             position: absolute;
             top: 0;
@@ -164,6 +167,7 @@
             transform-origin: center center; 
         }
 
+        /* Added a grouping of the start screen buttons to format instead of listing them individually. Also gave start screen buttons a hover effect Darin */
         #StartScreen button {
             background-color: #777777;
             color: black;
@@ -194,6 +198,7 @@
         <h1 class="title">Rithmomachia</h1>
         <div id="StartScreen">
             <!--Going to make another canvas for the start screen eventually maybe Darin-->
+            <!-- Background wrapper for image of background board on start screen Darin -->
             <div id="backgroundWrapper"></div>
             <button id="startButton">Start Game</button>
             <button id="muteButton">Mute</button>
@@ -223,6 +228,8 @@
     <script>
 
         let isMuted = false;
+
+        //Team variable used to determine which team the player is Darin
         let team = "Black";
         
         const CANVAS_WIDTH = 1000;
@@ -251,6 +258,8 @@
             StartGame();
         });
 
+
+        //Function for the team change button. Once pressed behind the scenes the board and pieces are swapped and visually the button changes the current team and the background of start screen flips. Darin
         document.getElementById('teamChangeButton').addEventListener('click', function(){
             const backgroundWrapper = document.getElementById('backgroundWrapper');
 
@@ -296,6 +305,7 @@
 
         //Can also mute and unmute audio by pressing m on the keyboard
         document.addEventListener("keydown", function(event){
+            //Key to mute audio Darin
             if(event.key == "m" || event.key === "M")
             {
                 isMuted = !isMuted;
@@ -309,7 +319,7 @@
                 for (let video of activeVideos) {
                     video.muted = isMuted;
             }
-            }
+            } //Key to skip videos Darin
             else if(event.key == "s" || event.key == "S")
             {
                 SkipVideo();
@@ -328,7 +338,7 @@
             document.getElementById('white-pyramid').classList.remove('hidden');
             document.getElementById('game-board').classList.remove('hidden');
         }
-
+        //Skips video by removing it from the html Darin
         function SkipVideo(){
             const videoContainer = document.getElementById('videoContainer'); 
             if(videoContainer.innerHTML != "")
@@ -430,6 +440,7 @@
         }
 
         async function addPieces() {
+            //2 Board initial states for the different player team cases. Darin
             const initialBoardState = team === "Black" ? [
                 ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
                 ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P', 'S169'],
