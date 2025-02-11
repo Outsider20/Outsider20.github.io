@@ -228,8 +228,11 @@
     </video>
 
     <script>
-        const width = 46;
-        const height = 41;
+        const DIMENSIONS = {
+          width: 46,
+          height: 41
+        };
+        
         // New ---------------------------------------------------------------------------------------
         const THEMES = {
             Lulu_Burkowski: {
@@ -254,8 +257,8 @@
                     deceit: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`
                 },
                 pieceScale: {
-                  x: .75*length / img.width,
-                  y: .75*height / img.height,
+                  x: 0.75 * DIMENSIONS.width / 100,
+                  y: 0.75 * DIMENSIONS.height / 100
                 }
             },
             Jessie_Reed: {
@@ -305,8 +308,8 @@
                     deceit: 'Images/Rith/Deceit Video.mp4'
                 },
                 pieceScale: {
-                    x: 0.76 * width / 100,
-                    y: 0.76 * height / 100
+                    x: 0.76 * DIMENSIONS.width / 100,
+                    y: 0.76 * DIMENSIONS.height / 100
                 }
             }
         };
