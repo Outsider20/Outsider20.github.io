@@ -228,7 +228,9 @@
     </video>
 
     <script>
-// New ---------------------------------------------------------------------------------------
+        const length = 46;
+        const height = 41;
+        // New ---------------------------------------------------------------------------------------
         const THEMES = {
             Lulu_Burkowski: {
                 board: 'Images/Rithmomachia/Board and pieces/Board-Rotate.png',
@@ -363,8 +365,7 @@
             console.log("Intro video is preloaded and ready.");
         };
 
-        const length = 46;
-        const height = 41;
+        
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
