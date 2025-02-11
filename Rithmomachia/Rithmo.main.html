@@ -155,7 +155,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('Images/HUNT-Pieces/HUNT-NewBoard-01.png');
+            background-image: url(THEMES[currentTheme].board);
             background-size: cover;
             background-position: center;
             transition: transform 0.5s ease;
@@ -756,16 +756,16 @@
         function capturePiece(position, value, type) {
             switch (type) {
                 case "s":
-                    playVideo(`Images/Rith/Siege Video.mp4`);
+                    playVideo(THEMES[currentTheme].siege);
                     break;
                 case "n":
-                    playVideo(`Images/Rith/Encounter Video.mp4`);
+                    playVideo(THEMES[currentTheme].encounter);
                     break;
                 case "r":
-                    playVideo(`Images/Rith/Eruption Video.mp4`);
+                    playVideo(THEMES[currentTheme].eruption);
                     break;
                 case "d":
-                    playVideo(`Images/Rith/Deceit Video.mp4`);
+                    playVideo(THEMES[currentTheme].diceit);
                     break;
             }
             for (let i = 0; i < position.length; i++) {
