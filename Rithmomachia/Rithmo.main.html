@@ -655,58 +655,58 @@
         }
 
 
-        function createGrid() {
-            const rows = 8; // Number of rows
-            const cols = 16; // Number of columns
-            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
+        // function createGrid() {
+        //     const rows = 8; // Number of rows
+        //     const cols = 16; // Number of columns
+        //     const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
 
-            // Create the grid
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    // Calculate the center position for the current square
-                    const centerX = col * length + length/2 + 95; // Adjust left margin
-                    const centerY = row * height + height/2 + 77; // Adjust top margin
+        //     // Create the grid
+        //     for (let row = 0; row < rows; row++) {
+        //         for (let col = 0; col < cols; col++) {
+        //             // Calculate the center position for the current square
+        //             const centerX = col * length + length/2 + 95; // Adjust left margin
+        //             const centerY = row * height + height/2 + 77; // Adjust top margin
 
-                    // Create the grid square
-                    const rect = new fabric.Rect({
-                        left: centerX - length / 2, // Adjust to start drawing from the top-left corner
-                        top: centerY - height / 2, // Adjust to start drawing from the top-left corner
-                        width: length,
-                        height: height,
-                        fill: 'transparent',
-                        strokeWidth: 1,
-                        stroke: 'red',
-                        selectable: false,
-                        evented: false // Prevent grid squares from being interactive
-                    });
+        //             // Create the grid square
+        //             const rect = new fabric.Rect({
+        //                 left: centerX - length / 2, // Adjust to start drawing from the top-left corner
+        //                 top: centerY - height / 2, // Adjust to start drawing from the top-left corner
+        //                 width: length,
+        //                 height: height,
+        //                 fill: 'transparent',
+        //                 strokeWidth: 1,
+        //                 stroke: 'red',
+        //                 selectable: false,
+        //                 evented: false // Prevent grid squares from being interactive
+        //             });
 
-                    // Add the grid square to the canvas
-                    canvas.add(rect);
+        //             // Add the grid square to the canvas
+        //             canvas.add(rect);
 
-                    // Determine the algebraic notation
-                    const file = alphabet[row]; // Row determines column label (A-H)
-                    const rank = col + 1; // Column determines row number (1-16)
+        //             // Determine the algebraic notation
+        //             const file = alphabet[row]; // Row determines column label (A-H)
+        //             const rank = col + 1; // Column determines row number (1-16)
 
-                    const algebraicNotation = `${file}${rank}`;
+        //             const algebraicNotation = `${file}${rank}`;
 
-                    // Create the text for algebraic notation
-                    const text = new fabric.Text(algebraicNotation, {
-                        left: centerX, // Centered in the square horizontally
-                        top: centerY, // Centered in the square vertically
-                        fontSize: 12,
-                        fontFamily: 'Arial',
-                        fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
-                        originX: 'center', // Align text by its center
-                        originY: 'center', // Align text by its center
-                        selectable: false, // Text should not be interactive
-                        evented: false // Text should not trigger events
-                    });
+        //             // Create the text for algebraic notation
+        //             const text = new fabric.Text(algebraicNotation, {
+        //                 left: centerX, // Centered in the square horizontally
+        //                 top: centerY, // Centered in the square vertically
+        //                 fontSize: 12,
+        //                 fontFamily: 'Arial',
+        //                 fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
+        //                 originX: 'center', // Align text by its center
+        //                 originY: 'center', // Align text by its center
+        //                 selectable: false, // Text should not be interactive
+        //                 evented: false // Text should not trigger events
+        //             });
 
-                    // Add the text to the canvas
-                    canvas.add(text);
-                }
-            }
-        }
+        //             // Add the text to the canvas
+        //             canvas.add(text);
+        //         }
+        //     }
+        // }
 
         function movePiece(from, to) {
 
@@ -1029,11 +1029,7 @@
         // Initialize the game
         async function initializeGame() {
             try {
-                
-                // Play Intro 
-                //playVideo('Images/Rith/HUNTRithCutscene.mp4')
-
-                
+   
                 // Load the background image first
                 await loadBoardBackground();
 
