@@ -263,7 +263,7 @@
             },
             Jessie_Reed: {
                  board: 'Images/Rithmomachia Art/Board.png',
-                pieces: {
+                 pieces: {
                     base: 'Images/Rithmomachia Art/',
                     whitePyramid: 'Images/Rithmomachia Art/White_Pyramid.png',
                     blackPyramid: 'Images/Rithmomachia Art/Black_Pyramid.png',
@@ -271,7 +271,7 @@
                             's': 'Square',
                             't': 'Triangle',
                             'c': 'Circle',
-                        }[baseType]
+                        }[type]
                     }.png`
                 },
                 videos: {
@@ -325,7 +325,7 @@
         document.getElementById('themeSelect').addEventListener('change', (e) => {
             currentTheme = e.target.value;
             localStorage.setItem('theme', currentTheme);
-            updateThemePreview();
+            //updateThemePreview();
             
             // Only reset the game if it's already started
             if (!document.getElementById('StartScreen').classList.contains('hidden')) {
@@ -335,10 +335,10 @@
             }
         });
 
-        function updateThemePreview() {
-            const preview = document.getElementById('themePreview');
-            preview.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
-        }
+        // function updateThemePreview() {
+        //     const preview = document.getElementById('themePreview');
+        //     preview.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
+        // }
 
         function updateBackgroundWrapper() {
             const backgroundWrapper = document.getElementById('backgroundWrapper');

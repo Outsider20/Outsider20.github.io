@@ -251,8 +251,131 @@
         //Team variable used to determine which team the player is Darin
         let team = "Black";
 
+        // --------
+
+        const DIMENSIONS = {
+          width: 46,
+          height: 41
+        };
+
+        const THEMES = {
+            Lulu_Burkowski: {
+                board: 'Images/Rithmomachia/Board and pieces/Board-Rotate.png',
+                pieces: {
+                    base: 'Images/Rithmomachia/Board and pieces',
+                    stackWhite: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
+                    stackBlack: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
+                    pieceFormat: (value, isWhite, type) => `Images/Rithmomachia/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
+                        {
+                            's': 'Square',
+                            't': 'Triangle',
+                            'c': 'Circle'
+                        }[type]
+                    }.png`
+                },
+                videos: {
+                    intro: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    siege: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    encounter: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    eruption: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    deceit: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`
+                },
+                pieceScale: {
+                  x: 0.75 * DIMENSIONS.width / 100,
+                  y: 0.75 * DIMENSIONS.height / 100
+                }
+            },
+            Jessie_Reed: {
+                 board: 'Images/Rithmomachia Art/Board.png',
+                 pieces: {
+                    base: 'Images/Rithmomachia Art/',
+                    whitePyramid: 'Images/Rithmomachia Art/White_Pyramid.png',
+                    blackPyramid: 'Images/Rithmomachia Art/Black_Pyramid.png',
+                    pieceFormat: (value, isWhite, type) => `${value}_${isWhite ? 'White' : 'Black'}_${{
+                            's': 'Square',
+                            't': 'Triangle',
+                            'c': 'Circle',
+                        }[type]
+                    }.png`
+                },
+                videos: {
+                    intro: 'Images/Rithmomachia Art/Intro final animation with sound.MP4',
+                    siege: 'Images/Rithmomachia Art/Siege final draft with sound.MP4',
+                    encounter: 'Images/Rithmomachia Art/Encounter final draft with sound.MP4',
+                    eruption: 'Images/Rithmomachia Art/Eruption final draft with sound.MP4',
+                    deceit: 'Images/Rithmomachia Art/Deceit final draft with sound.MP4'
+                },
+                pieceScale: {
+                    x: 40 / 100,
+                    y: 40 / 100
+                }
+            },
+            Daniel_Hunt: {
+                board: 'Images/HUNT-Pieces/HUNT-NewBoard-01.png',
+                pieces: {
+                    base: 'Images/HUNT-Pieces/',
+                    whitePyramid: 'Images/HUNT-Pieces/StackWhite.png',
+                    blackPyramid: 'Images/HUNT-Pieces/StackBrown.png',
+                    pieceFormat: (value, isWhite, type) => `Images/HUNT-Pieces/${
+                        {
+                            's': 'Sq',
+                            't': 'Tri',
+                            'c': 'Circ'
+                        }[type]
+                    }${value}.png`
+                },
+                videos: {
+                    intro: 'Images/Rith/HUNTRithCutscene.mp4',
+                    siege: 'Images/Rith/Siege Video.mp4',
+                    encounter: 'Images/Rith/Encounter Video.mp4',
+                    eruption: 'Images/Rith/Eruption Video.mp4',
+                    deceit: 'Images/Rith/Deceit Video.mp4'
+                },
+                pieceScale: {
+                    x: 0.76 * DIMENSIONS.width / 100,
+                    y: 0.76 * DIMENSIONS.height / 100
+                }
+            }
+        };
+
+        let currentTheme = "Lulu_Burkowski";
+
+        // Initialize theme from localStorage or default to classic
+        const savedTheme = localStorage.getItem('theme') || 'Lulu_Burkowski';
+        currentTheme = savedTheme;
+        document.getElementById('themeSelect').value = savedTheme;
+
+        // Theme switching functionality
+        document.getElementById('themeSelect').addEventListener('change', (e) => {
+            currentTheme = e.target.value;
+            localStorage.setItem('theme', currentTheme);
+            //Breaking code will fix
+            //updateThemePreview();
+            
+            // Only reset the game if it's already started
+            if (!document.getElementById('StartScreen').classList.contains('hidden')) {
+                updateBackgroundWrapper();
+            } else {
+                resetGame();
+            }
+        });
+
+        //Was breaking my code.
+        // function updateThemePreview() {
+        //     const preview = document.getElementById('themePreview');
+        //     preview.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
+        // }
+
+        function updateBackgroundWrapper() {
+            const backgroundWrapper = document.getElementById('backgroundWrapper');
+            backgroundWrapper.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
+        }
+
+        //--------------------
+
         const CANVAS_WIDTH = 925;
         const CANVAS_HEIGHT = 480;
+
 
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
