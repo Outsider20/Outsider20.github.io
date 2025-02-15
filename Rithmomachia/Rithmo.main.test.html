@@ -155,7 +155,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('Images/HUNT-Pieces/HUNT-NewBoard-01.png');
+            /* Unneeded. Background wrapper switches regardless of what is listed here. Should only be a static background image before the user switches it. */
+            background-image: /*`url(${THEMES[currentTheme].board})`*/ url('Images/HUNT-Pieces/HUNT-NewBoard-01.png');
             background-size: cover;
             background-position: center;
             transition: transform 0.5s ease;
@@ -391,8 +392,10 @@
             console.log("Intro video is preloaded and ready.");
         };
 
+        //Not in original main file but breaks code if removed.
         const length = 46;
         const height = 41;
+
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
@@ -500,7 +503,8 @@
         // Load board background
         function loadBoardBackground() {
             return new Promise((resolve, reject) => {
-                fabric.Image.fromURL('Images/HUNT-Pieces/HUNT-NewBoard-01.png', function(boardImage) {
+                //Loading the board image seems to work correctly
+                fabric.Image.fromURL(THEMES[currentTheme].board/*'Images/HUNT-Pieces/HUNT-NewBoard-01.png'*/, function(boardImage) {
                     boardImage.set({
                         selectable: false,
                         evented: false,
@@ -528,7 +532,8 @@
                 // Construct dynamic image path
                 let imagePath;
                 if (baseType == 'p') {
-                    imagePath = `Images/HUNT-Pieces/Stack${isWhite ? 'White' : 'Brown'}.png`
+                    //Error loading this 
+                    imagePath = /*isWhite ? THEMES[currentTheme].pieces.stackWhite : THEMES[currentTheme].pieces.stackBrown*/`Images/HUNT-Pieces/Stack${isWhite ? 'White' : 'Brown'}.png`
                     value = isWhite ? ['c1', 'c4', 't9', 't16', 's25', 's36'] : ['C16', 'T25', 'T36', 'S49', 'S64']
                 }else {
                     imagePath = `Images/HUNT-Pieces/${{
@@ -536,6 +541,14 @@
                         't': 'Tri',
                         'c': 'Circ'
                     }[baseType]}${value}.png`;
+
+                    //Theres a problem with this part loading
+                    // const pieceType = {
+                    //     's': THEMES[currentTheme].pieces.square,
+                    //     't': THEMES[currentTheme].pieces.triangle,
+                    //     'c': THEMES[currentTheme].pieces.circle
+                    // }[baseType];
+                    // imagePath = `${pieceType}${value}.png`;
                 }
 
                 fabric.Image.fromURL(imagePath, function(img) {
@@ -544,8 +557,9 @@
                         top: 0,
                         originX: 'center',
                         originY: 'center',
-                        scaleX: .76*length / img.width,
-                        scaleY: .76*height / img.height,
+                        //Scale seems to be way too big
+                        scaleX: /*THEMES[currentTheme].pieceScale.x*/ .76*length / img.width,
+                        scaleY: /*THEMES[currentTheme].pieceScale.y*/ .76*height / img.height,
                         hasControls: false,
                         hasBorders: false,
                         selectable: true,
@@ -684,58 +698,58 @@
         }
 
 
-        function createGrid() {
-            const rows = 8; // Number of rows
-            const cols = 16; // Number of columns
-            const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
+        // function createGrid() {
+        //     const rows = 8; // Number of rows
+        //     const cols = 16; // Number of columns
+        //     const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
 
-            // Create the grid
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    // Calculate the center position for the current square
-                    const centerX = col * length + length/2 + 95; // Adjust left margin
-                    const centerY = row * height + height/2 + 77; // Adjust top margin
+        //     // Create the grid
+        //     for (let row = 0; row < rows; row++) {
+        //         for (let col = 0; col < cols; col++) {
+        //             // Calculate the center position for the current square
+        //             const centerX = col * length + length/2 + 95; // Adjust left margin
+        //             const centerY = row * height + height/2 + 77; // Adjust top margin
 
-                    // Create the grid square
-                    const rect = new fabric.Rect({
-                        left: centerX - length / 2, // Adjust to start drawing from the top-left corner
-                        top: centerY - height / 2, // Adjust to start drawing from the top-left corner
-                        width: length,
-                        height: height,
-                        fill: 'transparent',
-                        strokeWidth: 1,
-                        stroke: 'red',
-                        selectable: false,
-                        evented: false // Prevent grid squares from being interactive
-                    });
+        //             // Create the grid square
+        //             const rect = new fabric.Rect({
+        //                 left: centerX - length / 2, // Adjust to start drawing from the top-left corner
+        //                 top: centerY - height / 2, // Adjust to start drawing from the top-left corner
+        //                 width: length,
+        //                 height: height,
+        //                 fill: 'transparent',
+        //                 strokeWidth: 1,
+        //                 stroke: 'red',
+        //                 selectable: false,
+        //                 evented: false // Prevent grid squares from being interactive
+        //             });
 
-                    // Add the grid square to the canvas
-                    canvas.add(rect);
+        //             // Add the grid square to the canvas
+        //             canvas.add(rect);
 
-                    // Determine the algebraic notation
-                    const file = alphabet[row]; // Row determines column label (A-H)
-                    const rank = col + 1; // Column determines row number (1-16)
+        //             // Determine the algebraic notation
+        //             const file = alphabet[row]; // Row determines column label (A-H)
+        //             const rank = col + 1; // Column determines row number (1-16)
 
-                    const algebraicNotation = `${file}${rank}`;
+        //             const algebraicNotation = `${file}${rank}`;
 
-                    // Create the text for algebraic notation
-                    const text = new fabric.Text(algebraicNotation, {
-                        left: centerX, // Centered in the square horizontally
-                        top: centerY, // Centered in the square vertically
-                        fontSize: 12,
-                        fontFamily: 'Arial',
-                        fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
-                        originX: 'center', // Align text by its center
-                        originY: 'center', // Align text by its center
-                        selectable: false, // Text should not be interactive
-                        evented: false // Text should not trigger events
-                    });
+        //             // Create the text for algebraic notation
+        //             const text = new fabric.Text(algebraicNotation, {
+        //                 left: centerX, // Centered in the square horizontally
+        //                 top: centerY, // Centered in the square vertically
+        //                 fontSize: 12,
+        //                 fontFamily: 'Arial',
+        //                 fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
+        //                 originX: 'center', // Align text by its center
+        //                 originY: 'center', // Align text by its center
+        //                 selectable: false, // Text should not be interactive
+        //                 evented: false // Text should not trigger events
+        //             });
 
-                    // Add the text to the canvas
-                    canvas.add(text);
-                }
-            }
-        }
+        //             // Add the text to the canvas
+        //             canvas.add(text);
+        //         }
+        //     }
+        // }
 
         function movePiece(from, to) {
 
@@ -784,17 +798,18 @@
 
         function capturePiece(position, value, type) {
             switch (type) {
+                //Vids will not load. 404 errors
                 case "s":
-                    playVideo(`Images/Rith/Siege Video.mp4`);
+                    playVideo(/*THEMES[currentTheme].siege*/ `Images/Rith/Siege Video.mp4`);
                     break;
                 case "n":
-                    playVideo(`Images/Rith/Encounter Video.mp4`);
+                    playVideo(/*THEMES[currentTheme].encounter*/ `Images/Rith/Encounter Video.mp4`);
                     break;
                 case "r":
-                    playVideo(`Images/Rith/Eruption Video.mp4`);
+                    playVideo(/*THEMES[currentTheme].eruption*/ `Images/Rith/Eruption Video.mp4`);
                     break;
                 case "d":
-                    playVideo(`Images/Rith/Deceit Video.mp4`);
+                    playVideo(/*THEMES[currentTheme].diceit */ `Images/Rith/Deceit Video.mp4`);
                     break;
             }
             for (let i = 0; i < position.length; i++) {
@@ -1058,11 +1073,7 @@
         // Initialize the game
         async function initializeGame() {
             try {
-                
-                // Play Intro 
-                //playVideo('Images/Rith/HUNTRithCutscene.mp4')
 
-                
                 // Load the background image first
                 await loadBoardBackground();
 
