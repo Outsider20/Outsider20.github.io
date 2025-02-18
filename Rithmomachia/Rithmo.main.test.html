@@ -835,8 +835,8 @@
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
-                const targetCenterX = toIndices.r * length + length / 2 + 95;
-                const targetCenterY = toIndices.c * height + height / 2 + 77;
+                const targetCenterX = toIndices.r * length + length / 2 + THEMES[currentTheme].gridOffset.centerX;
+                const targetCenterY = toIndices.c * height + height / 2 + THEMES[currentTheme].gridOffset.centerY;
 
                 // Animate the piece to the target position with smooth transition
                 piece.animate({
