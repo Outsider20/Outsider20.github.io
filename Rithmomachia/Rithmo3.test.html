@@ -275,9 +275,9 @@
             team = team === "Black" ? "White" : "Black";
 
             if (team === "White") {
-                backgroundWrapper.style.transform = "rotate(180deg)";
+                backgroundWrapper.style.transform = "scaleX(-1)";
             } else {
-                backgroundWrapper.style.transform = "rotate(0deg)";
+                backgroundWrapper.style.transform = "scaleX(1)";
             }
 
             this.textContent = `Change Team (Current team: ${team})`
