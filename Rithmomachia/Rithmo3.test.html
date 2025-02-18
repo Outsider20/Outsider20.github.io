@@ -361,7 +361,7 @@
                         evented: false,
                         left: 0,
                         top: 0,
-                        scaleX: CANVAS_WIDTH / boardImage.width,
+                        scaleX: team == "Black" ? CANVAS_WIDTH / boardImage.width : CANVAS_WIDTH / boardImage.width * -1,
                         scaleY: CANVAS_HEIGHT / boardImage.height
                     });
                     canvas.insertAt(boardImage, 0);
