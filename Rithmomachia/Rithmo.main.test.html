@@ -264,8 +264,8 @@
                 board: 'Images/Rithmomachia/Board and pieces/Board-Rotate.png',
                 pieces: {
                     base: 'Images/Rithmomachia/Board and pieces',
-                    whitePyramid: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
-                    blackPyramid: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
+                    blackPyramid: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
+                    whitePyramid: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
                     pieceFormat: (value, isWhite, type) => `Images/Rithmomachia/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
                         {
                             's': 'Square',
@@ -285,6 +285,20 @@
                   x: 0.75 * DIMENSIONS.width / 100,
                   y: 0.75 * DIMENSIONS.height / 100
                 }
+                <!--Work In progress--!>
+                // boardConfig: {
+                // canvasWidth: 1000,
+                // canvasHeight: 500,
+                // offsetWidth: 65,
+                // offsetHeight: 31.25,
+                    // Derived measurements
+                // borderLeft: 65/2,     // offsetWidth/2
+                // borderTop: 31.25/2,   // offsetHeight/2
+                // playableWidth: 740,    // Width of the actual playing area
+                // playableHeight: 330,   // Height of the actual playing area
+                // cellWidth: (1000 - 65)/16,  // (canvasWidth - offsetWidth)/columns      // Individual cell width
+                // cellHeight: (500 - 31.25)/8 // (canvasHeight - offsetHeight)/rows     // Individual cell height
+                //}
             },
             Jessie_Reed: {
                  board: 'Images/Rithmomachia Art/Board.png',
@@ -310,6 +324,14 @@
                     x: 40 / 100,
                     y: 40 / 100
                 }
+                //boardConfig: {
+                //  borderLeft: 92.75,
+                //  borderTop: 75,
+                //  playableWidth: 740,    // Width of the actual playing area
+                //  playableHeight: 330,   // Height of the actual playing area
+                //  cellWidth: 46.25,      // Individual cell width
+                //  cellHeight: 41.25      // Individual cell height
+                //}
             },
             Daniel_Hunt: {
                 board: 'Images/HUNT-Pieces/HUNT-NewBoard-01.png',
@@ -336,6 +358,14 @@
                     x: 0.76 * DIMENSIONS.width / 100,
                     y: 0.76 * DIMENSIONS.height / 100
                 }
+                //boardConfig: {
+                //  borderLeft: 92.75,
+                //  borderTop: 75,
+                //  playableWidth: 740,    // Width of the actual playing area
+                //  playableHeight: 330,   // Height of the actual playing area
+                //  cellWidth: 46.25,      // Individual cell width
+                //  cellHeight: 41.25      // Individual cell height
+                //}
             }
         };
 
