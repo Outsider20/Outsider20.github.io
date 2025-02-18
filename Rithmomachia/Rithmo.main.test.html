@@ -221,9 +221,9 @@
             <button id="muteButton">Mute</button>
             <button id="teamChangeButton">Change Team (Current team: Black)</button>
             <select id="themeSelect" title="Theme">
+                <option value="Daniel_Hunt">Daniel Theme</option>
                 <option value="Lulu_Burkowski">Lulu Theme</option>
                 <option value="Jessie_Reed">Jessie Theme</option>
-                <option value="Daniel_Hunt">Daniel Theme</option>
             </select>
         </div>
         <div class="game-container">
@@ -306,7 +306,7 @@
                     base: 'Images/Rithmomachia Art/',
                     whitePyramid: 'Images/Rithmomachia Art/White_Pyramid.png',
                     blackPyramid: 'Images/Rithmomachia Art/Black_Pyramid.png',
-                    pieceFormat: (value, isWhite, type) => `${value}_${isWhite ? 'White' : 'Black'}_${{
+                    pieceFormat: (value, isWhite, type) => `Images/Rithmomachia Art/${value}_${isWhite ? 'White' : 'Black'}_${{
                             's': 'Square',
                             't': 'Triangle',
                             'c': 'Circle',
@@ -355,8 +355,8 @@
                     deceit: 'Images/Rith/Deceit Video.mp4'
                 },
                 pieceScale: {
-                    x: 0.76 * DIMENSIONS.width / 100,
-                    y: 0.76 * DIMENSIONS.height / 100
+                    x: (0.76 * DIMENSIONS.width) / 100,
+                    y: (0.76 * DIMENSIONS.height) / 100
                 }
                 //boardConfig: {
                 //  borderLeft: 92.75,
@@ -369,17 +369,17 @@
             }
         };
 
-        let currentTheme = "Lulu_Burkowski";
+        let currentTheme = "Daniel_Hunt";
 
-        // Initialize theme from localStorage or default to classic
-        const savedTheme = localStorage.getItem('theme') || 'Lulu_Burkowski';
-        currentTheme = savedTheme;
-        document.getElementById('themeSelect').value = savedTheme;
+        // // Initialize theme from localStorage or default to classic
+        // const savedTheme = localStorage.getItem('theme') || 'Daniel_Hunt';
+        // currentTheme = savedTheme;
+        // document.getElementById('themeSelect').value = savedTheme;
 
         // Theme switching functionality
         document.getElementById('themeSelect').addEventListener('change', (e) => {
             currentTheme = e.target.value;
-            localStorage.setItem('theme', currentTheme);
+            //localStorage.setItem('theme', currentTheme);
             //Breaking code will fix
             //updateThemePreview();
             
