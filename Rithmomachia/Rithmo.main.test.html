@@ -288,6 +288,10 @@
                 pieceOffset: {
                     left: 65/2,
                     top: 31.25/2
+                },
+                cellSize: {
+                    length: 58.4375,
+                    height: 58.59375
                 }
                 <!--Work In progress--!> //Well need these to have the pieces positions change based on the board type (boarder thickness)
                 // boardConfig: {
@@ -331,6 +335,10 @@
                 pieceOffset: {
                     left: 71,
                     top: 71
+                },
+                cellSize: {
+                    length: 680/16,
+                    height: 392/8
                 }
                 //boardConfig: {
                 //  borderLeft: 92.75,
@@ -369,7 +377,12 @@
                 pieceOffset: {
                     left: 92.75,
                     top: 75
+                },
+                cellSize: {
+                    length: 46,
+                    height: 41
                 }
+
                 //boardConfig: {
                 //  borderLeft: 92.75,
                 //  borderTop: 75,
@@ -435,8 +448,8 @@
         };
 
         //Not in original main file but breaks code if removed.
-        const length = 46;
-        const height = 41;
+        const length = THEMES[currentTheme].cellSize.length;
+        const height = THEMES[currentTheme].cellSize.height;
 
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
