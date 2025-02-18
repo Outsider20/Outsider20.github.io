@@ -355,8 +355,8 @@
                     deceit: 'Images/Rith/Deceit Video.mp4'
                 },
                 pieceScale: {
-                    x: (0.76 * DIMENSIONS.width) / 100,
-                    y: (0.76 * DIMENSIONS.height) / 100
+                    x: 0.76 * DIMENSIONS.width / 100,
+                    y: 0.76 * DIMENSIONS.height / 100
                 }
                 //boardConfig: {
                 //  borderLeft: 92.75,
@@ -583,9 +583,9 @@
                         top: 0,
                         originX: 'center',
                         originY: 'center',
-                        //Scale seems to be way too big
-                        scaleX: /*THEMES[currentTheme].pieceScale.x*/ .76*length / img.width,
-                        scaleY: /*THEMES[currentTheme].pieceScale.y*/ .76*height / img.height,
+                        //Scale seems to be way too big for piece scale
+                        scaleX: /* THEMES[currentTheme].pieceScale.x */  .76*length / img.width ,
+                        scaleY: /* THEMES[currentTheme].pieceScale.y */ .76*height / img.height ,
                         hasControls: false,
                         hasBorders: false,
                         selectable: true,
