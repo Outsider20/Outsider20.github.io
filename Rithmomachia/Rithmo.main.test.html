@@ -292,6 +292,10 @@
                 cellSize: {
                     length: 58.4375,
                     height: 58.59375
+                },
+                gridOffset: {
+                    centerX: 125 / 4,
+                    centerY: 17
                 }
                 <!--Work In progress--!> //Well need these to have the pieces positions change based on the board type (boarder thickness)
                 // boardConfig: {
@@ -339,6 +343,10 @@
                 cellSize: {
                     length: 680/16,
                     height: 392/8
+                },
+                gridOffset: {
+                    centerX: 71,
+                    centerY: 71
                 }
                 //boardConfig: {
                 //  borderLeft: 92.75,
@@ -381,6 +389,10 @@
                 cellSize: {
                     length: 46,
                     height: 41
+                },
+                gridOffset: {
+                    centerX: 95,
+                    centerY: 77
                 }
 
                 //boardConfig: {
@@ -929,8 +941,8 @@
                 for (let row = 0; row < rows; row++) {
                     for (let col = 0; col < cols; col++) {
                         // Calculate the center of the current grid square
-                        const gridCenterX = col * length + length / 2 + 95;
-                        const gridCenterY = row * height + height / 2 + 77;
+                        const gridCenterX = col * length + length / 2 + THEMES[currentTheme].gridOffset.centerX;
+                        const gridCenterY = row * height + height / 2 + THEMES[currentTheme].gridOffset.centerY;
 
                         // Calculate the distance between the mouse pointer and the grid center
                         const distance = Math.sqrt(
