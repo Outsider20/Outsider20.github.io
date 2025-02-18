@@ -264,8 +264,8 @@
                 board: 'Images/Rithmomachia/Board and pieces/Board-Rotate.png',
                 pieces: {
                     base: 'Images/Rithmomachia/Board and pieces',
-                    stackWhite: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
-                    stackBlack: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
+                    whitePyramid: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
+                    blackPyramid: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
                     pieceFormat: (value, isWhite, type) => `Images/Rithmomachia/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
                         {
                             's': 'Square',
@@ -536,11 +536,8 @@
                     imagePath = /*isWhite ? THEMES[currentTheme].pieces.stackWhite : THEMES[currentTheme].pieces.stackBrown*/`Images/HUNT-Pieces/Stack${isWhite ? 'White' : 'Brown'}.png`
                     value = isWhite ? ['c1', 'c4', 't9', 't16', 's25', 's36'] : ['C16', 'T25', 'T36', 'S49', 'S64']
                 }else {
-                    imagePath = `Images/HUNT-Pieces/${{
-                        's': 'Sq',
-                        't': 'Tri',
-                        'c': 'Circ'
-                    }[baseType]}${value}.png`;
+                    // Use the theme's pieceFormat function for regular pieces (This Should fix it)
+                    imagePath = THEMES[currentTheme].pieces.pieceFormat(value, isWhite, baseType);
 
                     //Theres a problem with this part loading
                     // const pieceType = {
