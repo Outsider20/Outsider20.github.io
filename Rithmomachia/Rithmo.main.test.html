@@ -284,6 +284,10 @@
                 pieceScale: {
                   x: 0.75 * DIMENSIONS.width / 100,
                   y: 0.75 * DIMENSIONS.height / 100
+                },
+                pieceOffset: {
+                    left: 65/2,
+                    top: 31.25/2
                 }
                 <!--Work In progress--!> //Well need these to have the pieces positions change based on the board type (boarder thickness)
                 // boardConfig: {
@@ -323,6 +327,10 @@
                 pieceScale: {
                     x: 40 / 100,
                     y: 40 / 100
+                },
+                pieceOffset: {
+                    left: 71,
+                    top: 71
                 }
                 //boardConfig: {
                 //  borderLeft: 92.75,
@@ -357,6 +365,10 @@
                 pieceScale: {
                     x: 0.76 * DIMENSIONS.width / 100,
                     y: 0.76 * DIMENSIONS.height / 100
+                },
+                pieceOffset: {
+                    left: 92.75,
+                    top: 75
                 }
                 //boardConfig: {
                 //  borderLeft: 92.75,
@@ -634,8 +646,9 @@
                         const piecePromise = loadPieceImage(piece).then(pieceObject => {
                             // Position the piece
                             pieceObject.set({
-                                left: colIndex * length + length / 2 + 92.75,
-                                top: rowIndex * height + height / 2 + 75
+                                //Needs to be dynamically set
+                                left: colIndex * length + length / 2 + THEMES[currentTheme].pieceOffset.left,
+                                top: rowIndex * height + height / 2 + THEMES[currentTheme].pieceOffset.top
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
