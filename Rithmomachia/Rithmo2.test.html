@@ -282,7 +282,7 @@
             team = team === "Black" ? "White" : "Black";
 
             backgroundWrapper.style.transition = "transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55)";
-            backgroundWrapper.style.transform = `rotate(${team === "White" ? 190 : -10}deg)`; // Overshoot angle
+            backgroundWrapper.style.transform = `rotate(${team === "White" ? 190 : -10}deg)`;
 
             setTimeout(() => {
                 backgroundWrapper.style.transform = `rotate(${team === "White" ? 180 : 0}deg)`;
