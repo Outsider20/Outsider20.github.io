@@ -274,11 +274,18 @@
 
             team = team === "Black" ? "White" : "Black";
 
-            if (team === "White") {
-                backgroundWrapper.style.transform = "rotate(180deg)";
-            } else {
-                backgroundWrapper.style.transform = "rotate(0deg)";
-            }
+            // if (team === "White") {
+            //     backgroundWrapper.style.transform = "rotate(180deg)";
+            // } else {
+            //     backgroundWrapper.style.transform = "rotate(0deg)";
+            // }
+
+            backgroundWrapper.style.transition = "transform 0.8s ease-in-out, scale 0.5s ease-in-out";
+            backgroundWrapper.style.transform = "scale(0.8)";
+
+            setTimeout(() => {
+                backgroundWrapper.style.transform = `scale(1) rotate(${team === "White" ? 180 : 0}deg)`;
+            }, 200);
 
             this.textContent = `Change Team (Current team: ${team})`
 
