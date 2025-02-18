@@ -282,8 +282,8 @@
                     deceit: (type, isWhite) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`
                 },
                 pieceScale: {
-                  x: 0.75 * DIMENSIONS.width / 100,
-                  y: 0.75 * DIMENSIONS.height / 100
+                  x: 0.75,
+                  y: 0.75
                 },
                 pieceOffset: {
                     left: 65/2,
@@ -333,8 +333,8 @@
                     deceit: 'Images/Rithmomachia Art/Deceit final draft with sound.MP4'
                 },
                 pieceScale: {
-                    x: 40 / 100,
-                    y: 40 / 100
+                    x: .76,
+                    y: .76
                 },
                 pieceOffset: {
                     left: 71,
@@ -379,8 +379,8 @@
                     deceit: 'Images/Rith/Deceit Video.mp4'
                 },
                 pieceScale: {
-                    x: 0.76 * DIMENSIONS.width / 100,
-                    y: 0.76 * DIMENSIONS.height / 100
+                    x: 0.76,
+                    y: 0.76
                 },
                 pieceOffset: {
                     left: 92.75,
@@ -621,8 +621,8 @@
                         originX: 'center',
                         originY: 'center',
                         //Scale seems to be way too big for piece scale
-                        scaleX: /* THEMES[currentTheme].pieceScale.x */  .76*length / img.width ,
-                        scaleY: /* THEMES[currentTheme].pieceScale.y */ .76*height / img.height ,
+                        scaleX:  THEMES[currentTheme].pieceScale.x*length / img.width ,
+                        scaleY:  THEMES[currentTheme].pieceScale.y*height / img.height ,
                         hasControls: false,
                         hasBorders: false,
                         selectable: true,
