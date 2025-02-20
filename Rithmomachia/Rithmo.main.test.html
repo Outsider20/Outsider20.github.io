@@ -515,10 +515,32 @@
 
             team = team === "Black" ? "White" : "Black";
 
-            if (team === "White") {
-                backgroundWrapper.style.transform = "rotate(180deg)";
-            } else {
-                backgroundWrapper.style.transform = "rotate(0deg)";
+            if (currentTheme== "Daniel_Hunt")
+            {
+                if (team === "White") {
+                backgroundWrapper.style.transform = "scaleX(-1)";
+                }   
+                else {
+                backgroundWrapper.style.transform = "scaleX(1)";
+                }
+            }
+            else if (currentTheme=="Jessie_Reed")
+            {
+                backgroundWrapper.style.transition = "transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55)";
+                backgroundWrapper.style.transform = `rotate(${team === "White" ? 190 : -10}deg)`;
+
+                setTimeout(() => {
+                    backgroundWrapper.style.transform = `rotate(${team === "White" ? 180 : 0}deg)`;
+                }, 300);
+            }
+            else if (currentTheme == "Lulu_Burkowski")
+            {
+                backgroundWrapper.style.transition = "transform 0.8s ease-in-out, scale 0.5s ease-in-out";
+                backgroundWrapper.style.transform = "scale(0.8)";
+
+                setTimeout(() => {
+                    backgroundWrapper.style.transform = `scale(1) rotate(${team === "White" ? 180 : 0}deg)`;
+                }, 200);
             }
 
             this.textContent = `Change Team (Current team: ${team})`
