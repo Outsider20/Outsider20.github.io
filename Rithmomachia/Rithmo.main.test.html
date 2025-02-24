@@ -438,7 +438,8 @@
             let source = video.querySelector('source');
             source.src = THEMES[currentTheme].videos.intro;
             video.load();
-            
+
+            //Changes body background if the theme is jessie's as test 2 has a special image for it. 
             if (currentTheme == "Jessie_Reed") {
                 document.body.style.backgroundImage = "url('Images/Rithmomachia Art/Background.jpg')";
             } 
