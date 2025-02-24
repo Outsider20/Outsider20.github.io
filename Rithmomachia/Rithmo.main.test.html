@@ -276,11 +276,12 @@
                     }.png`
                 },
                 videos: {
-                    intro: (type, isWhite) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    siege: (type, isWhite) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    encounter: (type, isWhite) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    eruption: (type, isWhite) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    deceit: (type, isWhite) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`
+                    //Is type in these statements even used?
+                    intro: `Images/Rithmomachia/captures and intro with sound/Intro.mp4`,
+                    siege: (/* type, */ isWhite) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite == "Black"? 'black' : 'white'}.mp4`,
+                    encounter: (/* type, */ isWhite) => `Images/Rithmomachia/captures and intro with sound/Encounter ${isWhite == "Black" ? 'black' : 'white'}.mp4`,
+                    eruption: (/* type, */ isWhite) => `Images/Rithmomachia/captures and intro with sound/Eruption ${isWhite == "Black" ? 'black' : 'white'}.mp4`,
+                    deceit: (/* type, */ isWhite) => `Images/Rithmomachia/captures and intro with sound/Deceit ${isWhite == "Black" ? 'black' : 'white'}.mp4`
                 },
                 pieceScale: {
                   x: 0.75,
@@ -332,10 +333,10 @@
                 },
                 videos: {
                     intro: 'Images/Rithmomachia Art/Intro final animation with sound.MP4',
-                    siege: 'Images/Rithmomachia Art/Siege final draft with sound.MP4',
-                    encounter: 'Images/Rithmomachia Art/Encounter final draft with sound.MP4',
-                    eruption: 'Images/Rithmomachia Art/Eruption final draft with sound.MP4',
-                    deceit: 'Images/Rithmomachia Art/Deceit final draft with sound.MP4'
+                    siege: (isWhite) => 'Images/Rithmomachia Art/Siege final draft with sound.MP4',
+                    encounter: (isWhite) => 'Images/Rithmomachia Art/Encounter final draft with sound.MP4',
+                    eruption: (isWhite) => 'Images/Rithmomachia Art/Eruption final draft with sound.MP4',
+                    deceit: (isWhite) => 'Images/Rithmomachia Art/Deceit final draft with sound.MP4'
                 },
                 pieceScale: {
                     x: .76,
@@ -383,10 +384,10 @@
                 },
                 videos: {
                     intro: 'Images/Rith/HUNTRithCutscene.mp4',
-                    siege: 'Images/Rith/Siege Video.mp4',
-                    encounter: 'Images/Rith/Encounter Video.mp4',
-                    eruption: 'Images/Rith/Eruption Video.mp4',
-                    deceit: 'Images/Rith/Deceit Video.mp4'
+                    siege: (isWhite) => 'Images/Rith/Siege Video.mp4',
+                    encounter: (isWhite) => 'Images/Rith/Encounter Video.mp4',
+                    eruption: (isWhite) => 'Images/Rith/Eruption Video.mp4',
+                    deceit: (isWhite) => 'Images/Rith/Deceit Video.mp4'
                 },
                 pieceScale: {
                     x: 0.76,
@@ -431,6 +432,13 @@
         document.getElementById('themeSelect').addEventListener('change', (e) => {
             currentTheme = e.target.value;
             console.log(currentTheme);
+
+            let video = document.getElementById('introVideo');
+            let source = video.querySelector('source');
+
+            source.src = THEMES[currentTheme].videos.intro;
+
+            video.load();
             //localStorage.setItem('theme', currentTheme);
             //Breaking code will fix
             //updateThemePreview();
@@ -630,6 +638,21 @@
                         scaleX: CANVAS_WIDTH / boardImage.width,
                         scaleY: CANVAS_HEIGHT / boardImage.height
                     });
+
+                    if (team === "White") {
+                        boardImage.set({
+                            angle: 180,
+                            left: CANVAS_WIDTH,
+                            top: CANVAS_HEIGHT
+                        });
+                    } else {
+                        boardImage.set({
+                            angle: 0,
+                            left: 0,
+                            top: 0
+                        });
+                    }
+
                     canvas.insertAt(boardImage, 0);
                     resolve(boardImage);
                 }, function(error) {
@@ -914,16 +937,16 @@
             switch (type) {
                 //Vids will not load. 404 errors
                 case "s":
-                    playVideo(/*THEMES[currentTheme].siege*/ `Images/Rith/Siege Video.mp4`);
+                    playVideo(THEMES[currentTheme].videos.siege(team) /* `Images/Rith/Siege Video.mp4` */);
                     break;
                 case "n":
-                    playVideo(/*THEMES[currentTheme].encounter*/ `Images/Rith/Encounter Video.mp4`);
+                    playVideo(THEMES[currentTheme].videos.encounter(team) /* `Images/Rith/Encounter Video.mp4` */);
                     break;
                 case "r":
-                    playVideo(/*THEMES[currentTheme].eruption*/ `Images/Rith/Eruption Video.mp4`);
+                    playVideo(THEMES[currentTheme].videos.eruption(team) /* `Images/Rith/Eruption Video.mp4` */);
                     break;
                 case "d":
-                    playVideo(/*THEMES[currentTheme].diceit */ `Images/Rith/Deceit Video.mp4`);
+                    playVideo(THEMES[currentTheme].videos.deceit(team) /* `Images/Rith/Deceit Video.mp4` */);
                     break;
             }
             for (let i = 0; i < position.length; i++) {
