@@ -433,14 +433,21 @@
             currentTheme = e.target.value;
             console.log(currentTheme);
 
+            //Loads intro depending on theme
             let video = document.getElementById('introVideo');
             let source = video.querySelector('source');
-
             source.src = THEMES[currentTheme].videos.intro;
-
             video.load();
+            
+            if (currentTheme == "Jessie_Reed") {
+                document.body.style.backgroundImage = "url('Images/Rithmomachia Art/Background.jpg')";
+            } 
+            else{
+                document.body.style.backgroundImage = "none";
+            }
+
             //localStorage.setItem('theme', currentTheme);
-            //Breaking code will fix
+            //Breaking code
             //updateThemePreview();
             
             // Only reset the game if it's already started
@@ -933,18 +940,18 @@
 
         function capturePiece(position, value, type) {
             switch (type) {
-                //Vids will not load. 404 errors
+                //Fixed
                 case "s":
-                    playVideo(THEMES[currentTheme].videos.siege(team) /* `Images/Rith/Siege Video.mp4` */);
+                    playVideo(THEMES[currentTheme].videos.siege(team));
                     break;
                 case "n":
-                    playVideo(THEMES[currentTheme].videos.encounter(team) /* `Images/Rith/Encounter Video.mp4` */);
+                    playVideo(THEMES[currentTheme].videos.encounter(team) );
                     break;
                 case "r":
-                    playVideo(THEMES[currentTheme].videos.eruption(team) /* `Images/Rith/Eruption Video.mp4` */);
+                    playVideo(THEMES[currentTheme].videos.eruption(team));
                     break;
                 case "d":
-                    playVideo(THEMES[currentTheme].videos.deceit(team) /* `Images/Rith/Deceit Video.mp4` */);
+                    playVideo(THEMES[currentTheme].videos.deceit(team) );
                     break;
             }
             for (let i = 0; i < position.length; i++) {
