@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rithmomachia</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #533c3c;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.0);
+            z-index: 9999;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            height: 91vh;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 600;
+            width: 350px;
+            padding: 15px;
+            margin: 0px;
+            text-align: center;
+            background-color: #620404;
+            border-radius: 100px;
+            color: #000000;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .custom-file-label {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            border-radius: 10px;
+        }
+
+        #black-pyramid {
+            background-color: black;
+            color: white;
+            border-radius: 5px;
+            text-justify: inter-word;
+            text-align: center;
+            height: 300px;
+            min-width: 85px;
+            width: 85px;
+            /* Added order attribute for team change functionality and moving the pyramid display Darin*/
+            order: -1;
+        }
+
+        #white-pyramid {
+            background-color: white;
+            color: black;
+            border-radius: 5px;
+            text-align: center;
+            height: 300px;
+            min-width: 85px;
+            width: 85px;
+            /* Order here too Darin*/
+            order: 1;
+        }
+
+        #endLoopButton {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        #pause {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        #game-board {
+            position: relative;
+            width: fit-content;
+            max-width: 925px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #StartScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 1000px; 
+            height: 800px; 
+            border-radius: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* Added to flip background without flipping the entire start screen Darin */
+        #backgroundWrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: `url(${THEMES[currentTheme].board})`,
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.5s ease;
+            transform-origin: center center; 
+        }
+
+        /* Added a grouping of the start screen buttons to format instead of listing them individually. Also gave start screen buttons a hover effect Darin */
+        #StartScreen button {
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 20px;
+            margin: 10px 0;
+            transform: rotate(0deg) !important; 
+            transition: background-color 0.3s ease; 
+            z-index: 1; 
+        }
+
+        #StartScreen button:hover {
+            background-color: #888888;
+        }
+
+        #StartScreen button:active {
+            background-color: #666666;
+        }
+
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" >
+        <div class="overlay" id="videoContainer"></div>
+        <h1 class="title">Rithmomachia</h1>
+        <div id="StartScreen">
+            <!--Going to make another canvas for the start screen eventually maybe Darin-->
+            <!-- Background wrapper for image of background board on start screen Darin -->
+            <div id="backgroundWrapper"></div>
+            <button id="startButton">Start Game</button>
+            <button id="muteButton">Mute</button>
+            <button id="teamChangeButton">Change Team (Current team: Black)</button>
+            <select id="themeSelect" title="Theme">
+              <option value="Lulu_Burkowski">Lulu Theme</option>
+              <option value="Jessie_Reed">Jessie Theme</option>
+              <option value="Daniel_Hunt">Daniel Theme</option>
+            </select>
+        </div>
+        <div class="game-container">
+            <label id = "fileLabel" for="moveFileInput" class="custom-file-label hidden" >Choose File</label>
+            <input type="file" id="moveFileInput" accept=".txt" style="display:none;"/>
+            <button id="endLoopButton" class="hidden">Reset</button>
+            <button id="pause" onclick="PauseButton()" class="hidden">Pause</button>
+        </div>
+        <div class="game-container">
+            <div id="black-pyramid" class="hidden"><h3>Black<br />Pyramid</h3></div>
+            <div id="game-board" class="hidden">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+            <div id="white-pyramid" class="hidden"><h3>White<br />Pyramid</h3></div>
+        </div>
+    </div>
+    <!--Preload Intro video Darin-->
+    <video id="introVideo" preload="auto" style="display: none;">
+        <source src="Images/Rith/HUNTRithCutscene.mp4" type="video/mp4">
+    </video>
+
+    <script>
+        const DIMENSIONS = {
+          width: 46,
+          height: 41
+        };
+        
+        // New ---------------------------------------------------------------------------------------
+        const THEMES = {
+            Lulu_Burkowski: {
+                board: 'Images/Rithmomachia/Board and pieces/Board-Rotate.png',
+                pieces: {
+                    base: 'Images/Rithmomachia/Board and pieces',
+                    stackWhite: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
+                    stackBlack: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
+                    pieceFormat: (value, isWhite, type) => `Images/Rithmomachia/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
+                        {
+                            's': 'Square',
+                            't': 'Triangle',
+                            'c': 'Circle'
+                        }[type]
+                    }.png`
+                },
+                videos: {
+                    intro: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    siege: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    encounter: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    eruption: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
+                    deceit: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`
+                },
+                pieceScale: {
+                  x: 0.75 * DIMENSIONS.width / 100,
+                  y: 0.75 * DIMENSIONS.height / 100
+                }
+            },
+            Jessie_Reed: {
+                 board: 'Images/Rithmomachia Art/Board.png',
+                 pieces: {
+                    base: 'Images/Rithmomachia Art/',
+                    whitePyramid: 'Images/Rithmomachia Art/White_Pyramid.png',
+                    blackPyramid: 'Images/Rithmomachia Art/Black_Pyramid.png',
+                    pieceFormat: (value, isWhite, type) => `${value}_${isWhite ? 'White' : 'Black'}_${{
+                            's': 'Square',
+                            't': 'Triangle',
+                            'c': 'Circle',
+                        }[type]
+                    }.png`
+                },
+                videos: {
+                    intro: 'Images/Rithmomachia Art/Intro final animation with sound.MP4',
+                    siege: 'Images/Rithmomachia Art/Siege final draft with sound.MP4',
+                    encounter: 'Images/Rithmomachia Art/Encounter final draft with sound.MP4',
+                    eruption: 'Images/Rithmomachia Art/Eruption final draft with sound.MP4',
+                    deceit: 'Images/Rithmomachia Art/Deceit final draft with sound.MP4'
+                },
+                pieceScale: {
+                    x: 40 / 100,
+                    y: 40 / 100
+                }
+            },
+            Daniel_Hunt: {
+                board: 'Images/HUNT-Pieces/HUNT-NewBoard-01.png',
+                pieces: {
+                    base: 'Images/HUNT-Pieces/',
+                    whitePyramid: 'Images/HUNT-Pieces/StackWhite.png',
+                    blackPyramid: 'Images/HUNT-Pieces/StackBrown.png',
+                    pieceFormat: (value, isWhite, type) => `Images/HUNT-Pieces/${
+                        {
+                            's': 'Sq',
+                            't': 'Tri',
+                            'c': 'Circ'
+                        }[type]
+                    }${value}.png`
+                },
+                videos: {
+                    intro: 'Images/Rith/HUNTRithCutscene.mp4',
+                    siege: 'Images/Rith/Siege Video.mp4',
+                    encounter: 'Images/Rith/Encounter Video.mp4',
+                    eruption: 'Images/Rith/Eruption Video.mp4',
+                    deceit: 'Images/Rith/Deceit Video.mp4'
+                },
+                pieceScale: {
+                    x: 0.76 * DIMENSIONS.width / 100,
+                    y: 0.76 * DIMENSIONS.height / 100
+                }
+            }
+        };
+
+        let currentTheme = 'Lulu_Burkowski';
+
+        // Initialize theme from localStorage or default to classic
+        const savedTheme = localStorage.getItem('theme') || 'Lulu_Burkowski';
+        currentTheme = savedTheme;
+        document.getElementById('themeSelect').value = savedTheme;
+
+        // Theme switching functionality
+        document.getElementById('themeSelect').addEventListener('change', (e) => {
+            currentTheme = e.target.value;
+            localStorage.setItem('theme', currentTheme);
+            //updateThemePreview();
+            
+            // Only reset the game if it's already started
+            if (!document.getElementById('StartScreen').classList.contains('hidden')) {
+                updateBackgroundWrapper();
+            } else {
+                resetGame();
+            }
+        });
+
+        // function updateThemePreview() {
+        //     const preview = document.getElementById('themePreview');
+        //     preview.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
+        // }
+
+        function updateBackgroundWrapper() {
+            const backgroundWrapper = document.getElementById('backgroundWrapper');
+            backgroundWrapper.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
+        }
+//----------------------------------------------------------------------------------------------------
+
+        let isMuted = false;
+
+        //Team variable used to determine which team the player is Darin
+        let team = "Black";
+
+        const CANVAS_WIDTH = 925;
+        const CANVAS_HEIGHT = 480;
+
+        // Initialize canvas with proper dimensions
+        const canvas = new fabric.Canvas('gameCanvas', {
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
+            selection: false,
+            renderOnAddRemove: true
+        });
+
+        //Check that intro video is loaded in console -Darin
+        const introVideo = document.getElementById("introVideo");
+            introVideo.oncanplaythrough = () => {
+            console.log("Intro video is preloaded and ready.");
+        };
+
+        
+        let boardState = Array(8).fill().map(() => Array(16).fill(null));
+        let isLooping = true;
+        let cont = true;
+
+        //When start button is clicked it hides itself and calls start game -Darin
+        document.getElementById('startButton').addEventListener('click', function() {
+            document.getElementById('StartScreen').classList.add('hidden');
+            document.getElementById('muteButton').classList.add('hidden');
+            StartGame();
+        });
+
+        //Function for the team change button. Once pressed behind the scenes the board and pieces are swapped and visually the button changes the current team and the background of start screen flips. Darin
+        document.getElementById('teamChangeButton').addEventListener('click', function(){
+            const backgroundWrapper = document.getElementById('backgroundWrapper');
+
+            let Black_Pyramid = document.getElementById("black-pyramid");
+            let White_Pyramid = document.getElementById("white-pyramid");
+
+            let BlackOrder = window.getComputedStyle(Black_Pyramid).order;
+            let WhiteOrder = window.getComputedStyle(White_Pyramid).order;
+
+            Black_Pyramid.style.order = WhiteOrder;
+            White_Pyramid.style.order = BlackOrder;
+
+            team = team === "Black" ? "White" : "Black";
+
+            if (team === "White") {
+                backgroundWrapper.style.transform = "rotate(180deg)";
+            } else {
+                backgroundWrapper.style.transform = "rotate(0deg)";
+            }
+
+            this.textContent = `Change Team (Current team: ${team})`
+
+            console.log(`Changed to ${team} team`);
+
+
+        })
+
+        document.getElementById('muteButton').addEventListener('click', function() {
+            isMuted = !isMuted;
+            this.textContent = isMuted ? 'Unmute' : 'Mute';
+            
+            // Update mute state for intro video
+            const introVideo = document.getElementById('introVideo');
+            introVideo.muted = isMuted;
+            
+            // Update any currently playing videos in the video container
+            const videoContainer = document.getElementById('videoContainer');
+            const activeVideos = videoContainer.getElementsByTagName('video');
+            for (let video of activeVideos) {
+                video.muted = isMuted;
+            }
+        });
+
+        //Can also mute and unmute audio by pressing m on the keyboard
+        document.addEventListener("keydown", function(event){
+            if(event.key == "m" || event.key === "M")
+            {
+                isMuted = !isMuted;
+                document.getElementById('muteButton').textContent = isMuted ? 'Unmute' : 'Mute';
+            
+                const introVideo = document.getElementById('introVideo');
+                introVideo.muted = isMuted;
+            
+                const videoContainer = document.getElementById('videoContainer');
+                const activeVideos = videoContainer.getElementsByTagName('video');
+                for (let video of activeVideos) {
+                    video.muted = isMuted;
+            }
+            }
+            else if(event.key == "s" || event.key == "S")
+            {
+                SkipVideo();
+            }
+        });
+
+        //Plays preloaded intro video, initializes game, and unhides all elements that were previously hidden that are needed for the game. -Darin
+        function StartGame() {
+            canvas.clear();
+            playIntroVideo();
+            initializeGame();
+            document.getElementById('fileLabel').classList.remove('hidden');
+            document.getElementById('endLoopButton').classList.remove('hidden');
+            document.getElementById('pause').classList.remove('hidden');
+            document.getElementById('black-pyramid').classList.remove('hidden');
+            document.getElementById('white-pyramid').classList.remove('hidden');
+            document.getElementById('game-board').classList.remove('hidden');
+        }
+
+        function SkipVideo(){
+            const videoContainer = document.getElementById('videoContainer'); 
+            if(videoContainer.innerHTML != "")
+            {
+                videoContainer.innerHTML = "";
+                videoContainer.style.pointerEvents = 'none';
+                cont = true;
+            }
+            else{
+                console.log("No video to skip") 
+            }
+        }
+
+        // Load board background
+        function loadBoardBackground() {
+            return new Promise((resolve, reject) => {
+                fabric.Image.fromURL(THEMES[currentTheme].board, function(boardImage) {
+                    boardImage.set({
+                        selectable: false,
+                        evented: false,
+                        left: 0,
+                        top: 0,
+                        scaleX: CANVAS_WIDTH / boardImage.width,
+                        scaleY: CANVAS_HEIGHT / boardImage.height
+                    });
+                    canvas.insertAt(boardImage, 0);
+                    resolve(boardImage);
+                }, function(error) {
+                    console.error('Failed to load board image:', error);
+                    reject(error);
+                });
+            });
+        }
+
+        function loadPieceImage(piece) {
+            return new Promise((resolve, reject) => {
+                // Determine color and type
+                const isWhite = piece === piece.toUpperCase();
+                const baseType = piece[0].toLowerCase();
+                let value = piece.slice(1);
+
+                let imagePath;
+                if (baseType == 'p') {
+                    imagePath = isWhite ? THEMES[currentTheme].pieces.stackWhite : THEMES[currentTheme].pieces.stackBrown;
+                    value = isWhite ? ['c1', 'c4', 't9', 't16', 's25', 's36'] : ['C16', 'T25', 'T36', 'S49', 'S64'];
+                } else {
+                    const pieceType = {
+                        's': THEMES[currentTheme].pieces.square,
+                        't': THEMES[currentTheme].pieces.triangle,
+                        'c': THEMES[currentTheme].pieces.circle
+                    }[baseType];
+                    imagePath = `${pieceType}${value}.png`;
+                }
+
+                fabric.Image.fromURL(imagePath, function(img) {
+                    img.set({
+                        left: 0, // Will be set during board setup
+                        top: 0,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: THEMES[currentTheme].pieceScale.x,
+                        scaleY: THEMES[currentTheme].pieceScale.y,
+                        hasControls: false,
+                        hasBorders: false,
+                        selectable: true,
+                        pieceColor: isWhite ? 'white' : 'black',
+                        pieceType: baseType,
+                        pieceValue: value
+                    });
+
+                    resolve(img);
+                }, function(error) {
+                    console.error(`Failed to load image for piece ${piece}:`, error);
+                    reject(error);
+                });
+            });
+        }
+
+        async function addPieces() {
+            //2 Board initial states for the different player team cases. Darin
+            const initialBoardState = team === "Black" ? [
+                ['s49', 's28', 't16', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T81', 'S153', 'S289'],
+                ['s121', 's66', 't36', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T49', 'P', 'S169'],
+                ['.', 't12', 'c9', 'c3', '.', '.', '.', '.', '.', '.', '.', '.', 'C8', 'C64', 'T72', '.'],
+                ['.', 't30', 'c25', 'c5', '.', '.', '.', '.', '.', '.', '.', '.', 'C6', 'C36', 'T42', '.'],
+                ['.', 't56', 'c49', 'c7', '.', '.', '.', '.', '.', '.', '.', '.', 'C4', 'C16', 'T20', '.'],
+                ['.', 't90', 'c81', 'c9', '.', '.', '.', '.', '.', '.', '.', '.', 'C2', 'C4', 'T6', '.'],
+                ['s225', 's120', 't64', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T25', 'S45', 'S81'],
+                ['s361', 'p', 't100', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'T9', 'S15', 'S25']
+            ] : [
+                ['S25', 'S15', 'T9', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't100', 'p', 's361'],
+                ['S81', 'S45', 'T25', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't64', 's120', 's225'],
+                ['.', 'T6', 'C4', 'C2', '.', '.', '.', '.', '.', '.', '.', '.', 'c9', 'c81', 't90', '.'],
+                ['.', 'T20', 'C16', 'C4', '.', '.', '.', '.', '.', '.', '.', '.', 'c7', 'c49', 't56', '.'],
+                ['.', 'T42', 'C36', 'C6', '.', '.', '.', '.', '.', '.', '.', '.', 'c5', 'c25', 't30', '.'],
+                ['.', 'T72', 'C64', 'C8', '.', '.', '.', '.', '.', '.', '.', '.', 'c3', 'c9', 't12', '.'],
+                ['S169', 'P', 'T49', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't36', 's66', 's121'],
+                ['S289', 'S153', 'T81', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 't16', 's28', 's49']
+            ];
+
+            const pieceLoadPromises = [];
+
+            for (let rowIndex = 0; rowIndex < initialBoardState.length; rowIndex++) {
+                for (let colIndex = 0; colIndex < initialBoardState[rowIndex].length; colIndex++) {
+                    let piece = initialBoardState[rowIndex][colIndex];
+
+                    if (piece !== '.') {
+                        const piecePromise = loadPieceImage(piece).then(pieceObject => {
+                            // Position the piece
+                            pieceObject.set({
+                                left: colIndex * length + length / 2 + 92.75,
+                                top: rowIndex * height + height / 2 + 75
+                            });
+
+                            boardState[rowIndex][colIndex] = pieceObject;
+                            canvas.add(pieceObject);
+                            if (pieceObject.pieceType == 'p') {
+                                updatePyramid(pieceObject.pieceColor, pieceObject.pieceValue);
+                            }
+                        });
+                        pieceLoadPromises.push(piecePromise);
+                    }
+                };
+            };
+            // Wait for all pieces to be loaded before resolving
+            await Promise.all(pieceLoadPromises);
+        }
+
+        //Made a play intro function for an easy access way to play the intro video without rewritting the playVideo function. -Darin
+        function playIntroVideo() {
+            const videoContainer = document.getElementById('videoContainer');
+
+            videoContainer.innerHTML = '';
+            videoContainer.style.pointerEvents = 'auto';
+
+            const video = document.getElementById('introVideo');
+            video.autoplay = true;
+            video.loop = false;
+            video.controls = false;
+            video.muted = isMuted;
+
+            videoContainer.appendChild(video);
+            video.style.display = "block";
+            video.play();
+            
+            video.addEventListener('ended', () => {
+                videoContainer.innerHTML = '';
+                videoContainer.style.pointerEvents = 'none';
+            });
+        }
+
+        function playVideo(vid) {
+            cont = false;
+            const videoContainer = document.getElementById('videoContainer');
+
+            videoContainer.innerHTML = '';
+            videoContainer.style.pointerEvents = 'auto';
+
+            const video = document.createElement('video');
+            video.src = vid;
+            video.autoplay = true;
+            video.loop = false;
+            video.controls = false;
+            video.muted = isMuted;
+
+            videoContainer.appendChild(video);
+
+            video.addEventListener('ended', () => { 
+                let opacity = 1;
+                const fadeInterval = setInterval(() => {
+                    if (opacity > 0) {
+                        opacity -= 0.01;
+                        video.style.opacity = opacity;
+                    } else {
+                        clearInterval(fadeInterval); // Stop fading when opacity reaches 0
+                    }
+                }, 10); // Adjust the interval for speed
+                setTimeout(function () {
+                    cont = true;
+                }, 500);
+                videoContainer.style.pointerEvents = 'none';
+            });
+        }
+
+        function updatePyramid(w, ary) {
+            // Determine if it's the white pyramid
+            const isWhite = w === "white";
+
+            // Get the appropriate div element
+            const divElement = document.getElementById(isWhite ? "white-pyramid" : "black-pyramid");
+
+            // Update the div with the heading and array content
+            divElement.innerHTML = `
+                <h3>${isWhite ? "White Pyramid" : "Black Pyramid"}</h3>
+                ${ary.map(item => `<p>${item}</p>`).join("")}
+                `;
+
+        }
+
+
+        // function createGrid() {
+        //     const rows = 8; // Number of rows
+        //     const cols = 16; // Number of columns
+        //     const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
+
+        //     // Create the grid
+        //     for (let row = 0; row < rows; row++) {
+        //         for (let col = 0; col < cols; col++) {
+        //             // Calculate the center position for the current square
+        //             const centerX = col * length + length/2 + 95; // Adjust left margin
+        //             const centerY = row * height + height/2 + 77; // Adjust top margin
+
+        //             // Create the grid square
+        //             const rect = new fabric.Rect({
+        //                 left: centerX - length / 2, // Adjust to start drawing from the top-left corner
+        //                 top: centerY - height / 2, // Adjust to start drawing from the top-left corner
+        //                 width: length,
+        //                 height: height,
+        //                 fill: 'transparent',
+        //                 strokeWidth: 1,
+        //                 stroke: 'red',
+        //                 selectable: false,
+        //                 evented: false // Prevent grid squares from being interactive
+        //             });
+
+        //             // Add the grid square to the canvas
+        //             canvas.add(rect);
+
+        //             // Determine the algebraic notation
+        //             const file = alphabet[row]; // Row determines column label (A-H)
+        //             const rank = col + 1; // Column determines row number (1-16)
+
+        //             const algebraicNotation = `${file}${rank}`;
+
+        //             // Create the text for algebraic notation
+        //             const text = new fabric.Text(algebraicNotation, {
+        //                 left: centerX, // Centered in the square horizontally
+        //                 top: centerY, // Centered in the square vertically
+        //                 fontSize: 12,
+        //                 fontFamily: 'Arial',
+        //                 fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
+        //                 originX: 'center', // Align text by its center
+        //                 originY: 'center', // Align text by its center
+        //                 selectable: false, // Text should not be interactive
+        //                 evented: false // Text should not trigger events
+        //             });
+
+        //             // Add the text to the canvas
+        //             canvas.add(text);
+        //         }
+        //     }
+        // }
+
+        function movePiece(from, to) {
+
+            // Convert from algebraic notation to row and column
+            function positionToIndices(position) {
+                let c = position.toUpperCase().charCodeAt(0) - 65;
+                let r = Number(position[1]) - 1;
+                if (position[2]) {
+                    r = Number(position[1] + position[2]) - 1;
+                }
+                return { c, r };
+            }
+
+            const fromIndices = positionToIndices(from);
+            const toIndices = positionToIndices(to);
+
+            // Find the piece at the 'from' position (e.g., C4)
+            const piece = boardState[fromIndices.c][fromIndices.r];
+
+            if (piece) {
+                // Calculate the target position (center of the square in grid)
+                const targetCenterX = toIndices.r * length + length / 2 + 95;
+                const targetCenterY = toIndices.c * height + height / 2 + 77;
+
+                // Animate the piece to the target position with smooth transition
+                piece.animate({
+                    left: targetCenterX,
+                    top: targetCenterY
+                }, {
+                    duration: 1000, // Duration of the animation in milliseconds (adjust as needed)
+                    onChange: canvas.renderAll.bind(canvas), // Re-render the canvas during animation
+                    easing: fabric.util.ease.easeInOutQuad, // Smooth easing function
+                    onComplete: function() {
+                        // After the animation completes, update the piece position in the boardState
+                        boardState[fromIndices.c][fromIndices.r] = null;
+                        boardState[toIndices.c][toIndices.r] = piece;
+
+                        console.log(`Piece moved from ${from} to ${to}`);
+                    }
+                });
+
+            } else {
+                console.log(`No piece found at ${from}`);
+            }
+        }
+
+        function capturePiece(position, value, type) {
+            switch (type) {
+                case "s":
+                    playVideo(THEMES[currentTheme].siege);
+                    break;
+                case "n":
+                    playVideo(THEMES[currentTheme].encounter);
+                    break;
+                case "r":
+                    playVideo(THEMES[currentTheme].eruption);
+                    break;
+                case "d":
+                    playVideo(THEMES[currentTheme].diceit);
+                    break;
+            }
+            for (let i = 0; i < position.length; i++) {
+                const c = position[i].toUpperCase().charCodeAt(0) - 65;
+                const r = Number(position[i].slice(1)) - 1;
+
+                // Find the piece at the specified position
+                const piece = boardState[c][r];
+
+                if (piece) {
+                    if (Array.isArray(piece.pieceValue)) {
+                        let index = piece.pieceValue.indexOf(value[i]);
+                        piece.pieceValue.splice(index, 1);
+                        updatePyramid(piece.pieceColor, piece.pieceValue);
+                        if (piece.pieceValue.length == 0) {
+                            piece.animate({ opacity: 0 }, {
+                                duration: 500,
+                                onChange: canvas.renderAll.bind(canvas),
+                                onComplete: () => {
+                                    canvas.remove(piece);
+                                    boardState[c][r] = null; // Clear the captured position
+                                    console.log(`Pyramid at ${position[i]} empty.`);
+                                }
+                            });
+                        };
+                    }
+                    else {
+                        piece.animate({ opacity: 0 }, {
+                            duration: 500,
+                            onChange: canvas.renderAll.bind(canvas),
+                            onComplete: () => {
+                                canvas.remove(piece);
+                                boardState[c][r] = null; // Clear the captured position
+                                console.log(`Piece at ${position[i]} captured.`);
+                            }
+                        });
+                    }
+
+                } else {
+                    console.log(`No piece found at ${position[i]} to capture.`);
+                }
+            }
+        }
+
+        function enableSnapping() {
+            const rows = 8;
+            const cols = 16;
+
+            // Snap based on the closest grid center
+            canvas.on('object:moving', function (event) {
+                const obj = event.target;
+
+                // Get the current mouse position
+                const pointer = canvas.getPointer(event.e);
+
+                // Variables to track the closest grid square
+                let closestLeft = 0;
+                let closestTop = 0;
+                let smallestDistance = Infinity;
+
+                let oldRowIndex = -1;
+                let oldColIndex = -1;
+
+                // Iterate over all grid square centers to find the closest
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        // Calculate the center of the current grid square
+                        const gridCenterX = col * length + length / 2 + 95;
+                        const gridCenterY = row * height + height / 2 + 77;
+
+                        // Calculate the distance between the mouse pointer and the grid center
+                        const distance = Math.sqrt(
+                            Math.pow(pointer.x - gridCenterX, 2) + Math.pow(pointer.y - gridCenterY, 2)
+                        );
+
+                        // Update the closest grid square if this one is closer
+                        if (distance < smallestDistance) {
+                            smallestDistance = distance;
+                            closestLeft = gridCenterX;
+                            closestTop = gridCenterY;
+
+                            // Track the closest grid position (row, col)
+                            oldRowIndex = row;
+                            oldColIndex = col;
+                        }
+                    }
+                }
+
+                // Update the piece's position to the closest grid square center
+                obj.left = closestLeft;
+                obj.top = closestTop;
+
+                // Remove the piece from the old position in boardState
+                if (oldRowIndex !== -1 && oldColIndex !== -1) {
+                    boardState[oldRowIndex][oldColIndex] = null; // Clear the old position
+                }
+
+                // Calculate new row and column indices based on the snapped position
+                const newRowIndex = Math.floor((closestTop - 35) / length);
+                const newColIndex = Math.floor((closestLeft - 102 / 4) / height);
+
+                // Add the piece to the new position in boardState
+                if (newRowIndex >= 0 && newRowIndex < rows && newColIndex >= 0 && newColIndex < cols) {
+                    boardState[newRowIndex][newColIndex] = obj; // Place the piece at the new position
+                }
+            });
+        }
+
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fileContent = e.target.result;
+                    const moves = parseMoves(fileContent);
+                    resetGame().then(() => {
+                        executeMoves(moves);
+                    }).catch(error => {
+                        console.error('Error resetting the game:', error);
+                    })
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function parseMoves(fileContent) {
+            // Split the file content by lines
+            const lines = fileContent.split('\n');
+            const moves = [];
+
+            lines.forEach(line => {
+                if (line.trim()) {
+                    const movePairs = line.split(' '); // Split by space
+                    movePairs.forEach(pair => {
+                        if (pair.toUpperCase().includes('X')) {
+                            // Handle capture move (e.g., A1A2xC4c9)
+                            const parts = pair.split('x'); // Split by 'x'
+                            let [move, ...captures] = parts;
+                            const c = captures[0].match(/([snrd])(.*)/i);
+                            console.log(c);
+                            captures[0] = c[2];
+                            let take = [];
+                            let ids = [];
+
+                            // Extract capture position and unique ID (e.g., "C4" and "c9")
+                            captures.forEach(cap => {
+                                const captureMatch = cap.match(/([A-H][0-9]*)([c,t,s,C,T,S]\d+)/i);
+                                take.push(captureMatch[1]); // Capture position (e.g., "C4")
+                                ids.push(captureMatch[2]); // Captured piece info (e.g., "c9")
+                            });
+
+                            const [from, to] = splitMove(move); // Split the move into 'from' and 'to'
+                            moves.push([from, to, take, ids, c[1]]); // Add the parsed capture
+                        } else if (pair.length >= 4) {
+                            // Handle regular move (e.g., A1A2)
+                            const [from, to] = splitMove(pair);
+                            moves.push([from, to]); // Add regular move
+                        }
+                    });
+                }
+            });
+            return moves;
+        }
+
+
+        // Helper function to split a move into from and to
+        function splitMove(move) {
+            let from;
+            let to;
+            if (isNaN(move.charAt(2))) {
+                from = move.slice(0, 2);
+                to = move.slice(2);
+            }
+            else {
+                from = move.slice(0, 3);
+                to = move.slice(3);
+            }
+            return [from, to]; // Return the from and to positions
+        }
+
+
+        function executeMoves(moves) {
+            let index = 0;
+
+            function playNextMove() {
+                if (index < moves.length) {
+                    if (cont) {
+                        const move = moves[index];
+                        const from = move[0]; // Starting position
+                        const to = move[1];   // Target position
+                        const captures = move[2] || null; // Optional capture position
+
+                        // Perform the move
+                        movePiece(from, to);
+
+                        // Handle capture if specified
+                        if (captures) {
+                            setTimeout(() => {
+                                capturePiece(captures, move[3], move[4]);
+                            }, 1100); // Slight delay to align with move animation
+                        }
+
+                        // Wait before moving to the next move
+                        setTimeout(() => {
+                            index++;
+                            playNextMove();
+
+                        }, 2000); // Adjust delay as needed
+                    } else {
+                        setTimeout(playNextMove, 1000);
+                    }
+                } else {
+                    setTimeout(() => {
+                        resetGame().then(() => {
+                            if (isLooping) {
+                                executeMoves(moves);
+                            } else {
+                                isLooping = true
+                                document.getElementById('moveFileInput').value = '';
+                            }
+                        }).catch(error => {
+                            console.error('Error resetting the game:', error);
+                        })
+
+                    }, 1000);
+
+                }
+            }
+
+            playNextMove(); // Start executing moves
+        }
+
+
+        function resetGame() {
+            return new Promise((resolve, reject) => {
+                // Clear all objects on the canvas
+                canvas.clear();
+
+                // Reset the board state to empty
+                boardState = Array(8).fill().map(() => Array(16).fill(null));
+
+                // Reload the board background
+                loadBoardBackground().then(() => {
+
+                    // Wait for addPieces to finish loading the pieces before resolving the promise
+                    addPieces().then(() => {
+                        resolve(); // Resolve the promise once all pieces are loaded
+                    }).catch((error) => {
+                        console.error('Error loading pieces:', error);
+                        reject(error); // Reject if there's an error loading pieces
+                    });
+                }).catch((error) => {
+                    console.error('Error loading board background:', error);
+                    reject(error); // Reject if there's an error loading the board background
+                });
+            });
+        }
+
+
+        // Initialize the game
+        async function initializeGame() {
+            try {
+   
+                // Load the background image first
+                await loadBoardBackground();
+
+                await addPieces();
+
+                enableSnapping();
+                canvas.renderAll();
+            } catch (error) {
+            console.error('Game initialization failed:', error);
+            }
+        }
+
+        function PauseButton() {
+            const button = document.getElementById("pause");
+            // Change the button text to a new value
+            if (button.innerHTML === "Pause") {
+                button.innerHTML = "Play";
+                cont = false;
+            } else {
+                button.innerHTML = "Pause";
+                cont = true;
+            }
+        }
+
+        document.getElementById('moveFileInput').addEventListener('change', handleFileUpload);
+        document.getElementById('endLoopButton').addEventListener('click', () => {
+            isLooping = false;
+        });
+    </script >
+</body>
+</html>
