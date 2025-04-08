@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Rithmomachia</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="icon" type="image/png" href="img/favicon-32x32.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="img/favicon-48x48.png" sizes="48x48">
+        <link rel="icon" type="image/png" href="img/favicon-96x96.png" sizes="96x96">
+    </head>
+    <body>
+        <h1>Rithmomachia</h1>
+        <h2>New Game</h2>
+        Standard board: <button id="newGame">New Game</button>
+        <span id="error"></span>
+        <br><br>
+        Custom board: <input id="inputBoard" type="text"/>
+        <button id="newGameBoard">New Game Board</button>
+        <h2>Game Id</h2>
+        <input id="gameId" type="text" readonly size="40"/>
+        <h2>Board</h2>
+        <button id="refresh" disabled>Refresh Board</button><br>
+        <div id="board"></div>
+        <h2>Move</h2>
+        <input id="moveInput" type="text" size="40" disabled/>
+        <button id="move" disabled>Move</button>
+        <h2>Play</h2>
+        <button id="play" disabled>Play</button>
+        <input id="lastMove" type="text" readonly size="40"/>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="js/index.js"></script>
+    </body>
+</html>

@@ -1,0 +1,41 @@
+Game Initialization:
+
+#newGame button creates a new game by sending a POST request to the server
+#newGameBoard allows creating a game with a custom board configuration
+enableInputs() function enables game interaction buttons
+
+
+Board Interaction:
+
+refreshBoard() fetches the current game state and updates the board display
+#refresh button manually refreshes the board
+Each piece is represented by a string containing color, kind, value, and position
+
+
+Move Mechanics:
+
+#move button allows manual move input by specifying 'from' and 'to' positions
+#play button likely triggers an AI or automated move
+updateLastMove() updates the last move and captured pieces information
+
+
+Error Handling:
+
+Uses simple alert for network communication errors
+
+
+
+The code uses jQuery for AJAX calls and assumes a backend API with endpoints for:
+
+Creating games (/api/games)
+Retrieving game state (/api/game/{id})
+Making moves (/api/game/{id})
+
+The piece representation seems to follow a format like:
+
+Color (first character): 'W' or 'B'
+Kind (second character): Piece type
+Value (numeric)
+Position (e.g., chess algebraic notation)
+
+Would you like me to elaborate on any specific part of the code or explain its functionality in more detail?

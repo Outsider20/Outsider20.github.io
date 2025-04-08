@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rithmomachia</title>
+    <title>rithmomachia</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
@@ -123,7 +123,8 @@
         #game-board {
             position: relative;
             width: fit-content;
-            max-width: 925px;
+            max-width: 1000px;
+            max-height: 500;
             border: 2px solid #333;
             border-radius: 8px;
             overflow: hidden;
@@ -155,7 +156,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: `url(${THEMES[currentTheme].board})`,
+            /* Unneeded. Background wrapper switches regardless of what is listed here. Should only be a static background image before the user switches it. */
+            background-image: /*`url(${THEMES[currentTheme].board})`*/ url('Images/HUNT-Pieces/HUNT-NewBoard-01.png');
             background-size: cover;
             background-position: center;
             transition: transform 0.5s ease;
@@ -189,12 +191,29 @@
         .hidden {
             display: none !important;
         }
+
+        #themeSelect {
+            position: relative;
+            z-index: 10;
+            background-color: #777777;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 20px;
+            margin: 10px 0;
+            transform: rotate(0deg) !important; 
+            transition: background-color 0.3s ease; 
+            z-index: 1; 
+        }
+
     </style>
 </head>
 <body>
     <div class="container" >
         <div class="overlay" id="videoContainer"></div>
-        <h1 class="title">Rithmomachia</h1>
+        <h1 class="title">rithmomachia</h1>
         <div id="StartScreen">
             <!--Going to make another canvas for the start screen eventually maybe Darin-->
             <!-- Background wrapper for image of background board on start screen Darin -->
@@ -203,13 +222,13 @@
             <button id="muteButton">Mute</button>
             <button id="teamChangeButton">Change Team (Current team: Black)</button>
             <select id="themeSelect" title="Theme">
-              <option value="Lulu_Burkowski">Lulu Theme</option>
-              <option value="Jessie_Reed">Jessie Theme</option>
-              <option value="Daniel_Hunt">Daniel Theme</option>
+                <option value="Daniel_Hunt">Daniel Theme</option>
+                <option value="Lulu_Burkowski">Lulu Theme</option>
+                <option value="Jessie_Reed">Jessie Theme</option>
             </select>
         </div>
         <div class="game-container">
-            <label id = "fileLabel" for="moveFileInput" class="custom-file-label hidden" >Choose File</label>
+            <label id = "fileLabel" for="moveFileInput" class="custom-file-label hidden" >Open File</label>
             <input type="file" id="moveFileInput" accept=".txt" style="display:none;"/>
             <button id="endLoopButton" class="hidden">Reset</button>
             <button id="pause" onclick="PauseButton()" class="hidden">Pause</button>
@@ -228,20 +247,20 @@
     </video>
 
     <script>
-        const DIMENSIONS = {
-          width: 46,
-          height: 41
-        };
-        
-        // New ---------------------------------------------------------------------------------------
+
+        let isMuted = false;
+
+        //Team variable used to determine which team the player is Darin
+        let team = "Black";
+
         const THEMES = {
             Lulu_Burkowski: {
                 board: 'Images/Rithmomachia/Board and pieces/Board-Rotate.png',
                 pieces: {
                     base: 'Images/Rithmomachia/Board and pieces',
-                    stackWhite: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
-                    stackBlack: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
-                    pieceFormat: (value, isWhite, type) => `Images/Rithmomachia/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
+                    blackPyramid: 'Images/Rithmomachia/Board and pieces/Black_Pyramid.png',
+                    whitePyramid: 'Images/Rithmomachia/Board and pieces/White_Pyramid.png',
+                    pieceFormat: (value, isWhite, type) => `Images/rithmomachia/Board and pieces/${value}_${isWhite ? 'White' : 'Black'}_${
                         {
                             's': 'Square',
                             't': 'Triangle',
@@ -250,15 +269,32 @@
                     }.png`
                 },
                 videos: {
-                    intro: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    siege: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    encounter: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    eruption: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`,
-                    deceit: (type) => `Images/Rithmomachia/captures and intro with sound/Siege ${isWhite ? 'Black' : 'White'}.mp4`
+                    //Is type in these statements even used?
+                    intro: `Images/Rithmomachia/captures and intro with sound/Intro.mp4`,
+                    siege: (/* type, */ isWhite) => `Images/rithmomachia/captures and intro with sound/Siege ${isWhite == "Black"? 'black' : 'white'}.mp4`,
+                    encounter: (/* type, */ isWhite) => `Images/rithmomachia/captures and intro with sound/Encounter ${isWhite == "Black" ? 'black' : 'white'}.mp4`,
+                    eruption: (/* type, */ isWhite) => `Images/rithmomachia/captures and intro with sound/Eruption ${isWhite == "Black" ? 'black' : 'white'}.mp4`,
+                    deceit: (/* type, */ isWhite) => `Images/rithmomachia/captures and intro with sound/Deceit ${isWhite == "Black" ? 'black' : 'white'}.mp4`
                 },
                 pieceScale: {
-                  x: 0.75 * DIMENSIONS.width / 100,
-                  y: 0.75 * DIMENSIONS.height / 100
+                  x: 0.75,
+                  y: 0.75
+                },
+                pieceOffset: {
+                    left: 65/2,
+                    top: 31.25/2
+                },
+                cellSize: {
+                    length: 58.4375,
+                    height: 58.59375
+                },
+                gridOffset: {
+                    centerX: 125 / 4,
+                    centerY: 17
+                },
+                canvasDim: {
+                    width: 1000,
+                    height: 500
                 }
             },
             Jessie_Reed: {
@@ -267,7 +303,7 @@
                     base: 'Images/Rithmomachia Art/',
                     whitePyramid: 'Images/Rithmomachia Art/White_Pyramid.png',
                     blackPyramid: 'Images/Rithmomachia Art/Black_Pyramid.png',
-                    pieceFormat: (value, isWhite, type) => `${value}_${isWhite ? 'White' : 'Black'}_${{
+                    pieceFormat: (value, isWhite, type) => `Images/rithmomachia Art/${value}_${isWhite ? 'White' : 'Black'}_${{
                             's': 'Square',
                             't': 'Triangle',
                             'c': 'Circle',
@@ -276,14 +312,30 @@
                 },
                 videos: {
                     intro: 'Images/Rithmomachia Art/Intro final animation with sound.MP4',
-                    siege: 'Images/Rithmomachia Art/Siege final draft with sound.MP4',
-                    encounter: 'Images/Rithmomachia Art/Encounter final draft with sound.MP4',
-                    eruption: 'Images/Rithmomachia Art/Eruption final draft with sound.MP4',
-                    deceit: 'Images/Rithmomachia Art/Deceit final draft with sound.MP4'
+                    siege: (isWhite) => 'Images/Rithmomachia Art/Siege final draft with sound.MP4',
+                    encounter: (isWhite) => 'Images/Rithmomachia Art/Encounter final draft with sound.MP4',
+                    eruption: (isWhite) => 'Images/Rithmomachia Art/Eruption final draft with sound.MP4',
+                    deceit: (isWhite) => 'Images/Rithmomachia Art/Deceit final draft with sound.MP4'
                 },
                 pieceScale: {
-                    x: 40 / 100,
-                    y: 40 / 100
+                    x: .76,
+                    y: .76
+                },
+                pieceOffset: {
+                    left: 71,
+                    top: 71
+                },
+                cellSize: {
+                    length: 680/16,
+                    height: 392/8
+                },
+                gridOffset: {
+                    centerX: 71,
+                    centerY: 71
+                },
+                canvasDim: {
+                    width: 925,
+                    height: 480
                 }
             },
             Daniel_Hunt: {
@@ -302,31 +354,55 @@
                 },
                 videos: {
                     intro: 'Images/Rith/HUNTRithCutscene.mp4',
-                    siege: 'Images/Rith/Siege Video.mp4',
-                    encounter: 'Images/Rith/Encounter Video.mp4',
-                    eruption: 'Images/Rith/Eruption Video.mp4',
-                    deceit: 'Images/Rith/Deceit Video.mp4'
+                    siege: (isWhite) => 'Images/Rith/Siege Video.mp4',
+                    encounter: (isWhite) => 'Images/Rith/Encounter Video.mp4',
+                    eruption: (isWhite) => 'Images/Rith/Eruption Video.mp4',
+                    deceit: (isWhite) => 'Images/Rith/Deceit Video.mp4'
                 },
                 pieceScale: {
-                    x: 0.76 * DIMENSIONS.width / 100,
-                    y: 0.76 * DIMENSIONS.height / 100
+                    x: 0.76,
+                    y: 0.76
+                },
+                pieceOffset: {
+                    left: 92.75,
+                    top: 75
+                },
+                cellSize: {
+                    length: 41,
+                    height: 46
+                },
+                gridOffset: {
+                    centerX: 95,
+                    centerY: 77
+                },
+                canvasDim: {
+                    width: 925,
+                    height: 480
                 }
             }
         };
 
-        let currentTheme = 'Lulu_Burkowski';
-
-        // Initialize theme from localStorage or default to classic
-        const savedTheme = localStorage.getItem('theme') || 'Lulu_Burkowski';
-        currentTheme = savedTheme;
-        document.getElementById('themeSelect').value = savedTheme;
+        let currentTheme = "Daniel_Hunt";
 
         // Theme switching functionality
         document.getElementById('themeSelect').addEventListener('change', (e) => {
             currentTheme = e.target.value;
-            localStorage.setItem('theme', currentTheme);
-            //updateThemePreview();
-            
+            console.log(currentTheme);
+
+            //Loads intro depending on theme
+            let video = document.getElementById('introVideo');
+            let source = video.querySelector('source');
+            source.src = THEMES[currentTheme].videos.intro;
+            video.load();
+
+            //Changes body background if the theme is jessie's as test 2 has a special image for it. 
+            if (currentTheme == "Jessie_Reed") {
+                document.body.style.backgroundImage = "url('Images/Rithmomachia Art/Background.jpg')";
+            } 
+            else{
+                document.body.style.backgroundImage = "none";
+            }
+
             // Only reset the game if it's already started
             if (!document.getElementById('StartScreen').classList.contains('hidden')) {
                 updateBackgroundWrapper();
@@ -335,32 +411,28 @@
             }
         });
 
-        // function updateThemePreview() {
-        //     const preview = document.getElementById('themePreview');
-        //     preview.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
-        // }
-
         function updateBackgroundWrapper() {
             const backgroundWrapper = document.getElementById('backgroundWrapper');
             backgroundWrapper.style.backgroundImage = `url('${THEMES[currentTheme].board}')`;
         }
-//----------------------------------------------------------------------------------------------------
 
-        let isMuted = false;
+        let CANVAS_WIDTH;
+        let CANVAS_HEIGHT;
 
-        //Team variable used to determine which team the player is Darin
-        let team = "Black";
-
-        const CANVAS_WIDTH = 925;
-        const CANVAS_HEIGHT = 480;
 
         // Initialize canvas with proper dimensions
         const canvas = new fabric.Canvas('gameCanvas', {
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
+            // width: CANVAS_WIDTH,
+            // height: CANVAS_HEIGHT,
             selection: false,
             renderOnAddRemove: true
         });
+        function setCanvasWidthandHeight() {
+            CANVAS_WIDTH = THEMES[currentTheme].canvasDim.width;
+            CANVAS_HEIGHT = THEMES[currentTheme].canvasDim.height;
+            canvas.setWidth(CANVAS_WIDTH);
+            canvas.setHeight(CANVAS_HEIGHT);
+        }
 
         //Check that intro video is loaded in console -Darin
         const introVideo = document.getElementById("introVideo");
@@ -368,7 +440,15 @@
             console.log("Intro video is preloaded and ready.");
         };
 
-        
+        //Not in original main file but breaks code if removed.
+        let length;
+        let height;
+
+        function setLengthandHeight() {
+            length = THEMES[currentTheme].cellSize.length;
+            height = THEMES[currentTheme].cellSize.height;
+        }
+
         let boardState = Array(8).fill().map(() => Array(16).fill(null));
         let isLooping = true;
         let cont = true;
@@ -395,11 +475,31 @@
 
             team = team === "Black" ? "White" : "Black";
 
-            if (team === "White") {
-                backgroundWrapper.style.transform = "rotate(180deg)";
-            } else {
-                backgroundWrapper.style.transform = "rotate(0deg)";
+            if (currentTheme == "Daniel_Hunt") {
+                backgroundWrapper.style.transform = `scaleX(${team === "White" ? -1 : 1})`;
+            } 
+            else if (currentTheme == "Jessie_Reed") {
+                backgroundWrapper.style.transition = "transform 1s cubic-bezier(0.68, -0.55, 0.27, 1.55)";
+                backgroundWrapper.style.transform = `rotate(${team === "White" ? 300 : -120}deg)`;
+
+                setTimeout(() => {
+                    backgroundWrapper.style.transform = `scaleX(${team === "White" ? -1 : 1})`;
+                }, 500);
+            } 
+            else if (currentTheme == "Lulu_Burkowski") {
+                backgroundWrapper.style.transition = "transform 1s ease-in-out, scale 0.6s ease-in-out";
+                backgroundWrapper.style.transform = "scale(0.7) rotate(360deg)"; // Added rotation
+
+                setTimeout(() => {
+                    backgroundWrapper.style.transform = "scale(1.1) rotate(0deg)";
+                }, 300);
+
+                setTimeout(() => {
+                    backgroundWrapper.style.transform = `scaleX(${team === "White" ? -1 : 1})`;
+                }, 600);
             }
+
+
 
             this.textContent = `Change Team (Current team: ${team})`
 
@@ -407,6 +507,7 @@
 
 
         })
+
 
         document.getElementById('muteButton').addEventListener('click', function() {
             isMuted = !isMuted;
@@ -448,7 +549,9 @@
 
         //Plays preloaded intro video, initializes game, and unhides all elements that were previously hidden that are needed for the game. -Darin
         function StartGame() {
+            setCanvasWidthandHeight();
             canvas.clear();
+            setLengthandHeight();
             playIntroVideo();
             initializeGame();
             document.getElementById('fileLabel').classList.remove('hidden');
@@ -475,7 +578,8 @@
         // Load board background
         function loadBoardBackground() {
             return new Promise((resolve, reject) => {
-                fabric.Image.fromURL(THEMES[currentTheme].board, function(boardImage) {
+                //Loading the board image seems to work correctly
+                fabric.Image.fromURL(THEMES[currentTheme].board/*'Images/HUNT-Pieces/HUNT-NewBoard-01.png'*/, function(boardImage) {
                     boardImage.set({
                         selectable: false,
                         evented: false,
@@ -484,6 +588,21 @@
                         scaleX: CANVAS_WIDTH / boardImage.width,
                         scaleY: CANVAS_HEIGHT / boardImage.height
                     });
+
+                    if (team === "White") {
+                        boardImage.set({
+                            angle: 180,
+                            left: CANVAS_WIDTH,
+                            top: CANVAS_HEIGHT
+                        });
+                    } else {
+                        boardImage.set({
+                            angle: 0,
+                            left: 0,
+                            top: 0
+                        });
+                    }
+
                     canvas.insertAt(boardImage, 0);
                     resolve(boardImage);
                 }, function(error) {
@@ -500,17 +619,16 @@
                 const baseType = piece[0].toLowerCase();
                 let value = piece.slice(1);
 
+                // Construct dynamic image path
                 let imagePath;
                 if (baseType == 'p') {
-                    imagePath = isWhite ? THEMES[currentTheme].pieces.stackWhite : THEMES[currentTheme].pieces.stackBrown;
+                    imagePath = isWhite ? THEMES[currentTheme].pieces.whitePyramid : THEMES[currentTheme].pieces.blackPyramid;
                     value = isWhite ? ['c1', 'c4', 't9', 't16', 's25', 's36'] : ['C16', 'T25', 'T36', 'S49', 'S64'];
-                } else {
-                    const pieceType = {
-                        's': THEMES[currentTheme].pieces.square,
-                        't': THEMES[currentTheme].pieces.triangle,
-                        'c': THEMES[currentTheme].pieces.circle
-                    }[baseType];
-                    imagePath = `${pieceType}${value}.png`;
+                }else {
+                    // Use the theme's pieceFormat function for regular pieces (This Should fix it)
+                    imagePath = THEMES[currentTheme].pieces.pieceFormat(value, isWhite, baseType);
+
+                   
                 }
 
                 fabric.Image.fromURL(imagePath, function(img) {
@@ -519,8 +637,9 @@
                         top: 0,
                         originX: 'center',
                         originY: 'center',
-                        scaleX: THEMES[currentTheme].pieceScale.x,
-                        scaleY: THEMES[currentTheme].pieceScale.y,
+                        //Scale seems to be way too big for piece scale -Fixed?
+                        scaleX:  THEMES[currentTheme].pieceScale.x*length / img.width ,
+                        scaleY:  THEMES[currentTheme].pieceScale.y*height / img.height ,
                         hasControls: false,
                         hasBorders: false,
                         selectable: true,
@@ -569,8 +688,9 @@
                         const piecePromise = loadPieceImage(piece).then(pieceObject => {
                             // Position the piece
                             pieceObject.set({
-                                left: colIndex * length + length / 2 + 92.75,
-                                top: rowIndex * height + height / 2 + 75
+                                //Height and length seem to be off and test 3 has height and length flipped
+                                left: colIndex * height + height / 2 + THEMES[currentTheme].pieceOffset.left,
+                                top: rowIndex * length + length / 2 + THEMES[currentTheme].pieceOffset.top
                             });
 
                             boardState[rowIndex][colIndex] = pieceObject;
@@ -658,60 +778,6 @@
 
         }
 
-
-        // function createGrid() {
-        //     const rows = 8; // Number of rows
-        //     const cols = 16; // Number of columns
-        //     const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Column labels (A-H for rows)
-
-        //     // Create the grid
-        //     for (let row = 0; row < rows; row++) {
-        //         for (let col = 0; col < cols; col++) {
-        //             // Calculate the center position for the current square
-        //             const centerX = col * length + length/2 + 95; // Adjust left margin
-        //             const centerY = row * height + height/2 + 77; // Adjust top margin
-
-        //             // Create the grid square
-        //             const rect = new fabric.Rect({
-        //                 left: centerX - length / 2, // Adjust to start drawing from the top-left corner
-        //                 top: centerY - height / 2, // Adjust to start drawing from the top-left corner
-        //                 width: length,
-        //                 height: height,
-        //                 fill: 'transparent',
-        //                 strokeWidth: 1,
-        //                 stroke: 'red',
-        //                 selectable: false,
-        //                 evented: false // Prevent grid squares from being interactive
-        //             });
-
-        //             // Add the grid square to the canvas
-        //             canvas.add(rect);
-
-        //             // Determine the algebraic notation
-        //             const file = alphabet[row]; // Row determines column label (A-H)
-        //             const rank = col + 1; // Column determines row number (1-16)
-
-        //             const algebraicNotation = `${file}${rank}`;
-
-        //             // Create the text for algebraic notation
-        //             const text = new fabric.Text(algebraicNotation, {
-        //                 left: centerX, // Centered in the square horizontally
-        //                 top: centerY, // Centered in the square vertically
-        //                 fontSize: 12,
-        //                 fontFamily: 'Arial',
-        //                 fill: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black
-        //                 originX: 'center', // Align text by its center
-        //                 originY: 'center', // Align text by its center
-        //                 selectable: false, // Text should not be interactive
-        //                 evented: false // Text should not trigger events
-        //             });
-
-        //             // Add the text to the canvas
-        //             canvas.add(text);
-        //         }
-        //     }
-        // }
-
         function movePiece(from, to) {
 
             // Convert from algebraic notation to row and column
@@ -732,8 +798,8 @@
 
             if (piece) {
                 // Calculate the target position (center of the square in grid)
-                const targetCenterX = toIndices.r * length + length / 2 + 95;
-                const targetCenterY = toIndices.c * height + height / 2 + 77;
+                const targetCenterX = toIndices.r * height + height / 2 + THEMES[currentTheme].gridOffset.centerX;
+                const targetCenterY = toIndices.c * length + length / 2 + THEMES[currentTheme].gridOffset.centerY;
 
                 // Animate the piece to the target position with smooth transition
                 piece.animate({
@@ -759,17 +825,18 @@
 
         function capturePiece(position, value, type) {
             switch (type) {
+                //Fixed
                 case "s":
-                    playVideo(THEMES[currentTheme].siege);
+                    playVideo(THEMES[currentTheme].videos.siege(team));
                     break;
                 case "n":
-                    playVideo(THEMES[currentTheme].encounter);
+                    playVideo(THEMES[currentTheme].videos.encounter(team) );
                     break;
                 case "r":
-                    playVideo(THEMES[currentTheme].eruption);
+                    playVideo(THEMES[currentTheme].videos.eruption(team));
                     break;
                 case "d":
-                    playVideo(THEMES[currentTheme].diceit);
+                    playVideo(THEMES[currentTheme].videos.deceit(team) );
                     break;
             }
             for (let i = 0; i < position.length; i++) {
@@ -837,8 +904,8 @@
                 for (let row = 0; row < rows; row++) {
                     for (let col = 0; col < cols; col++) {
                         // Calculate the center of the current grid square
-                        const gridCenterX = col * length + length / 2 + 95;
-                        const gridCenterY = row * height + height / 2 + 77;
+                        const gridCenterX = col * height + height / 2 + THEMES[currentTheme].gridOffset.centerX;
+                        const gridCenterY = row * length + length / 2 + THEMES[currentTheme].gridOffset.centerY;
 
                         // Calculate the distance between the mouse pointer and the grid center
                         const distance = Math.sqrt(
@@ -868,8 +935,8 @@
                 }
 
                 // Calculate new row and column indices based on the snapped position
-                const newRowIndex = Math.floor((closestTop - 35) / length);
-                const newColIndex = Math.floor((closestLeft - 102 / 4) / height);
+                const newRowIndex = Math.floor((closestTop - /*These 2 numbers are different between tests ->*/ 20) / length);
+                const newColIndex = Math.floor((closestLeft - 125 / 4) / height);
 
                 // Add the piece to the new position in boardState
                 if (newRowIndex >= 0 && newRowIndex < rows && newColIndex >= 0 && newColIndex < cols) {
@@ -1033,7 +1100,7 @@
         // Initialize the game
         async function initializeGame() {
             try {
-   
+
                 // Load the background image first
                 await loadBoardBackground();
 
