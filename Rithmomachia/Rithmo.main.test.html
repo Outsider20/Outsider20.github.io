@@ -1083,6 +1083,7 @@
 			videoContainer.style.pointerEvents = 'auto';
 
 			const video = document.getElementById('introVideo');
+			video.src = THEMES[currentTheme].videos.intro;
 			video.autoplay = true;
 			video.loop = false;
 			video.controls = false;
